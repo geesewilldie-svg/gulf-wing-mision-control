@@ -107,3 +107,57 @@ test("dialog validates input and closes with Escape", async ({ page }) => {
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
+
+for (const width of [320, 390]) {
+  test(`maximized panels fit within a ${width}px viewport`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto("/");
+    for (const name of ["Mission board", "Agent activity", "Model costs"]) {
+      await page
+        .getByRole("button", { name: `Maximize ${name}`, exact: true })
+        .click();
+      const bounds = await page
+        .getByRole("region", { name, exact: true })
+        .boundingBox();
+      expect(bounds).not.toBeNull();
+      expect(bounds!.x).toBeGreaterThanOrEqual(12);
+      expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width - 12);
+      await page
+        .getByRole("button", { name: `Restore ${name}`, exact: true })
+        .click();
+    }
+  });
+}
+
+test("every dialog dismissal restores focus to its opening control", async ({
+  page,
+}) => {
+  await page.goto("/");
+  for (const openerName of ["New mission", "Assign demo mission", "Add task"]) {
+    const opener = page.getByRole("button", { name: openerName, exact: true });
+    for (const method of ["escape", "close", "backdrop", "submit"]) {
+      await opener.focus();
+      await page.keyboard.press("Enter");
+      await expect(page.getByLabel("Mission title")).toBeFocused();
+      if (method === "escape") await page.keyboard.press("Escape");
+      if (method === "close")
+        await page
+          .getByRole("button", { name: "Close mission dialog" })
+          .click();
+      if (method === "backdrop")
+        await page
+          .locator(".modal-backdrop")
+          .click({ position: { x: 5, y: 5 } });
+      if (method === "submit") {
+        await page
+          .getByLabel("Mission title")
+          .fill(`Focus regression ${openerName}`);
+        await page.getByRole("button", { name: "Create demo mission" }).click();
+      }
+      await expect(page.getByRole("dialog")).toHaveCount(0);
+      await expect(opener).toBeFocused();
+    }
+  }
+});

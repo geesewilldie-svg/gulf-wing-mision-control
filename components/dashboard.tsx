@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Activity,
   ArrowDownLeft,
@@ -31,6 +31,17 @@ export default function Dashboard() {
   const [hidden, setHidden] = useState<string[]>([]);
   const [menu, setMenu] = useState(false);
   const [modal, setModal] = useState(false);
+  const missionOpener = useRef<HTMLButtonElement | null>(null);
+  const openMission = (opener: HTMLButtonElement) => {
+    missionOpener.current = opener;
+    setModal(true);
+  };
+  useEffect(() => {
+    if (!modal && missionOpener.current) {
+      missionOpener.current.focus({ preventScroll: true });
+      missionOpener.current = null;
+    }
+  }, [modal]);
   const [title, setTitle] = useState("");
   const [agent, setAgent] = useState("GPT");
   const [events, setEvents] = useState([
@@ -169,7 +180,10 @@ export default function Dashboard() {
                 One workspace. Every venture. A connected intelligence layer.
               </p>
             </div>
-            <button className="primary-button" onClick={() => setModal(true)}>
+            <button
+              className="primary-button"
+              onClick={(e) => openMission(e.currentTarget)}
+            >
               <Plus size={16} /> New mission
             </button>
           </div>
@@ -292,9 +306,9 @@ export default function Dashboard() {
                 <span>{active.role}</span>
               </div>
               <button
-                onClick={() => {
+                onClick={(e) => {
                   setAgent(selected);
-                  setModal(true);
+                  openMission(e.currentTarget);
                 }}
               >
                 Assign demo mission <ArrowRight size={14} />
@@ -328,7 +342,7 @@ export default function Dashboard() {
                   <span>{visibleTasks.length} missions</span>
                   <button
                     className="text-button"
-                    onClick={() => setModal(true)}
+                    onClick={(e) => openMission(e.currentTarget)}
                   >
                     <Plus size={13} /> Add task
                   </button>

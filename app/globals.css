@@ -1307,7 +1307,7 @@ footer > span {
   }
   .maximized {
     inset: 72px 12px 12px;
-    left: 12px;
+    width: auto !important;
     overflow: auto;
   }
   .workspace-heading {
