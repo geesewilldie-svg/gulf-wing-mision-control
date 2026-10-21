@@ -9,9 +9,12 @@ import {
 } from "@/lib/displays";
 import { agents } from "@/lib/demo";
 import HolographicCore from "./holographic-core";
+import SyncControls from "./sync-controls";
 
 export default function Presentation() {
-  const { workspace, ready, storageMessage } = useWorkspace({ readOnly: true });
+  const { workspace, ready, storageMessage, sync } = useWorkspace({
+    readOnly: true,
+  });
   const [view, setView] = useState<DisplayView>("overview");
   const [selected, setSelected] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
@@ -69,6 +72,7 @@ export default function Presentation() {
           {fullscreen ? "Exit fullscreen" : "Fullscreen"}
         </button>
       </header>
+      <SyncControls displayOnly />
       <div className="display-title">
         <div>
           <div className="eyebrow">GULF WING / PRESENTATION DISPLAY</div>
@@ -76,7 +80,11 @@ export default function Presentation() {
             {workspace.venture}
             <span>.</span>
           </h1>
-          <p>DEMO · Saved workspace in this browser · No live integrations</p>
+          <p>
+            DEMO ·{" "}
+            {sync.mode === "shared" ? sync.status : "Browser-only workspace"} ·
+            No live agent integrations
+          </p>
         </div>
         <div className="display-count">
           <strong>
@@ -175,7 +183,12 @@ export default function Presentation() {
         <span>
           <Shield size={14} /> DEMO DISPLAY · NO LIVE CONNECTIONS
         </span>
-        <span>Same-browser updates · Use device controls for TV mirroring</span>
+        <span>
+          {sync.mode === "shared"
+            ? "Laptop-shared workspace"
+            : "Same-browser workspace"}{" "}
+          · Android / Windows display
+        </span>
       </footer>
       <p role="status" className="display-message">
         {message}

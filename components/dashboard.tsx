@@ -26,6 +26,7 @@ import { agents, costs, Task, ventures } from "@/lib/demo";
 import WorkspacePanel from "./workspace-panel";
 import HolographicCore from "./holographic-core";
 import ScreenControls from "./screen-controls";
+import SyncControls from "./sync-controls";
 import { useWorkspace } from "@/hooks/use-workspace";
 import {
   panelNames,
@@ -34,8 +35,14 @@ import {
   type PanelLayout,
 } from "@/lib/workspace";
 export default function Dashboard() {
-  const { workspace, setWorkspace, ready, resetWorkspace, storageMessage } =
-    useWorkspace();
+  const {
+    workspace,
+    setWorkspace,
+    ready,
+    resetWorkspace,
+    storageMessage,
+    sync,
+  } = useWorkspace();
   const { venture, selected, tasks, hidden, events, panels } = workspace;
   function setField<K extends keyof Workspace>(
     field: K,
@@ -136,6 +143,20 @@ export default function Dashboard() {
     return (
       <main className="loading-workspace" role="status">
         Loading your demo workspace…
+      </main>
+    );
+  if (sync.mode === "shared" && sync.role === "display")
+    return (
+      <main className="presentation">
+        <h1>Display-only device</h1>
+        <p>
+          This device is paired for presentation. Open a display view or
+          disconnect to use your browser-only workspace.
+        </p>
+        <p>
+          <a href="/display">Open presentation</a>
+        </p>
+        <SyncControls displayOnly />
       </main>
     );
   return (
@@ -246,6 +267,7 @@ export default function Dashboard() {
               <Plus size={16} /> New mission
             </button>
           </div>
+          <SyncControls />
           <ScreenControls />
           <div className="metrics">
             <div>
@@ -400,14 +422,18 @@ export default function Dashboard() {
             <span>
               {storageMessage
                 ? "Local demo workspace"
-                : "Saved locally in this browser · DEMO"}
+                : sync.mode === "shared"
+                  ? sync.status + " · DEMO"
+                  : "Saved locally in this browser · DEMO"}
             </span>
             <button
               className="text-button"
               onClick={() => {
                 if (
                   !window.confirm(
-                    "Reset demo? This removes saved missions, activity, and panel layouts in this browser and restores the demo defaults.",
+                    sync.mode === "shared"
+                      ? "Reset shared demo? This replaces the laptop’s shared missions, activity, and layouts for every paired device with demo defaults."
+                      : "Reset demo? This removes saved missions, activity, and panel layouts in this browser and restores the demo defaults.",
                   )
                 )
                   return;
@@ -662,8 +688,10 @@ export default function Dashboard() {
               </button>
             </div>
             <p>
-              This demo task is saved only in this browser. No agent or API will
-              run.
+              {sync.mode === "shared"
+                ? "This demo task will be saved to your laptop’s shared workspace."
+                : "This demo task is saved only in this browser."}{" "}
+              No agent or model API will run.
             </p>
             <form onSubmit={addTask}>
               <label>

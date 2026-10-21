@@ -6,3 +6,6 @@ out/
 playwright-report/
 test-results/
 *.tsbuildinfo
+
+# Local shared workspace and pairing configuration
+.gulf-wing/

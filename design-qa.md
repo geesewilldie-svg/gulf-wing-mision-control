@@ -73,3 +73,36 @@ Evidence: [display launcher](docs/design/display-center.png) captured from a 144
 Build, TypeScript, and 68 desktop/mobile Chromium tests passed. Added coverage verifies independent windows, live mission/status/reset updates across windows, view-only storage safety, controller-tab synchronization, malformed incoming update handling, pop-up fallback, mobile/4K bounds, unsupported/denied fullscreen, and actual browser fullscreen enter/exit. Initial test failures were fixture issues (the storage baseline was read before hydration, and fullscreen mocks targeted an HTML element before it existed); the fixtures now wait for saved initialization and patch Element.prototype. The full corrected suite passes.
 
 Real monitor placement, phone mirroring, LG AirPlay/receiver compatibility, and TV firmware behavior were not tested on hardware. They remain device-dependent checks described in the README, rather than an asserted integration.
+
+## Android / Windows shared-workspace phase
+
+### Reference and design adaptation
+
+The five additional user-supplied references are retained under [docs/design/references](docs/design/references/README.md). The circular cyan HUD reference and the final focused core capture were opened together for comparison. The implementation adds original segmented radial scanner bands, calibrated spokes, and restrained cyan glow while retaining the interactive particle core, readable text controls, Gulf Wing identity, and explicit agent-simulation labels. The reference's film imagery, branding, fabricated device telemetry, and desktop wallpaper widgets are not runtime UI assets.
+
+This is an adaptation brief, not pixel reproduction: the source HUD image is 1280 × 720 and the final core component capture is 1148 × 582 at one image pixel per CSS pixel. Intentional differences include the Gulf Wing navigation/content, accessible HTML controls, a particle visualization, and a separated agent directive panel.
+
+### Final rendered evidence
+
+- [Windows controller](docs/design/sync-windows-controller.png): viewport 1440 × 1000, full-page capture, deviceScaleFactor 1, paired controller, connection details expanded.
+- [Android controller](docs/design/sync-android-controller.png): Galaxy Chromium emulation, viewport 384 × 854, full-page capture, deviceScaleFactor 1, independent paired controller profile.
+- [TV presentation](docs/design/sync-tv-presentation.png): viewport 1920 × 1080, full-page capture, deviceScaleFactor 1, separate display-only session.
+- [Focused segmented core](docs/design/sync-cyan-core.png): viewport 1440 × 1000, component capture 1148 × 582.
+
+Reduced motion freezes the captures. Motion/pause/rotation are verified in normal-motion tests. All three final browser captures had zero console/page errors and no horizontal overflow. No pairing codes, host signing secrets, personal phone identifiers, or original hardware photos appear in these evidence images.
+
+Typography retains clear body/action hierarchy with small monospace HUD labels; framing and spacing maintain a primary core-plus-directive composition; cyan and mint remain the primary accents against navy surfaces; live-rendered geometry stays sharp at capped pixel density; copy distinguishes actual laptop synchronization from simulated AI-agent work. Pairing fields are masked, connection status stays visible when controls are collapsed, and conflict/re-pair decisions remain accessible as HTML controls.
+
+### Fixes and validation
+
+- Revision-checked saves prevent silent concurrent replacement. Both conflict decisions were exercised, including the explicit confirmation for keeping a device version.
+- Pairing renewal preserves queued edits even if pending-edit storage is full. Its storage warning is retained alongside a network/authentication error rather than being overwritten by it.
+- Shared reset explicitly says it affects every paired device. Local workspace publication confirms replacement, and disconnect restores the separate local workspace.
+- Display sessions are denied API writes; controller/viewer access is enforced by signed, expiring sessions, with same-origin checks and bounded request bodies.
+- Private pairing configuration and shared state are excluded from Git. The test host uses disposable temporary storage and generated test credentials rather than operator configuration.
+
+Production build and TypeScript passed. The full suite passed **76 tests**; **8 duplicate shared-host matrix cases were intentionally skipped** because those cases already create separate Android and desktop sessions. After adding local-publication assertions, the targeted host suite also passed all **8 cases**, with its duplicate mobile matrix skipped. Production dependency audit found **0 vulnerabilities**. Separate runtime checks verified initial setup, repeat-setup preservation, and persistence of workspace/revision/pairing configuration across an actual Node host process restart.
+
+Physical Samsung S25 Ultra, LG OLED65A1PUA, ASUS ScreenPad, Windows Firewall, Wi-Fi isolation, HDMI, and Smart View behavior remain hardware checks. Recommended use is the Windows laptop hosting the app, a Windows presentation window on the HDMI-connected TV, and the Android phone paired on the same trusted private LAN. No public deployment, cloud identity, paid service, or model API integration was added. The README contains Windows setup, pairing, recovery, and private-network constraints.
+
+Final result for this phase: passed.

@@ -124,6 +124,49 @@ export default function HolographicCore({
         ctx.ellipse(cx, cy, scale * radius, scale * radius * 0.87, 0, 0, TAU);
         ctx.stroke();
       }
+      // Independent radial scanner segments inspired by the supplied cinematic HUD references.
+      ctx.save();
+      ctx.strokeStyle = activeColor;
+      for (let band = 0; band < 3; band++) {
+        const radius = scale * (1.14 + band * 0.18);
+        ctx.lineWidth = band === 1 ? 4 : 2;
+        ctx.globalAlpha = band === 1 ? 0.65 : 0.35;
+        for (let segment = 0; segment < 4; segment++) {
+          const start =
+            (segment * TAU) / 4 +
+            time * (band % 2 ? -0.06 : 0.045) +
+            band * 0.2;
+          ctx.beginPath();
+          ctx.ellipse(
+            cx,
+            cy,
+            radius,
+            radius * 0.87,
+            0,
+            start,
+            start + 0.55 + band * 0.16,
+          );
+          ctx.stroke();
+        }
+      }
+      ctx.globalAlpha = 0.3;
+      ctx.lineWidth = 0.7;
+      for (let quadrant = 0; quadrant < 4; quadrant++) {
+        const angle = (quadrant * TAU) / 4 + Math.PI / 4;
+        const inner = scale * 1.1,
+          outer = scale * 1.63;
+        ctx.beginPath();
+        ctx.moveTo(
+          cx + Math.cos(angle) * inner,
+          cy + Math.sin(angle) * inner * 0.87,
+        );
+        ctx.lineTo(
+          cx + Math.cos(angle) * outer,
+          cy + Math.sin(angle) * outer * 0.87,
+        );
+        ctx.stroke();
+      }
+      ctx.restore();
       for (let i = 0; i < 80; i++) {
         const angle = (i / 80) * TAU;
         const radius = scale * 1.52;

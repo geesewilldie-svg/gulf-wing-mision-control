@@ -67,14 +67,15 @@ export default function ScreenControls() {
           </p>
           <strong>Phone or LG TV</strong>
           <p>
-            Use compatible AirPlay or phone screen mirroring, a supported
-            browser Cast screen option, or an HDMI connection. The TV connection
-            is managed by your device.
+            Use Samsung Smart View / compatible Screen Share, Windows wireless
+            display, or an HDMI connection. The TV connection is managed by your
+            device.
           </p>
           <p className="screen-limit">
-            Views share updates only in the same browser profile and site
-            address. Different devices need screen mirroring to share this
-            session; cloud synchronization is not connected.
+            Use Connect devices to pair Android and Windows screens to your
+            laptop. Without pairing, views share updates only in the same
+            browser profile and site address. Cloud synchronization is not
+            connected.
           </p>
         </div>
         <p className="screen-message" role="status">
