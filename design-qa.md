@@ -63,3 +63,13 @@ No remaining actionable P0/P1/P2 findings within the adaptation scope.
 ## Follow-up polish
 
 The secondary graph intentionally uses a compact illustrative dataset, not hundreds of imported knowledge records. Real memory search, semantic links, and voice interaction remain separate integration work.
+
+## Multi-display extension
+
+The existing holographic design now has a Screens & TV launcher and dedicated overview, core, mission-board, and activity presentation routes. Typography increases for 4K presentation; mobile views reflow within the viewport. Presentation windows consume the same browser's stored workspace without writing it, while standard controller tabs exchange validated storage updates. No TV connection or cross-device synchronization is implied.
+
+Evidence: [display launcher](docs/design/display-center.png) captured from a 1440 × 1000 viewport; [4K overview](docs/design/display-overview-4k.png) captured at 3840 × 2160; [mobile core](docs/design/display-core-mobile.png) captured at 390 × 844 (full-page image). All captures have deviceScaleFactor 1 and reduced motion for stable visual inspection. Final production capture recorded no page/console errors; document width matched each viewport. The larger TV text, command-center return link, fullscreen action, display labels, mission lanes, and simulation notices were inspected.
+
+Build, TypeScript, and 68 desktop/mobile Chromium tests passed. Added coverage verifies independent windows, live mission/status/reset updates across windows, view-only storage safety, controller-tab synchronization, malformed incoming update handling, pop-up fallback, mobile/4K bounds, unsupported/denied fullscreen, and actual browser fullscreen enter/exit. Initial test failures were fixture issues (the storage baseline was read before hydration, and fullscreen mocks targeted an HTML element before it existed); the fixtures now wait for saved initialization and patch Element.prototype. The full corrected suite passes.
+
+Real monitor placement, phone mirroring, LG AirPlay/receiver compatibility, and TV firmware behavior were not tested on hardware. They remain device-dependent checks described in the README, rather than an asserted integration.

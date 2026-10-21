@@ -25,6 +25,7 @@ import {
 import { agents, costs, Task, ventures } from "@/lib/demo";
 import WorkspacePanel from "./workspace-panel";
 import HolographicCore from "./holographic-core";
+import ScreenControls from "./screen-controls";
 import { useWorkspace } from "@/hooks/use-workspace";
 import {
   panelNames,
@@ -245,6 +246,7 @@ export default function Dashboard() {
               <Plus size={16} /> New mission
             </button>
           </div>
+          <ScreenControls />
           <div className="metrics">
             <div>
               <span className="metric-icon">

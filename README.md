@@ -47,9 +47,32 @@ The dashboard automatically saves demo missions (up to 2,000), statuses, the lat
 
 **Reset demo** asks for confirmation, then restores all demo defaults, including missions and layouts. Cancel leaves your workspace intact. Reset only changes this app's `gulf-wing.demo-workspace.v1` storage entry; other browser data is untouched.
 
-Storage is local to the browser profile and site origin (including the port), with no cloud sync or backup. Clearing site data removes the saved workspace. Multiple open tabs do not synchronize; the last tab to save wins. Use a single tab when editing. Do not put sensitive or production data into this demo.
+Storage is local to the browser profile and site origin (including the port), with no cloud sync or backup. Clearing site data removes the saved workspace. Windows and tabs in the same browser profile and origin receive saved updates automatically. Dedicated presentation windows are read-only consumers of saved data; exploring an agent there only changes that display. Simultaneous edits in multiple controller tabs still use last-save-wins behavior; use one primary controller for reliable editing. Do not put sensitive or production data into this demo.
 
 Saved data is versioned and validated before loading. Malformed or unsupported data is replaced with demo defaults with a visible warning. Out-of-range panel geometry is constrained to supported bounds. If browser storage is blocked or full, the dashboard remains usable and warns that changes will only last until refresh. No save-success claim is shown after a storage failure.
+
+## Multiple monitors, phones, and LG TVs
+
+Open **Screens & TV** on the dashboard. Choose a mission overview, holographic core, mission board, or activity display. Each **Open display** button opens a named independent window; **Open here** is the fallback if pop-ups are blocked. Allow pop-ups only for this app if needed.
+
+### Windows or Mac with several monitors
+
+1. Connect the monitors or TV through HDMI, DisplayPort, or your supported dock.
+2. In Windows, press **Win+P → Extend**; on macOS, select extended displays in System Settings → Displays.
+3. Open the desired display views, move each window onto its monitor, and choose **Fullscreen**. Escape normally exits browser fullscreen. A complete overview and dedicated screen views use larger presentation typography, including layouts checked at 3840 × 2160.
+4. Keep the original dashboard as your controller. Changes to demo missions, statuses, activity, and the selected venture appear in presentation windows in the **same browser profile and site origin**, without refreshing. Display modes have no mission-editing controls and do not overwrite saved workspace data.
+
+### Phone or computer to an LG OLED TV
+
+- **HDMI** from a computer (or a compatible phone adapter) is the most predictable option. Use mirroring or extended desktop as appropriate.
+- **iPhone/iPad:** If your specific LG TV supports AirPlay, use Control Center → Screen Mirroring and select the TV. The devices typically need to be on the same local network. Enable AirPlay on the TV if its settings require it. Model/firmware support varies.
+- **Android:** Use the phone's supported Screen Cast/Smart View/wireless-display option only if it is compatible with the TV or a connected receiver. Chromecast/Google Cast support varies by LG model and receiver; an ordinary web page cannot guarantee it.
+- **Desktop Chrome/Edge:** Their browser/OS casting or wireless display controls can mirror a screen to a compatible receiver. Availability and menu names vary.
+- Open the desired presentation view before mirroring. Fullscreen is offered when the browser supports it; unsupported or denied requests show a useful fallback message. The app does not automatically discover TVs, pair devices, or implement a Cast/AirPlay sender.
+
+Screen mirroring shows the same session on the TV. Opening this app independently on a phone, TV browser, or another computer creates separate browser-local storage: **cross-device synchronization is not connected**. No cloud server, account, API key, remote control service, or public deployment has been added. A locally hosted development server is not automatically accessible from a phone or TV; network access and secure hosting would need a separate setup.
+
+Keep the dashboard as the controller and the other windows as presentation screens. Closing a display does not close the controller or erase saved work. A presentation's local agent selection can differ from the controller's selection. LG hardware casting and multi-monitor placement require real-device checks; browser tests do not establish that a specific TV can connect.
 
 ## Validation
 
@@ -76,6 +99,8 @@ The workflow does not deploy, merge, create PRs, or perform AI code review. To m
 - `components/dashboard.tsx`: interactive demo workspace.
 - `components/workspace-panel.tsx`: reusable window controls.
 - `components/holographic-core.tsx`: original interactive Canvas visualization and accessible agent controls.
+- `components/screen-controls.tsx` and `components/presentation.tsx`: display launcher and responsive presentation screens.
+- `app/display/`: presentation route, with `?view=overview|core|missions|activity`.
 - `lib/demo.ts`: typed, explicitly simulated data.
 - `lib/workspace.ts`: versioned workspace schema, defaults, and saved-data validation.
 - `hooks/use-workspace.ts`: hydration-safe loading, automatic saving, and storage failure handling.
