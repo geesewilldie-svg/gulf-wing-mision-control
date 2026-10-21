@@ -30,6 +30,17 @@ Open the development server on port 3000 in your browser. Stop with Ctrl+C. No e
 - Simulate an agent event to update the activity feed. Model cost and token figures are fixed illustrative data.
 - Controls support keyboard focus, the mission dialog traps focus and closes with Escape, status changes have a live announcement, and reduced-motion preferences are respected.
 
+## Holographic command core
+
+The command dashboard uses an original cinematic holographic direction inspired by the supplied particle-core, galaxy, and relationship-graph references. The central visualization is rendered live in Canvas; no film assets, copied source code, external images, model calls, or additional services are used.
+
+- **Core**, **Galaxy**, and **Graph** switch between a rotating particle sphere, a spiral particle field, and a connected relationship map. These are illustrative views, not real stored memories or verified relationships.
+- Select GPT, Claude, Hermes, or Codex from the glowing constellation nodes. The agent uplink panel shows its role and actual local demo mission count; **Assign demo mission** opens the existing mission flow with that agent selected.
+- Drag the visualization horizontally, or focus it and use arrow keys, to rotate. Mobile vertical swipes remain available for page scrolling.
+- Pause/resume motion, reset the viewing angle, or expand the hologram. Expanded mode supports keyboard focus containment, Escape to close, and focus restoration.
+- Reduced-motion preferences render a static visualization automatically. A visible fallback preserves agent controls if Canvas cannot initialize. Animation is capped near 30fps, uses a capped pixel ratio, and suspends drawing while the document is hidden.
+- The hologram's view mode, angle, and pause state are temporary display controls. Saved missions and workspace panel layouts retain their existing persistence behavior.
+
 ## Saved workspaces and reset
 
 The dashboard automatically saves demo missions (up to 2,000), statuses, the latest 12 activity events, selected venture/agent, and each panel's position, size, minimized state, and maximized state in `localStorage`. Minimized panels retain their geometry. Desktop positions and sizes are retained while mobile uses a stacked layout. Only one panel is maximized at a time.
@@ -64,6 +75,7 @@ The workflow does not deploy, merge, create PRs, or perform AI code review. To m
 - `app/`: App Router shell, metadata, visual system, responsive styles.
 - `components/dashboard.tsx`: interactive demo workspace.
 - `components/workspace-panel.tsx`: reusable window controls.
+- `components/holographic-core.tsx`: original interactive Canvas visualization and accessible agent controls.
 - `lib/demo.ts`: typed, explicitly simulated data.
 - `lib/workspace.ts`: versioned workspace schema, defaults, and saved-data validation.
 - `hooks/use-workspace.ts`: hydration-safe loading, automatic saving, and storage failure handling.

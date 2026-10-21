@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { agents, costs, Task, ventures } from "@/lib/demo";
 import WorkspacePanel from "./workspace-panel";
+import HolographicCore from "./holographic-core";
 import { useWorkspace } from "@/hooks/use-workspace";
 import {
   panelNames,
@@ -233,7 +234,8 @@ export default function Dashboard() {
                 Mission control<span>.</span>
               </h1>
               <p>
-                One workspace. Every venture. A connected intelligence layer.
+                Your operational universe. Connected, focused, under your
+                command.
               </p>
             </div>
             <button
@@ -300,76 +302,97 @@ export default function Dashboard() {
             </div>
           </div>
           <section
-            className="network-panel panel"
+            className="network-panel panel neural-deck"
             id="network"
             aria-label="AI agent network"
           >
-            <div className="network-heading">
-              <div>
-                <div className="eyebrow">INTELLIGENCE LAYER</div>
-                <h2>Connected by design.</h2>
-                <p>Select an agent to explore its role.</p>
+            <div className="neural-main">
+              <div className="network-heading">
+                <div>
+                  <div className="eyebrow">HOLOGRAPHIC INTELLIGENCE</div>
+                  <h2>Intelligence, in orbit.</h2>
+                  <p>Your ventures. Your agents. One command core.</p>
+                </div>
+                <span className="network-pill">
+                  <Radio size={12} /> DEMO SYSTEM
+                </span>
               </div>
-              <span className="network-pill">
-                <Radio size={12} /> 4 DEMO NODES
-              </span>
+              <HolographicCore selected={selected} onSelect={setSelected} />
             </div>
-            <div className="network-stage">
-              <div className="orbit orbit-1" />
-              <div className="orbit orbit-2" />
-              <div className="orbit orbit-3" />
-              <svg
-                className="network-lines"
-                viewBox="0 0 800 300"
-                preserveAspectRatio="none"
-                aria-hidden="true"
-              >
-                <path d="M400 150 L160 70 M400 150 L640 70 M400 150 L160 240 M400 150 L640 240" />
-              </svg>
-              <div className="core">
-                <div className="core-logo">W</div>
-                <strong>GULF WING</strong>
-                <small>MISSION CORE</small>
+            <aside
+              className="neural-console"
+              aria-label="Selected agent details"
+            >
+              <div className="console-kicker">
+                <Radio size={13} /> AGENT UPLINK <span>DEMO</span>
               </div>
-              {agents.map((a, i) => (
-                <button
-                  key={a.name}
-                  className={`agent-node node-${i} ${selected === a.name ? "selected" : ""}`}
-                  style={{ "--agent-color": a.color } as React.CSSProperties}
-                  onClick={() => setSelected(a.name)}
-                  aria-pressed={selected === a.name}
-                >
-                  <span className="agent-symbol">{a.symbol}</span>
-                  <span>
-                    <strong>{a.name}</strong>
-                    <small>{a.role.split(" & ")[0]}</small>
-                  </span>
-                  <span className="node-dot" />
-                </button>
-              ))}
-              <span className="coordinate coord-left">
-                GW / NEURAL WORKSPACE
-              </span>
-              <span className="coordinate coord-right">SANDBOX · V.01</span>
-            </div>
-            <div className="agent-detail">
-              <div>
+              <div className="console-identity">
                 <span
-                  className="status-dot"
-                  style={{ background: active.color }}
-                />
-                <strong>{active.name}</strong>
-                <span>{active.role}</span>
+                  className="console-agent-icon"
+                  style={{ color: active.color }}
+                >
+                  <Cpu size={26} />
+                </span>
+                <div>
+                  <small>SELECTED INTELLIGENCE</small>
+                  <h3>{active.name}</h3>
+                  <p>{active.role}</p>
+                </div>
+              </div>
+              <div className="console-status">
+                <span className="status-dot" /> Available for simulation
+              </div>
+              <div className="console-divider" />
+              <div className="console-section-label">
+                MISSION DIRECTIVE <span>01 / LOCAL</span>
+              </div>
+              <h4>
+                {selected === "GPT"
+                  ? "Turn the big picture into the next move."
+                  : selected === "Claude"
+                    ? "Bring clarity to every decision."
+                    : selected === "Hermes"
+                      ? "Keep every operation in motion."
+                      : "Build what comes next."}
+              </h4>
+              <p className="console-description">
+                {selected === "GPT"
+                  ? "Explore strategy, organize priorities, and coordinate your next portfolio briefing."
+                  : selected === "Claude"
+                    ? "Explore research, review information, and shape a clear operational briefing."
+                    : selected === "Hermes"
+                      ? "Explore routing, coordinate checklists, and map repeatable venture workflows."
+                      : "Explore engineering tasks, plan automations, and prepare implementation briefs."}{" "}
+                All agent activity is simulated.
+              </p>
+              <div className="console-stats">
+                <div>
+                  <small>ASSIGNED MISSIONS</small>
+                  <strong>
+                    {tasks
+                      .filter((task) => task.agent === selected)
+                      .length.toString()
+                      .padStart(2, "0")}
+                  </strong>
+                </div>
+                <div>
+                  <small>EXECUTION MODE</small>
+                  <strong className="console-demo">SANDBOX</strong>
+                </div>
               </div>
               <button
+                className="primary-button console-assign"
                 onClick={(e) => {
                   setAgent(selected);
                   openMission(e.currentTarget);
                 }}
               >
-                Assign demo mission <ArrowRight size={14} />
+                Assign demo mission <ArrowRight size={15} />
               </button>
-            </div>
+              <div className="console-note">
+                <Shield size={12} /> Local workspace. No model calls.
+              </div>
+            </aside>
           </section>
           <div className="storage-bar">
             <span>

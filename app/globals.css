@@ -1375,3 +1375,605 @@ footer > span {
   line-height: 1.7;
   font-size: 11px;
 }
+
+/* Gulf Wing holographic command system: animated data, accessible HTML controls. */
+:root {
+  --bg: #050b12;
+  --panel: #0a1520;
+  --line: #1b3442;
+  --cyan: #56def5;
+}
+body {
+  background: #050b12;
+}
+.sidebar {
+  background: #070f17;
+}
+.topbar {
+  background: #07111c;
+}
+.neural-deck {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  overflow: hidden;
+  background: #07131e;
+}
+.neural-deck:before {
+  display: none;
+}
+.neural-main {
+  min-width: 0;
+}
+.neural-deck .network-heading {
+  padding: 25px 25px 0;
+}
+.neural-deck .network-heading h2 {
+  font-size: 25px;
+  letter-spacing: -0.6px;
+}
+.neural-deck .network-heading p {
+  line-height: 1.6;
+}
+.neural-console {
+  padding: 26px 23px;
+  border-left: 1px solid #203b49;
+  background: #0b1924;
+  display: flex;
+  flex-direction: column;
+}
+.console-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #8fc8d7;
+  font: 9px monospace;
+  letter-spacing: 1.4px;
+}
+.console-kicker > span {
+  margin-left: auto;
+  font-size: 8px;
+  color: #7099a9;
+  border: 1px solid #2c4957;
+  padding: 3px 5px;
+  border-radius: 3px;
+}
+.console-identity {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  margin-top: 32px;
+}
+.console-agent-icon {
+  padding: 13px;
+  display: flex;
+  background: #112b3b;
+  border: 1px solid #285064;
+  border-radius: 9px;
+}
+.console-identity small {
+  color: #7897aa;
+  font: 7px monospace;
+  letter-spacing: 1.2px;
+}
+.console-identity h3 {
+  font-size: 29px;
+  font-weight: 500;
+  margin: 5px 0;
+  letter-spacing: -0.8px;
+}
+.console-identity p {
+  color: #92aebd;
+  font-size: 10px;
+}
+.console-status {
+  margin-top: 22px;
+  font-size: 9px;
+  color: #7ccebe;
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+.console-divider {
+  border-top: 1px solid #223b48;
+  margin: 24px 0;
+}
+.console-section-label {
+  color: #87a9b9;
+  font: 8px monospace;
+  letter-spacing: 1.1px;
+  display: flex;
+  justify-content: space-between;
+}
+.console-section-label span {
+  color: #5f8095;
+  font-size: 7px;
+}
+.neural-console h4 {
+  font-size: 19px;
+  font-weight: 400;
+  line-height: 1.45;
+  margin-top: 14px;
+  letter-spacing: -0.4px;
+}
+.console-description {
+  font-size: 10px;
+  line-height: 1.9;
+  color: #8ca7b8;
+  margin-top: 12px;
+}
+.console-stats {
+  display: flex;
+  gap: 25px;
+  margin: 25px 0;
+}
+.console-stats small {
+  display: block;
+  color: #718fa2;
+  font: 7px monospace;
+  letter-spacing: 0.8px;
+}
+.console-stats strong {
+  display: block;
+  font-size: 24px;
+  font-weight: 400;
+  margin-top: 8px;
+  color: #c7eaf4;
+}
+.console-stats .console-demo {
+  font: 12px monospace;
+  margin-top: 15px;
+  color: #6bcad5;
+}
+.console-assign {
+  margin-top: auto;
+  justify-content: space-between;
+}
+.console-note {
+  margin-top: 13px;
+  font-size: 8px;
+  color: #718d9d;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.holo-view {
+  padding: 20px 22px 0;
+}
+.holo-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 1;
+}
+.view-tabs {
+  display: flex;
+  border: 1px solid #29414f;
+  border-radius: 5px;
+  padding: 3px;
+  background: #0b1c27;
+}
+.view-tabs button {
+  font: 9px monospace;
+  color: #83a5b8;
+  padding: 6px 11px;
+  border-radius: 3px;
+}
+.view-tabs button[aria-pressed="true"] {
+  color: #a9f1ff;
+  background: #173547;
+}
+.holo-tools {
+  display: flex;
+  gap: 4px;
+}
+.holo-tools button {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #274150;
+  border-radius: 4px;
+  color: #8bb1c2;
+  background: #0a1a26;
+}
+.holo-tools button:hover {
+  border-color: #51b5ce;
+  color: #81e6fa;
+}
+.holo-stage {
+  position: relative;
+  height: 385px;
+  isolation: isolate;
+}
+.holo-stage canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: pan-y;
+  cursor: grab;
+}
+.holo-stage canvas:active {
+  cursor: grabbing;
+}
+.holo-caption {
+  position: absolute;
+  top: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  color: #6796aa;
+  font: 7px monospace;
+  letter-spacing: 1.1px;
+  pointer-events: none;
+}
+.holo-caption > span:last-child {
+  margin-left: auto;
+  color: #71bfae;
+  font-size: 6px;
+}
+.holo-center-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  pointer-events: none;
+  text-shadow:
+    0 2px 8px #000,
+    0 0 18px #000;
+}
+.holo-center-label small {
+  color: #a5d6e3;
+  font: 8px monospace;
+  letter-spacing: 3px;
+}
+.holo-center-label strong {
+  font-size: 22px;
+  color: #e4fbff;
+  font-weight: 400;
+  white-space: nowrap;
+}
+.holo-center-label > span {
+  font: 6px monospace;
+  letter-spacing: 2px;
+  color: #9cdeef;
+  white-space: nowrap;
+}
+.holo-node {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  min-width: 66px;
+  padding: 8px;
+  border-radius: 6px;
+  z-index: 2;
+}
+.holo-node-0 {
+  left: 22%;
+  top: 9%;
+}
+.holo-node-1 {
+  right: 13%;
+  top: 26%;
+}
+.holo-node-2 {
+  left: 12%;
+  bottom: 22%;
+}
+.holo-node-3 {
+  right: 22%;
+  bottom: 7%;
+}
+.node-light {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--node-color);
+  box-shadow:
+    0 0 12px var(--node-color),
+    0 0 26px color-mix(in srgb, var(--node-color) 40%, transparent);
+  border: 2px solid color-mix(in srgb, var(--node-color) 65%, white);
+}
+.holo-node.is-selected .node-light {
+  box-shadow:
+    0 0 0 5px color-mix(in srgb, var(--node-color) 15%, transparent),
+    0 0 16px var(--node-color),
+    0 0 35px var(--node-color);
+}
+.node-label {
+  padding: 5px 8px;
+  border: 1px solid #254555;
+  border-radius: 4px;
+  background: #081923ed;
+  color: #adc8d4;
+  text-align: center;
+}
+.node-label strong {
+  font-size: 9px;
+  font-weight: 500;
+  display: block;
+}
+.node-label small {
+  font-size: 7px;
+  color: #7995a8;
+  display: block;
+  margin-top: 3px;
+}
+.holo-node.is-selected .node-label {
+  border-color: var(--node-color);
+  color: #e1faff;
+}
+.holo-readout {
+  position: absolute;
+  bottom: 15px;
+  color: #84a9b9;
+  font: 7px monospace;
+  letter-spacing: 1.3px;
+  line-height: 1.9;
+  pointer-events: none;
+}
+.holo-readout.left {
+  left: 0;
+}
+.holo-readout.right {
+  right: 0;
+  text-align: right;
+}
+.holo-readout span {
+  color: #54798f;
+  font-size: 6px;
+}
+.holo-bottom {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-top: 1px solid #1c3b4c;
+  color: #6793a8;
+  font: 7px monospace;
+  letter-spacing: 1.2px;
+}
+.holo-bottom span:nth-child(2) {
+  color: #527888;
+}
+.holo-fallback {
+  position: absolute;
+  top: 35%;
+  left: 15%;
+  right: 15%;
+  z-index: 3;
+  background: #0b1924;
+  color: #d5f3fa;
+  padding: 18px;
+  text-align: center;
+  line-height: 1.8;
+}
+.holo-expanded {
+  position: fixed;
+  inset: 80px 30px 25px 245px;
+  padding: 22px;
+  background: #07131e;
+  border: 1px solid #396376;
+  border-radius: 10px;
+  z-index: 55;
+  box-shadow: 0 0 0 100vmax #020912ed;
+  display: flex;
+  flex-direction: column;
+}
+.holo-expanded .holo-stage {
+  flex: 1;
+  min-height: 260px;
+}
+@media (min-width: 1550px) {
+  .neural-deck {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+  .holo-stage {
+    height: 430px;
+  }
+}
+@media (max-width: 1100px) {
+  .neural-deck {
+    grid-template-columns: minmax(0, 1fr) 255px;
+  }
+  .neural-console {
+    padding: 22px 17px;
+  }
+  .holo-view {
+    padding: 18px 16px 0;
+  }
+  .holo-stage {
+    height: 410px;
+  }
+  .holo-node-0 {
+    left: 12%;
+  }
+  .holo-node-1 {
+    right: 1%;
+  }
+  .holo-node-2 {
+    left: 0;
+  }
+  .holo-node-3 {
+    right: 12%;
+  }
+  .holo-caption {
+    letter-spacing: 0.3px;
+  }
+  .neural-deck .network-heading {
+    padding: 22px 16px 0;
+  }
+  .neural-deck .network-heading h2 {
+    font-size: 21px;
+  }
+  .network-pill {
+    font-size: 7px;
+  }
+}
+@media (max-width: 950px) {
+  .neural-deck {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .neural-console {
+    border-left: 0;
+    border-top: 1px solid #203b49;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 25px;
+  }
+  .console-kicker {
+    grid-column: span 2;
+  }
+  .console-identity {
+    margin-top: 20px;
+    grid-column: 1;
+  }
+  .console-status {
+    grid-column: 1;
+    margin-top: 15px;
+  }
+  .console-divider {
+    display: none;
+  }
+  .console-section-label {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+    margin-top: 25px;
+  }
+  .neural-console h4 {
+    grid-column: 2;
+    grid-row: 2;
+    margin-top: 50px;
+    font-size: 16px;
+  }
+  .console-description {
+    grid-column: 2;
+    grid-row: 3 / span 2;
+  }
+  .console-stats {
+    grid-column: 1;
+    margin: 18px 0;
+  }
+  .console-assign {
+    grid-column: span 2;
+    margin-top: 8px;
+  }
+  .console-note {
+    grid-column: span 2;
+  }
+  .holo-stage {
+    height: 380px;
+  }
+  .holo-node-0 {
+    left: 23%;
+  }
+  .holo-node-1 {
+    right: 13%;
+  }
+  .holo-node-2 {
+    left: 13%;
+  }
+  .holo-node-3 {
+    right: 23%;
+  }
+}
+@media (max-width: 760px) {
+  .holo-expanded {
+    inset: 72px 12px 12px;
+    padding: 15px;
+  }
+  .neural-deck .network-heading {
+    padding: 21px 17px 0;
+  }
+  .neural-deck .network-heading h2 {
+    font-size: 22px;
+  }
+  .neural-deck .network-heading p {
+    font-size: 9px;
+  }
+  .neural-deck .eyebrow {
+    font-size: 8px;
+    letter-spacing: 1px;
+  }
+  .holo-stage {
+    height: 355px;
+  }
+  .holo-view {
+    padding: 18px 13px 0;
+  }
+  .holo-caption {
+    font-size: 6px;
+  }
+  .holo-caption > span:last-child {
+    font-size: 5px;
+  }
+  .holo-node-0 {
+    left: 17%;
+  }
+  .holo-node-1 {
+    right: 0;
+  }
+  .holo-node-2 {
+    left: 0;
+  }
+  .holo-node-3 {
+    right: 16%;
+  }
+  .holo-center-label strong {
+    font-size: 18px;
+  }
+  .holo-center-label small {
+    font-size: 7px;
+  }
+  .holo-center-label > span {
+    font-size: 5px;
+  }
+  .neural-console {
+    padding: 21px 17px;
+    column-gap: 15px;
+  }
+  .console-identity {
+    gap: 9px;
+  }
+  .console-agent-icon {
+    padding: 8px;
+  }
+  .console-identity h3 {
+    font-size: 23px;
+  }
+  .console-identity p {
+    font-size: 8px;
+  }
+  .neural-console h4 {
+    font-size: 14px;
+  }
+  .console-description {
+    font-size: 9px;
+  }
+  .console-stats {
+    gap: 15px;
+  }
+  .console-stats small {
+    font-size: 6px;
+  }
+  .console-section-label {
+    font-size: 7px;
+    letter-spacing: 0.5px;
+  }
+  .console-section-label span {
+    display: none;
+  }
+  .holo-bottom {
+    font-size: 6px;
+    letter-spacing: 0.6px;
+  }
+}
