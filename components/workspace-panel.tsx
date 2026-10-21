@@ -1,5 +1,6 @@
 "use client";
-import { useRef, useState } from "react";
+import { useRef, type Dispatch, type SetStateAction } from "react";
+import type { PanelLayout } from "@/lib/workspace";
 import { Grip, Maximize2, Minimize2, Minus, Move } from "lucide-react";
 export default function WorkspacePanel({
   title,
@@ -7,24 +8,31 @@ export default function WorkspacePanel({
   children,
   className = "",
   onMinimize,
+  layout,
+  onLayoutChange,
 }: {
   title: string;
   subtitle: string;
   children: React.ReactNode;
   className?: string;
   onMinimize: () => void;
+  layout: PanelLayout;
+  onLayoutChange: Dispatch<SetStateAction<PanelLayout>>;
 }) {
-  const [size, setSize] = useState<{ width: number; height: number } | null>(
-    null,
-  );
+  const { size, offset, maximized: max } = layout;
+  const setSize = (size: PanelLayout["size"]) =>
+    onLayoutChange((current) => ({ ...current, size }));
+  const setOffset = (next: SetStateAction<PanelLayout["offset"]>) =>
+    onLayoutChange((current) => ({
+      ...current,
+      offset: typeof next === "function" ? next(current.offset) : next,
+    }));
   const resize = useRef<{
     x: number;
     y: number;
     width: number;
     height: number;
   } | null>(null);
-  const [max, setMax] = useState(false);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
   const drag = useRef<{ x: number; y: number; ox: number; oy: number } | null>(
     null,
   );
@@ -61,7 +69,7 @@ export default function WorkspacePanel({
                 ArrowUp: [0, -16],
                 ArrowDown: [0, 16],
               };
-              if (d[e.key]) {
+              if (d[e.key] && !max) {
                 e.preventDefault();
                 setOffset((v) => ({
                   x: Math.max(-160, Math.min(160, v.x + d[e.key][0])),
@@ -101,7 +109,12 @@ export default function WorkspacePanel({
           </button>
           <button
             aria-label={`${max ? "Restore" : "Maximize"} ${title}`}
-            onClick={() => setMax(!max)}
+            onClick={() =>
+              onLayoutChange((current) => ({
+                ...current,
+                maximized: !current.maximized,
+              }))
+            }
           >
             {max ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
           </button>
@@ -117,22 +130,34 @@ export default function WorkspacePanel({
             !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)
           )
             return;
+          if (max) return;
           e.preventDefault();
           const box = e.currentTarget.parentElement!.getBoundingClientRect();
           setSize({
-            width: Math.max(
-              280,
-              box.width +
-                (e.key === "ArrowRight" ? 16 : e.key === "ArrowLeft" ? -16 : 0),
+            width: Math.min(
+              1600,
+              Math.max(
+                280,
+                box.width +
+                  (e.key === "ArrowRight"
+                    ? 16
+                    : e.key === "ArrowLeft"
+                      ? -16
+                      : 0),
+              ),
             ),
-            height: Math.max(
-              220,
-              box.height +
-                (e.key === "ArrowDown" ? 16 : e.key === "ArrowUp" ? -16 : 0),
+            height: Math.min(
+              700,
+              Math.max(
+                220,
+                box.height +
+                  (e.key === "ArrowDown" ? 16 : e.key === "ArrowUp" ? -16 : 0),
+              ),
             ),
           });
         }}
         onPointerDown={(e) => {
+          if (max) return;
           const box = e.currentTarget.parentElement!.getBoundingClientRect();
           resize.current = {
             x: e.clientX,
@@ -146,8 +171,8 @@ export default function WorkspacePanel({
           const r = resize.current;
           if (r)
             setSize({
-              width: Math.max(280, r.width + e.clientX - r.x),
-              height: Math.max(220, r.height + e.clientY - r.y),
+              width: Math.min(1600, Math.max(280, r.width + e.clientX - r.x)),
+              height: Math.min(700, Math.max(220, r.height + e.clientY - r.y)),
             });
         }}
         onPointerUp={() => {

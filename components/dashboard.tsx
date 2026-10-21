@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type SetStateAction } from "react";
 import {
   Activity,
   ArrowDownLeft,
@@ -22,13 +22,63 @@ import {
   Terminal,
   X,
 } from "lucide-react";
-import { agents, costs, initialTasks, Task, ventures } from "@/lib/demo";
+import { agents, costs, Task, ventures } from "@/lib/demo";
 import WorkspacePanel from "./workspace-panel";
+import HolographicCore from "./holographic-core";
+import ScreenControls from "./screen-controls";
+import SyncControls from "./sync-controls";
+import { useWorkspace } from "@/hooks/use-workspace";
+import {
+  panelNames,
+  type Workspace,
+  type PanelName,
+  type PanelLayout,
+} from "@/lib/workspace";
 export default function Dashboard() {
-  const [venture, setVenture] = useState<string>(ventures[0]);
-  const [selected, setSelected] = useState("GPT");
-  const [tasks, setTasks] = useState(initialTasks);
-  const [hidden, setHidden] = useState<string[]>([]);
+  const {
+    workspace,
+    setWorkspace,
+    ready,
+    resetWorkspace,
+    storageMessage,
+    sync,
+  } = useWorkspace();
+  const { venture, selected, tasks, hidden, events, panels } = workspace;
+  function setField<K extends keyof Workspace>(
+    field: K,
+    value: SetStateAction<Workspace[K]>,
+  ) {
+    setWorkspace((current) => ({
+      ...current,
+      [field]:
+        typeof value === "function"
+          ? (value as (previous: Workspace[K]) => Workspace[K])(current[field])
+          : value,
+    }));
+  }
+  const setVenture = (value: string) => setField("venture", value);
+  const setSelected = (value: string) => setField("selected", value);
+  const setTasks = (value: SetStateAction<Task[]>) => setField("tasks", value);
+  const setHidden = (value: SetStateAction<PanelName[]>) =>
+    setField("hidden", value);
+  const setEvents = (value: SetStateAction<string[]>) =>
+    setField("events", value);
+  const updatePanel = (
+    name: PanelName,
+    update: SetStateAction<PanelLayout>,
+  ) => {
+    setWorkspace((current) => {
+      const next =
+        typeof update === "function" ? update(current.panels[name]) : update;
+      const panels = { ...current.panels, [name]: next };
+      if (next.maximized)
+        for (const other of panelNames) {
+          if (other !== name)
+            panels[other] = { ...panels[other], maximized: false };
+        }
+      return { ...current, panels };
+    });
+  };
   const [menu, setMenu] = useState(false);
   const [modal, setModal] = useState(false);
   const missionOpener = useRef<HTMLButtonElement | null>(null);
@@ -44,11 +94,6 @@ export default function Dashboard() {
   }, [modal]);
   const [title, setTitle] = useState("");
   const [agent, setAgent] = useState("GPT");
-  const [events, setEvents] = useState([
-    "Hermes completed operational workflow mapping",
-    "Claude started quarterly performance analysis",
-    "GPT prepared a portfolio briefing outline",
-  ]);
   const [notice, setNotice] = useState("");
   const active = agents.find((a) => a.name === selected)!;
   const visibleTasks = tasks.filter((t) => t.venture === venture);
@@ -59,9 +104,23 @@ export default function Dashboard() {
   const addTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
+    if (tasks.length >= 2000) {
+      setNotice(
+        "This demo supports up to 2,000 missions. Reset the demo to start fresh.",
+      );
+      return;
+    }
+    let id = Date.now();
+    while (tasks.some((task) => task.id === id)) id++;
     setTasks((v) => [
       ...v,
-      { id: Date.now(), title: title.trim(), agent, status: "Queued", venture },
+      {
+        id,
+        title: title.trim(),
+        agent,
+        status: "Queued",
+        venture,
+      },
     ]);
     log(`${agent} received a demo task: ${title.trim()}`);
     setTitle("");
@@ -80,6 +139,26 @@ export default function Dashboard() {
     log(`${task.agent}: ${task.title} → ${next}`);
   };
   const icons = [Building2, Layers, Plane, Shield, Compass];
+  if (!ready)
+    return (
+      <main className="loading-workspace" role="status">
+        Loading your demo workspace…
+      </main>
+    );
+  if (sync.mode === "shared" && sync.role === "display")
+    return (
+      <main className="presentation">
+        <h1>Display-only device</h1>
+        <p>
+          This device is paired for presentation. Open a display view or
+          disconnect to use your browser-only workspace.
+        </p>
+        <p>
+          <a href="/display">Open presentation</a>
+        </p>
+        <SyncControls displayOnly />
+      </main>
+    );
   return (
     <div className="app-shell">
       <aside className={`sidebar ${menu ? "mobile-open" : ""}`}>
@@ -177,7 +256,8 @@ export default function Dashboard() {
                 Mission control<span>.</span>
               </h1>
               <p>
-                One workspace. Every venture. A connected intelligence layer.
+                Your operational universe. Connected, focused, under your
+                command.
               </p>
             </div>
             <button
@@ -187,6 +267,8 @@ export default function Dashboard() {
               <Plus size={16} /> New mission
             </button>
           </div>
+          <SyncControls />
+          <ScreenControls />
           <div className="metrics">
             <div>
               <span className="metric-icon">
@@ -224,7 +306,7 @@ export default function Dashboard() {
                 <strong>
                   {Math.round(
                     (tasks.filter((t) => t.status === "Complete").length /
-                      tasks.length) *
+                      Math.max(1, tasks.length)) *
                       100,
                   )}
                   <b>%</b> <em>Local task state</em>
@@ -244,77 +326,135 @@ export default function Dashboard() {
             </div>
           </div>
           <section
-            className="network-panel panel"
+            className="network-panel panel neural-deck"
             id="network"
             aria-label="AI agent network"
           >
-            <div className="network-heading">
-              <div>
-                <div className="eyebrow">INTELLIGENCE LAYER</div>
-                <h2>Connected by design.</h2>
-                <p>Select an agent to explore its role.</p>
+            <div className="neural-main">
+              <div className="network-heading">
+                <div>
+                  <div className="eyebrow">HOLOGRAPHIC INTELLIGENCE</div>
+                  <h2>Intelligence, in orbit.</h2>
+                  <p>Your ventures. Your agents. One command core.</p>
+                </div>
+                <span className="network-pill">
+                  <Radio size={12} /> DEMO SYSTEM
+                </span>
               </div>
-              <span className="network-pill">
-                <Radio size={12} /> 4 DEMO NODES
-              </span>
+              <HolographicCore selected={selected} onSelect={setSelected} />
             </div>
-            <div className="network-stage">
-              <div className="orbit orbit-1" />
-              <div className="orbit orbit-2" />
-              <div className="orbit orbit-3" />
-              <svg
-                className="network-lines"
-                viewBox="0 0 800 300"
-                preserveAspectRatio="none"
-                aria-hidden="true"
-              >
-                <path d="M400 150 L160 70 M400 150 L640 70 M400 150 L160 240 M400 150 L640 240" />
-              </svg>
-              <div className="core">
-                <div className="core-logo">W</div>
-                <strong>GULF WING</strong>
-                <small>MISSION CORE</small>
+            <aside
+              className="neural-console"
+              aria-label="Selected agent details"
+            >
+              <div className="console-kicker">
+                <Radio size={13} /> AGENT UPLINK <span>DEMO</span>
               </div>
-              {agents.map((a, i) => (
-                <button
-                  key={a.name}
-                  className={`agent-node node-${i} ${selected === a.name ? "selected" : ""}`}
-                  style={{ "--agent-color": a.color } as React.CSSProperties}
-                  onClick={() => setSelected(a.name)}
-                  aria-pressed={selected === a.name}
-                >
-                  <span className="agent-symbol">{a.symbol}</span>
-                  <span>
-                    <strong>{a.name}</strong>
-                    <small>{a.role.split(" & ")[0]}</small>
-                  </span>
-                  <span className="node-dot" />
-                </button>
-              ))}
-              <span className="coordinate coord-left">
-                GW / NEURAL WORKSPACE
-              </span>
-              <span className="coordinate coord-right">SANDBOX · V.01</span>
-            </div>
-            <div className="agent-detail">
-              <div>
+              <div className="console-identity">
                 <span
-                  className="status-dot"
-                  style={{ background: active.color }}
-                />
-                <strong>{active.name}</strong>
-                <span>{active.role}</span>
+                  className="console-agent-icon"
+                  style={{ color: active.color }}
+                >
+                  <Cpu size={26} />
+                </span>
+                <div>
+                  <small>SELECTED INTELLIGENCE</small>
+                  <h3>{active.name}</h3>
+                  <p>{active.role}</p>
+                </div>
+              </div>
+              <div className="console-status">
+                <span className="status-dot" /> Available for simulation
+              </div>
+              <div className="console-divider" />
+              <div className="console-section-label">
+                MISSION DIRECTIVE <span>01 / LOCAL</span>
+              </div>
+              <h4>
+                {selected === "GPT"
+                  ? "Turn the big picture into the next move."
+                  : selected === "Claude"
+                    ? "Bring clarity to every decision."
+                    : selected === "Hermes"
+                      ? "Keep every operation in motion."
+                      : "Build what comes next."}
+              </h4>
+              <p className="console-description">
+                {selected === "GPT"
+                  ? "Explore strategy, organize priorities, and coordinate your next portfolio briefing."
+                  : selected === "Claude"
+                    ? "Explore research, review information, and shape a clear operational briefing."
+                    : selected === "Hermes"
+                      ? "Explore routing, coordinate checklists, and map repeatable venture workflows."
+                      : "Explore engineering tasks, plan automations, and prepare implementation briefs."}{" "}
+                All agent activity is simulated.
+              </p>
+              <div className="console-stats">
+                <div>
+                  <small>ASSIGNED MISSIONS</small>
+                  <strong>
+                    {tasks
+                      .filter((task) => task.agent === selected)
+                      .length.toString()
+                      .padStart(2, "0")}
+                  </strong>
+                </div>
+                <div>
+                  <small>EXECUTION MODE</small>
+                  <strong className="console-demo">SANDBOX</strong>
+                </div>
               </div>
               <button
+                className="primary-button console-assign"
                 onClick={(e) => {
                   setAgent(selected);
                   openMission(e.currentTarget);
                 }}
               >
-                Assign demo mission <ArrowRight size={14} />
+                Assign demo mission <ArrowRight size={15} />
               </button>
-            </div>
+              <div className="console-note">
+                <Shield size={12} /> Local workspace. No model calls.
+              </div>
+            </aside>
           </section>
+          <div className="storage-bar">
+            <span>
+              {storageMessage
+                ? "Local demo workspace"
+                : sync.mode === "shared"
+                  ? sync.status + " · DEMO"
+                  : "Saved locally in this browser · DEMO"}
+            </span>
+            <button
+              className="text-button"
+              onClick={() => {
+                if (
+                  !window.confirm(
+                    sync.mode === "shared"
+                      ? "Reset shared demo? This replaces the laptop’s shared missions, activity, and layouts for every paired device with demo defaults."
+                      : "Reset demo? This removes saved missions, activity, and panel layouts in this browser and restores the demo defaults.",
+                  )
+                )
+                  return;
+                resetWorkspace();
+                setNotice(
+                  "Demo reset. Missions and layouts restored to defaults.",
+                );
+              }}
+            >
+              <RotateCcw size={13} /> Reset demo
+            </button>
+          </div>
+          {storageMessage && (
+            <p
+              className="storage-warning"
+              role="alert"
+              aria-label="Workspace storage"
+            >
+              {storageMessage}
+            </p>
+          )}
           <div className="workspace-heading" id="workspace">
             <div>
               <h2>Your workspace</h2>
@@ -334,6 +474,10 @@ export default function Dashboard() {
             {!hidden.includes("Mission board") && (
               <WorkspacePanel
                 title="Mission board"
+                layout={panels["Mission board"]}
+                onLayoutChange={(update) =>
+                  updatePanel("Mission board", update)
+                }
                 subtitle={`${venture} · DEMO`}
                 className="task-panel"
                 onMinimize={() => setHidden((v) => [...v, "Mission board"])}
@@ -395,6 +539,10 @@ export default function Dashboard() {
             {!hidden.includes("Agent activity") && (
               <WorkspacePanel
                 title="Agent activity"
+                layout={panels["Agent activity"]}
+                onLayoutChange={(update) =>
+                  updatePanel("Agent activity", update)
+                }
                 subtitle="Local simulation stream"
                 className="activity-panel"
                 onMinimize={() => setHidden((v) => [...v, "Agent activity"])}
@@ -408,7 +556,7 @@ export default function Dashboard() {
                       <div>
                         <p>{event}</p>
                         <small>
-                          {i === 0 ? "Just now" : "Demo event"}{" "}
+                          {i === 0 ? "Latest demo event" : "Demo event"}{" "}
                           <span>· DEMO</span>
                         </small>
                       </div>
@@ -429,6 +577,8 @@ export default function Dashboard() {
             {!hidden.includes("Model costs") && (
               <WorkspacePanel
                 title="Model costs"
+                layout={panels["Model costs"]}
+                onLayoutChange={(update) => updatePanel("Model costs", update)}
                 subtitle="Illustrative session · USD · DEMO"
                 className="cost-panel"
                 onMinimize={() => setHidden((v) => [...v, "Model costs"])}
@@ -537,7 +687,12 @@ export default function Dashboard() {
                 <X size={20} />
               </button>
             </div>
-            <p>This task stays in this session. No agent or API will run.</p>
+            <p>
+              {sync.mode === "shared"
+                ? "This demo task will be saved to your laptop’s shared workspace."
+                : "This demo task is saved only in this browser."}{" "}
+              No agent or model API will run.
+            </p>
             <form onSubmit={addTask}>
               <label>
                 Mission title
