@@ -51,6 +51,14 @@ npm test
 
 Browser tests start the production server automatically, so build first. They cover desktop/mobile mission creation, selected agents, task status, venture isolation, feed events, minimized/maximized panels, desktop movement/resizing, dialog validation, and horizontal overflow. Saved-workspace coverage also checks refresh persistence, venture isolation, panel geometry and mobile reflow, confirmed/cancelled reset, unrelated storage preservation, invalid saved data, and blocked/full browser storage. On Linux machines with preinstalled Chromium, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to its executable path to avoid downloading a browser. `npm run start` serves a completed production build.
 
+## GitHub Actions checks
+
+The `Mission Control checks` workflow runs on pull requests targeting `main`, pushes to `main`, and manual runs from the repository's **Actions** tab. Its **Build, types, and browser tests** job installs the locked dependencies on Node.js 24, builds the app, checks TypeScript, installs Chromium, and runs both desktop and mobile tests. It has read-only repository permissions and requires no API keys or paid services. GitHub-hosted runner usage is subject to your account's included allowance.
+
+After opening or updating a PR, look at its **Checks** tab or the repository's **Actions** tab. A green check means the job passed; a red check links to the failing step. Browser failures upload a report and trace under the run's **Artifacts** section for seven days. These artifacts can contain demo task content entered by tests.
+
+The workflow does not deploy, merge, create PRs, or perform AI code review. To make a green check mandatory before merging, a repository administrator can add **Build, types, and browser tests** as a required status check in the branch protection/ruleset settings for `main` after its first run. This file does not change repository settings automatically.
+
 ## Structure
 
 - `app/`: App Router shell, metadata, visual system, responsive styles.
