@@ -141,6 +141,11 @@ test("every dialog dismissal restores focus to its opening control", async ({
       await opener.focus();
       await page.keyboard.press("Enter");
       await expect(page.getByLabel("Mission title")).toBeFocused();
+      const dialogBounds = await page.getByRole("dialog").boundingBox();
+      expect(dialogBounds!.x).toBeGreaterThanOrEqual(0);
+      expect(dialogBounds!.x + dialogBounds!.width).toBeLessThanOrEqual(
+        page.viewportSize()!.width,
+      );
       if (method === "escape") await page.keyboard.press("Escape");
       if (method === "close")
         await page

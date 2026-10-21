@@ -971,7 +971,7 @@ footer > span {
   padding: 20px;
 }
 .mission-modal {
-  width: 450px;
+  width: min(450px, calc(100vw - 40px));
   max-width: 100%;
   padding: 27px;
   background: #101e2e;
