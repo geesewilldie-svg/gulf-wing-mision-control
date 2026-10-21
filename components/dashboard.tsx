@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type SetStateAction } from "react";
 import {
   Activity,
   ArrowDownLeft,
@@ -22,13 +22,54 @@ import {
   Terminal,
   X,
 } from "lucide-react";
-import { agents, costs, initialTasks, Task, ventures } from "@/lib/demo";
+import { agents, costs, Task, ventures } from "@/lib/demo";
 import WorkspacePanel from "./workspace-panel";
+import { useWorkspace } from "@/hooks/use-workspace";
+import {
+  panelNames,
+  type Workspace,
+  type PanelName,
+  type PanelLayout,
+} from "@/lib/workspace";
 export default function Dashboard() {
-  const [venture, setVenture] = useState<string>(ventures[0]);
-  const [selected, setSelected] = useState("GPT");
-  const [tasks, setTasks] = useState(initialTasks);
-  const [hidden, setHidden] = useState<string[]>([]);
+  const { workspace, setWorkspace, ready, resetWorkspace, storageMessage } =
+    useWorkspace();
+  const { venture, selected, tasks, hidden, events, panels } = workspace;
+  function setField<K extends keyof Workspace>(
+    field: K,
+    value: SetStateAction<Workspace[K]>,
+  ) {
+    setWorkspace((current) => ({
+      ...current,
+      [field]:
+        typeof value === "function"
+          ? (value as (previous: Workspace[K]) => Workspace[K])(current[field])
+          : value,
+    }));
+  }
+  const setVenture = (value: string) => setField("venture", value);
+  const setSelected = (value: string) => setField("selected", value);
+  const setTasks = (value: SetStateAction<Task[]>) => setField("tasks", value);
+  const setHidden = (value: SetStateAction<PanelName[]>) =>
+    setField("hidden", value);
+  const setEvents = (value: SetStateAction<string[]>) =>
+    setField("events", value);
+  const updatePanel = (
+    name: PanelName,
+    update: SetStateAction<PanelLayout>,
+  ) => {
+    setWorkspace((current) => {
+      const next =
+        typeof update === "function" ? update(current.panels[name]) : update;
+      const panels = { ...current.panels, [name]: next };
+      if (next.maximized)
+        for (const other of panelNames) {
+          if (other !== name)
+            panels[other] = { ...panels[other], maximized: false };
+        }
+      return { ...current, panels };
+    });
+  };
   const [menu, setMenu] = useState(false);
   const [modal, setModal] = useState(false);
   const missionOpener = useRef<HTMLButtonElement | null>(null);
@@ -44,11 +85,6 @@ export default function Dashboard() {
   }, [modal]);
   const [title, setTitle] = useState("");
   const [agent, setAgent] = useState("GPT");
-  const [events, setEvents] = useState([
-    "Hermes completed operational workflow mapping",
-    "Claude started quarterly performance analysis",
-    "GPT prepared a portfolio briefing outline",
-  ]);
   const [notice, setNotice] = useState("");
   const active = agents.find((a) => a.name === selected)!;
   const visibleTasks = tasks.filter((t) => t.venture === venture);
@@ -59,9 +95,23 @@ export default function Dashboard() {
   const addTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
+    if (tasks.length >= 2000) {
+      setNotice(
+        "This demo supports up to 2,000 missions. Reset the demo to start fresh.",
+      );
+      return;
+    }
+    let id = Date.now();
+    while (tasks.some((task) => task.id === id)) id++;
     setTasks((v) => [
       ...v,
-      { id: Date.now(), title: title.trim(), agent, status: "Queued", venture },
+      {
+        id,
+        title: title.trim(),
+        agent,
+        status: "Queued",
+        venture,
+      },
     ]);
     log(`${agent} received a demo task: ${title.trim()}`);
     setTitle("");
@@ -80,6 +130,12 @@ export default function Dashboard() {
     log(`${task.agent}: ${task.title} → ${next}`);
   };
   const icons = [Building2, Layers, Plane, Shield, Compass];
+  if (!ready)
+    return (
+      <main className="loading-workspace" role="status">
+        Loading your demo workspace…
+      </main>
+    );
   return (
     <div className="app-shell">
       <aside className={`sidebar ${menu ? "mobile-open" : ""}`}>
@@ -224,7 +280,7 @@ export default function Dashboard() {
                 <strong>
                   {Math.round(
                     (tasks.filter((t) => t.status === "Complete").length /
-                      tasks.length) *
+                      Math.max(1, tasks.length)) *
                       100,
                   )}
                   <b>%</b> <em>Local task state</em>
@@ -315,6 +371,39 @@ export default function Dashboard() {
               </button>
             </div>
           </section>
+          <div className="storage-bar">
+            <span>
+              {storageMessage
+                ? "Local demo workspace"
+                : "Saved locally in this browser · DEMO"}
+            </span>
+            <button
+              className="text-button"
+              onClick={() => {
+                if (
+                  !window.confirm(
+                    "Reset demo? This removes saved missions, activity, and panel layouts in this browser and restores the demo defaults.",
+                  )
+                )
+                  return;
+                resetWorkspace();
+                setNotice(
+                  "Demo reset. Missions and layouts restored to defaults.",
+                );
+              }}
+            >
+              <RotateCcw size={13} /> Reset demo
+            </button>
+          </div>
+          {storageMessage && (
+            <p
+              className="storage-warning"
+              role="alert"
+              aria-label="Workspace storage"
+            >
+              {storageMessage}
+            </p>
+          )}
           <div className="workspace-heading" id="workspace">
             <div>
               <h2>Your workspace</h2>
@@ -334,6 +423,10 @@ export default function Dashboard() {
             {!hidden.includes("Mission board") && (
               <WorkspacePanel
                 title="Mission board"
+                layout={panels["Mission board"]}
+                onLayoutChange={(update) =>
+                  updatePanel("Mission board", update)
+                }
                 subtitle={`${venture} · DEMO`}
                 className="task-panel"
                 onMinimize={() => setHidden((v) => [...v, "Mission board"])}
@@ -395,6 +488,10 @@ export default function Dashboard() {
             {!hidden.includes("Agent activity") && (
               <WorkspacePanel
                 title="Agent activity"
+                layout={panels["Agent activity"]}
+                onLayoutChange={(update) =>
+                  updatePanel("Agent activity", update)
+                }
                 subtitle="Local simulation stream"
                 className="activity-panel"
                 onMinimize={() => setHidden((v) => [...v, "Agent activity"])}
@@ -408,7 +505,7 @@ export default function Dashboard() {
                       <div>
                         <p>{event}</p>
                         <small>
-                          {i === 0 ? "Just now" : "Demo event"}{" "}
+                          {i === 0 ? "Latest demo event" : "Demo event"}{" "}
                           <span>· DEMO</span>
                         </small>
                       </div>
@@ -429,6 +526,8 @@ export default function Dashboard() {
             {!hidden.includes("Model costs") && (
               <WorkspacePanel
                 title="Model costs"
+                layout={panels["Model costs"]}
+                onLayoutChange={(update) => updatePanel("Model costs", update)}
                 subtitle="Illustrative session · USD · DEMO"
                 className="cost-panel"
                 onMinimize={() => setHidden((v) => [...v, "Model costs"])}
@@ -537,7 +636,10 @@ export default function Dashboard() {
                 <X size={20} />
               </button>
             </div>
-            <p>This task stays in this session. No agent or API will run.</p>
+            <p>
+              This demo task is saved only in this browser. No agent or API will
+              run.
+            </p>
             <form onSubmit={addTask}>
               <label>
                 Mission title
