@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import NexusConversation, { type AskConversation } from "./nexus-conversation";
 type VoiceStatus = {
   available: boolean;
   speech?: boolean;
@@ -11,12 +12,17 @@ type VoiceStatus = {
 export default function NexusVoice({
   answer,
   onTranscript,
+  onAsk,
+  onConversationActive,
   disabled = false,
 }: {
+  onAsk: AskConversation;
+  onConversationActive: (active: boolean) => void;
   answer: string;
   onTranscript: (text: string) => void;
   disabled?: boolean;
 }) {
+  const [conversationActive, setConversationActive] = useState(false);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [voice, setVoice] = useState("");
   const [backend, setBackend] = useState("auto");
@@ -230,12 +236,14 @@ export default function NexusVoice({
     <details className="nexus-voice">
       <summary>Nexus voice · Push to talk</summary>
       <p>
-        No always-on listening. No voice cloning. Device voices vary; choose an
-        installed British voice if available.
+        Listening starts only when you choose a recording or conversation
+        control. No voice cloning. Device voices vary; choose an installed
+        British voice if available.
       </p>
       <label>
         Speech engine
         <select
+          disabled={conversationActive}
           value={backend}
           onChange={(e) => {
             stopSpeech();
@@ -259,7 +267,11 @@ export default function NexusVoice({
       {effectiveBackend === "device" && (
         <label>
           Device voice
-          <select value={voice} onChange={(e) => setVoice(e.target.value)}>
+          <select
+            disabled={conversationActive}
+            value={voice}
+            onChange={(e) => setVoice(e.target.value)}
+          >
             <option value="">Automatic / British preferred</option>
             {voices.map((v) => (
               <option key={v.voiceURI} value={v.voiceURI}>
@@ -280,13 +292,20 @@ export default function NexusVoice({
         . Automatic selection never switches a voice you explicitly chose.
       </p>
       <div className="nexus-buttons">
-        <button onClick={speak} disabled={disabled || speaking}>
+        <button
+          onClick={speak}
+          disabled={disabled || speaking || conversationActive}
+        >
           Speak {answer ? "answer" : "voice preview"}
         </button>
-        <button onClick={stopSpeech}>Stop speech</button>
+        <button onClick={stopSpeech} disabled={conversationActive}>
+          Stop speech
+        </button>
         <button
           onClick={record}
-          disabled={disabled || busy || !local.transcription}
+          disabled={
+            disabled || busy || !local.transcription || conversationActive
+          }
         >
           {recording
             ? "Stop recording"
@@ -309,9 +328,24 @@ export default function NexusVoice({
       </button>
       <p>
         Local transcription: {local.transcription ? "ready" : "not configured"}.
-        Recording stops after 30 seconds. Nothing is submitted as a question
-        automatically.
+        Manual recording stops after 30 seconds and requires Ask Nexus.
+        Conversation mode submits automatically while active.
       </p>
+      <NexusConversation
+        disabled={disabled || busy || recording || speaking}
+        transcriptionReady={Boolean(local.transcription)}
+        engine={effectiveBackend}
+        voice={
+          voices.find((v) => v.voiceURI === voice) ??
+          voices.find((v) => v.lang === "en-GB") ??
+          null
+        }
+        onAsk={onAsk}
+        onActive={(active) => {
+          setConversationActive(active);
+          onConversationActive(active);
+        }}
+      />
       <p role="status">{message}</p>
     </details>
   );

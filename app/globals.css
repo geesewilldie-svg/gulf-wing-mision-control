@@ -2753,3 +2753,14 @@ body {
 .nexus-records li { padding: 14px; margin: 10px 0; background: #0c2434; border-radius: 8px; overflow-wrap: anywhere; }
 .nexus-message { color: #a5e7f5; overflow-wrap: anywhere; }
 @media(max-width:640px) { .nexus-console { padding: 16px; } .nexus-card { padding: 16px; } .nexus-fields,.nexus-connections { grid-template-columns: minmax(0,1fr); } }
+
+.nexus-conversation {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border: 1px solid rgba(63, 196, 232, .35);
+  border-radius: 12px;
+  background: rgba(4, 26, 43, .7);
+}
+.nexus-conversation.is-active { border-color: #62e6ed; }
+.conversation-phase { color: #8cecf2; font-weight: 600; }
+.nexus-conversation small { display: block; line-height: 1.6; }

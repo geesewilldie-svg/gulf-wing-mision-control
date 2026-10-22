@@ -336,3 +336,14 @@ including download/no-download paths, validation and preservation on failure.
 Voice processing errors now distinguish an incompatible decoder from a running
 worker that failed transcription or speech generation. These errors contain
 fixed troubleshooting messages, not transcripts, private paths or tracebacks.
+
+### Hands-free conversation with Nexus
+
+On the laptop, leave Mission Control, Ollama and the Nexus voice worker running.
+Open `http://127.0.0.1:3000/nexus`, pair as a controller, expand **Nexus voice · Push to talk**, and select **Start conversation**. Allow microphone access when prompted. Speak normally, then pause for about 1.4 seconds. Nexus transcribes the turn, submits it using the selected routing, speaks the answer with the selected voice (Isabella preferred), and listens again. Auto routing requires your configured local model for generated answers; Knowledge only still returns document-search results.
+
+**Stop conversation / Mute** ends the session immediately. While listening, you can also say “stop listening.” The microphone is released during transcription, thinking and speech to reduce echo. Closing the voice panel, hiding the browser tab, navigating away, or losing controller access stops conversation. It never starts automatically on page load. This is turn-taking conversation, without wake-word detection or interruption while Nexus speaks. Recent context is limited to four messages in the active session and is not saved as a conversation log. Existing question/answer fields still display the last turn.
+
+A voiced turn has a 30-second limit; silence alone is discarded. Background noise can affect the simple local energy detector, so use a quiet room or headset. Errors stop the loop with a visible message instead of retrying indefinitely. Browsers require localhost or HTTPS for microphone capture; the phone's plain HTTP LAN address supports typed questions but cannot use this microphone mode. No cloud transcription or paid service was added.
+
+Conversation tests use synthetic microphone levels, transcription, model replies and audio playback. They verify the automatic follow-up cycle, microphone release during speech, bounded context, stop cancellation and history validation; they do not measure real microphone recognition quality or voice latency on your laptop.
