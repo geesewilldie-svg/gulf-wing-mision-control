@@ -24,6 +24,9 @@ if (!process.env.GW_SYNC_TEST_ROOT) {
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,
+  // These browser fixtures share one laptop data directory. Keep scenarios
+  // sequential; explicit multi-device/concurrent API tests still exercise races.
+  workers: 1,
   use: {
     baseURL: "http://127.0.0.1:3000",
     launchOptions: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH

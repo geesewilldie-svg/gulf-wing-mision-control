@@ -143,7 +143,9 @@ test.describe("Nexus private business foundation", () => {
     await page.getByLabel("Name", { exact: true }).fill(leadName);
     await page.getByRole("button", { name: "Add operating record" }).click();
     await expect(
-      page.getByText(`Lead: ${leadName}`, { exact: true }),
+      page
+        .locator(".nexus-records")
+        .getByText(`Lead: ${leadName}`, { exact: true }),
     ).toBeVisible();
     await page
       .getByLabel("Estimate name", { exact: true })
@@ -209,6 +211,11 @@ test.describe("Nexus private business foundation", () => {
         })
       ).status(),
     ).toBe(403);
+    expect((await page.request.get("/api/sync/knowledge")).status()).toBe(403);
+    expect(
+      (await page.request.post("/api/sync/knowledge", { data: {} })).status(),
+    ).toBe(403);
+    expect((await page.request.get("/api/sync/access")).status()).toBe(403);
     await page.goto("/nexus");
     await expect(
       page

@@ -2764,3 +2764,24 @@ body {
 .nexus-conversation.is-active { border-color: #62e6ed; }
 .conversation-phase { color: #8cecf2; font-weight: 600; }
 .nexus-conversation small { display: block; line-height: 1.6; }
+
+.business-toolbar { display:flex; gap:1rem; align-items:center; flex-wrap:wrap; margin-block:1rem; }
+.business-metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:.75rem;margin-block:1rem; }
+.business-metrics > div { padding:1rem; border:1px solid #235368; border-radius:12px; background:#07213299; }
+.business-metrics strong { display:block;color:#8cecf2;font-size:1.7rem; }
+.business-metrics span { font-size:.8rem; }
+.nexus-card fieldset { border:1px solid #235368; padding:1rem; border-radius:10px; min-width:0; margin-block:.75rem; }
+.nexus-card .business-check { display:flex; align-items:center; gap:.75rem; margin-block:.6rem; }
+.nexus-card .business-check input { width:auto; flex:0 0 auto; }
+.business-services { margin-block:1rem; }
+.preserve-lines { white-space:pre-wrap; }
+.estimate-total { font-size:2rem; }
+.estimate-print { max-width:850px;margin:auto; }
+.estimate-print article { border:1px solid #235368; border-radius:12px; padding:2rem; }
+@media print {
+  body:has(.estimate-print) { color:#111;background:white; }
+  .estimate-print { padding:0;max-width:none;color:#111;background:white; }
+  .estimate-print .no-print { display:none; }
+  .estimate-print article { border:0;padding:0; }
+  .estimate-print h1,.estimate-print h2,.estimate-print h3 { color:#111; }
+}

@@ -195,11 +195,7 @@ created customer contracts, bookings, invoices, or accounting entries.
 
 ### Private business knowledge and Obsidian
 
-Import the private JSON pack prepared from the uploaded plans through **Ask Nexus
-→ Import business plans or Obsidian knowledge**. It contains PDF page text and
-cached spreadsheet values, with source/page/sheet references. Workbook values are
-forecasts; import does not recalculate formulas or certify accounting results.
-The pack is handed off separately and is **not committed to this repository**.
+Import original PDF plans and XLSX workbooks through **Ask Nexus → Import business plans or Obsidian knowledge**. The same panel accepts the separately prepared private JSON pack, Markdown and text. Imports retain source/page/sheet references and unrelated existing files. Workbook formula caches are not recalculated or certified; financial projections remain forecasts. Private source documents and the pack are **not committed to this repository**.
 
 A single `.md` or `.txt` note can be imported through the same control. To import
 an Obsidian vault snapshot from your Windows laptop:
@@ -218,8 +214,7 @@ The private index, operating records, estimates and change history live under
 `.gulf-wing/` (or `GW_SYNC_DATA_DIR`), excluded from Git and public assets. Back up
 this folder securely while the host is stopped. Local files are not encrypted by
 this app; use Windows device encryption, access controls and secure backups.
-All paired display sessions can read private data; this is a single trusted
-operator environment, not production multi-company authorization. Keep using a
+All paired display sessions can read private data. Trusted controllers share full permissions; named employee accounts and production multi-company authorization are not implemented. Keep using a
 trusted private LAN; existing HTTP pairing/data remains unencrypted in transit.
 
 ### Auto and optional local model
@@ -233,7 +228,7 @@ Ollama must be running on 127.0.0.1:11434. The model has no tools, billing acces
 email-sending ability or permission to execute document instructions. One model
 request runs at a time, with a 90-second timeout and a bounded response length.
 Answers show the engine and retrieved evidence; citations require human review.
-Conversation history/memory and routing across external providers are future work.
+Hands-free conversation keeps four recent messages in memory for the active session. Persistent conversation history and routing across external providers remain future work.
 
 ChatGPT, Claude, Gemini, both Copilots, Codex, Hermes, OpenClaw, Google Workspace,
 Meta Ads, Google Ads and LinkedIn appear in Connections as **Not connected**.
@@ -347,3 +342,14 @@ Open `http://127.0.0.1:3000/nexus`, pair as a controller, expand **Nexus voice �
 A voiced turn has a 30-second limit; silence alone is discarded. Background noise can affect the simple local energy detector, so use a quiet room or headset. Errors stop the loop with a visible message instead of retrying indefinitely. Browsers require localhost or HTTPS for microphone capture; the phone's plain HTTP LAN address supports typed questions but cannot use this microphone mode. No cloud transcription or paid service was added.
 
 Conversation tests use synthetic microphone levels, transcription, model replies and audio playback. They verify the automatic follow-up cycle, microphone release during speech, bounded context, stop cancellation and history validation; they do not measure real microphone recognition quality or voice latency on your laptop.
+
+
+### Co-hosting daily operations and your wife's devices
+
+See the [day-one Windows setup and operating guide](docs/cohosting-day-one.md) for the complete intake → estimate → accepted job → checklist workflow and morning acceptance check.
+
+This release adds contact/address intake, editing, service catalog, dated/assigned jobs, quality checklists, filtering, estimate status, customer-facing print/PDF copies, one-job conversion from accepted estimates, private backup/restore and shared-device refresh with conflict protection. Existing records are migrated on read without dropping statuses. New workspaces contain service templates but no clients or fake operating activity.
+
+The Ask Nexus importer now reads PDF, XLSX, JSON, Markdown and text directly on the laptop, with bounded uploads and source page/sheet references. It merges unrelated files; same-name reimports replace their uploaded sections. Originals are untouched and source documents are never committed. Cached workbook formulas are not recalculated. Nexus can search saved operating records as well as imported documents; model answers remain subject to source verification.
+
+Run `npm.cmd run ready` from a spare PowerShell tab for a local setup report. In Nexus, **Family / team device access** shows private laptop addresses and explains pairing a phone or Chromebook on the same trusted Wi-Fi. Typed business workflows work there; remote microphone access requires HTTPS. The laptop must remain awake and running. Outside access, HTTPS provisioning, named accounts, live ads, accounting, invoicing and payments are not installed or implied.
