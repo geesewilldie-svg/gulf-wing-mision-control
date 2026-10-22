@@ -7,7 +7,7 @@ only voices labeled on-device indicate local service. No paid voice API is used.
 This is not a clone of a performer and does not reproduce JARVIS exactly.
 
 The optional worker provides local CPU speech recognition through Faster-Whisper
-and local Piper speech output. No wake-word/background listener is enabled. Actual
+and local Piper speech output. The worker does not listen to the microphone by itself. Nexus now offers an explicitly started browser background conversation mode; see [background assistant setup](../../docs/background-assistant.md). No wake word is enabled. Actual
 latency, pronunciation and voice quality require testing on your ASUS hardware.
 Python dependencies and models are optional, separate downloads; they are not
 bundled in the Next.js app or installed by `npm ci`.

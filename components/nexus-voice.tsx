@@ -11,6 +11,7 @@ type VoiceStatus = {
 };
 export default function NexusVoice({
   answer,
+  section,
   onTranscript,
   onAsk,
   onConversationActive,
@@ -18,6 +19,7 @@ export default function NexusVoice({
 }: {
   onAsk: AskConversation;
   onConversationActive: (active: boolean) => void;
+  section: string;
   answer: string;
   onTranscript: (text: string) => void;
   disabled?: boolean;
@@ -332,6 +334,7 @@ export default function NexusVoice({
         Conversation mode submits automatically while active.
       </p>
       <NexusConversation
+        section={section}
         disabled={disabled || busy || recording || speaking}
         transcriptionReady={Boolean(local.transcription)}
         engine={effectiveBackend}
