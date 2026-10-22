@@ -4,13 +4,13 @@ import { ExternalLink, Monitor, Tv } from "lucide-react";
 import { displayViews, type DisplayView } from "@/lib/displays";
 export default function ScreenControls() {
   const [message, setMessage] = useState("");
-  const open = (view: DisplayView) => {
+  const open = (view: DisplayView | "screenpad") => {
     let popup: Window | null = null;
     try {
       popup = window.open(
-        `/display?view=${view}`,
+        view === "screenpad" ? "/screenpad" : `/display?view=${view}`,
         `gulf-wing-${view}`,
-        "popup,width=1440,height=900",
+        view === "screenpad" ? "popup,width=1000,height=500" : "popup,width=1440,height=900",
       );
     } catch {
       setMessage(
@@ -47,6 +47,13 @@ export default function ScreenControls() {
           <Tv size={26} />
         </div>
         <div className="screen-options">
+          <article>
+            <Monitor size={18} />
+            <h3>ASUS ScreenPad console</h3>
+            <p>A compact hologram and touch controls for your extended ScreenPad display.</p>
+            <button onClick={() => open("screenpad")}>Open ScreenPad <ExternalLink size={12} /></button>
+            <a href="/screenpad">Open here</a>
+          </article>
           {displayViews.map((view) => (
             <article key={view.id}>
               <Monitor size={18} />
@@ -65,6 +72,8 @@ export default function ScreenControls() {
             Connect your displays, choose Extend in your computer’s display
             settings, and move each new window to a screen.
           </p>
+          <strong>ASUS ScreenPad</strong>
+          <p>Enable ScreenPad display mode in ASUS ScreenXpert, then choose Extend in Windows display settings. Move the ScreenPad console window there. Hardware and driver support must be checked on your laptop.</p>
           <strong>Phone or LG TV</strong>
           <p>
             Use Samsung Smart View / compatible Screen Share, Windows wireless

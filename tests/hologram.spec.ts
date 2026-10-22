@@ -100,3 +100,31 @@ test("reduced motion renders a static hologram and preserves usable controls", a
     await canvas.evaluate((element: HTMLCanvasElement) => element.toDataURL()),
   ).not.toBe(frame);
 });
+
+test("terrain graph is distinct, selectable, rotatable and static when paused", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const canvas = page.locator(".holo-stage canvas");
+  const frame = () => canvas.evaluate((element: HTMLCanvasElement) => element.toDataURL());
+  const core = await frame();
+  await page.getByRole("button", { name: "Graph", exact: true }).click();
+  await expect(page.getByText("DEMO SIGNAL TERRAIN", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Demo terrain height scale")).toBeVisible();
+  const terrain = await frame();
+  expect(terrain).not.toBe(core);
+  await page.waitForTimeout(150);
+  expect(await frame()).toBe(terrain);
+  await page.getByRole("button", { name: "Claude Research", exact: true }).click();
+  await expect.poll(frame).not.toBe(terrain);
+  const selected = await frame();
+  await canvas.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect.poll(frame).not.toBe(selected);
+  await page.getByRole("button", { name: "Reset hologram view" }).click();
+  await expect.poll(frame).toBe(selected);
+  await page.getByRole("button", { name: "Expand hologram" }).click();
+  await expect(page.getByLabel("Demo terrain height scale")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Galaxy", exact: true }).click();
+  await expect(page.getByLabel("Demo terrain height scale")).toHaveCount(0);
+});

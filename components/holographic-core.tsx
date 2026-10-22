@@ -12,7 +12,7 @@ const colors = ["#52dbff", "#bba5ff", "#64efcf", "#ffc48d"];
 
 // Deterministic geometry makes the demo reproducible without external images or services.
 function createPoints(mode: Mode): Point[] {
-  const count = mode === "Graph" ? 105 : 1050;
+  const count = 1050;
   return Array.from({ length: count }, (_, i) => {
     const u = (i + 0.5) / count;
     const theta = i * 2.3999632297;
@@ -31,7 +31,7 @@ function createPoints(mode: Mode): Point[] {
     }
     const y = 1 - 2 * u;
     const radius = Math.sqrt(1 - y * y);
-    const shell = mode === "Graph" ? 0.45 + noise * 0.6 : 0.8 + noise * 0.18;
+    const shell = 0.8 + noise * 0.18;
     return {
       x: Math.cos(theta) * radius * shell,
       y: y * shell,
@@ -39,6 +39,93 @@ function createPoints(mode: Mode): Point[] {
       group,
     };
   });
+}
+
+// Original procedural surface: illustrative signal heights, never provider telemetry.
+function drawTerrain(
+  ctx: CanvasRenderingContext2D, width: number, height: number,
+  rotation: { x: number; y: number }, time: number, selected: string,
+) {
+  const size = 40;
+  const scale = Math.min(width * 0.27, height * 0.36);
+  const yaw = rotation.y + 0.55;
+  const tilt = Math.max(0.25, Math.min(1.15, 0.58 + rotation.x));
+  const peaks = [ [-0.65, -0.5], [0.55, -0.5], [-0.5, 0.65], [0.65, 0.55] ];
+  const selectedIndex = agents.findIndex((agent) => agent.name === selected);
+  const heightAt = (x: number, z: number) => {
+    let value = 0.025 + 0.018 * Math.sin(x * 14 + time) * Math.cos(z * 12);
+    peaks.forEach(([px, pz], index) => {
+      const distance = (x - px) ** 2 + (z - pz) ** 2;
+      value += Math.exp(-distance * 11) * (index === selectedIndex ? 0.95 : 0.57);
+    });
+    return value;
+  };
+  const project = (x: number, y: number, z: number) => {
+    const rx = x * Math.cos(yaw) - z * Math.sin(yaw);
+    const rz = x * Math.sin(yaw) + z * Math.cos(yaw);
+    return {
+      x: width / 2 + rx * scale,
+      y: height * 0.57 + (rz * Math.sin(tilt) - y * Math.cos(tilt)) * scale,
+      depth: rz * Math.cos(tilt) + y * Math.sin(tilt),
+    };
+  };
+  const color = (height: number, alpha: number) =>
+    `hsla(${190 - Math.min(height / 0.95, 1) * 182}, 95%, 65%, ${alpha})`;
+  ctx.save();
+  // Floor grid and drop lines establish depth, distinct from the orbital views.
+  ctx.strokeStyle = "#174359";
+  ctx.lineWidth = 0.6;
+  const line = (a: ReturnType<typeof project>, b: ReturnType<typeof project>) => {
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  };
+  for (let i = 0; i <= 12; i++) {
+    const n = -1.35 + i * 2.7 / 12;
+    line(project(n, -0.12, -1.35), project(n, -0.12, 1.35));
+    line(project(-1.35, -0.12, n), project(1.35, -0.12, n));
+  }
+  const grid = Array.from({ length: size + 1 }, (_, row) =>
+    Array.from({ length: size + 1 }, (_, col) => {
+      const x = -1.2 + col * 2.4 / size, z = -1.2 + row * 2.4 / size;
+      const h = heightAt(x, z);
+      return { ...project(x, h, z), h };
+    }),
+  );
+  const cells = [];
+  for (let row = 0; row < size; row++) for (let col = 0; col < size; col++) {
+    const corners = [grid[row][col], grid[row][col + 1], grid[row + 1][col + 1], grid[row + 1][col]];
+    cells.push({ corners, depth: corners.reduce((sum, point) => sum + point.depth, 0) / 4 });
+  }
+  cells.sort((a, b) => a.depth - b.depth);
+  ctx.lineWidth = 0.75;
+  for (const { corners } of cells) {
+    const h = corners.reduce((sum, point) => sum + point.h, 0) / 4;
+    ctx.beginPath();
+    corners.forEach((point, index) => index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y));
+    ctx.closePath();
+    ctx.fillStyle = "rgba(3, 15, 30, 0.8)"; ctx.fill();
+    ctx.fillStyle = color(h, 0.12); ctx.fill();
+    ctx.strokeStyle = color(h, 0.65); ctx.stroke();
+  }
+  const sweep = Math.sin(time * 0.65) * 1.15;
+  ctx.strokeStyle = "#a6f7ff";
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  for (let col = 0; col <= size; col++) {
+    const x = -1.2 + col * 2.4 / size;
+    const p = project(x, heightAt(x, sweep) + 0.008, sweep);
+    if (col === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+  }
+  ctx.stroke();
+  peaks.forEach(([x, z], index) => {
+    const top = project(x, heightAt(x, z), z);
+    ctx.strokeStyle = color(heightAt(x, z), 0.45);
+    line(project(x, -0.12, z), top);
+    ctx.fillStyle = index === selectedIndex ? "#fff3c4" : "#83e9ff";
+    ctx.beginPath(); ctx.arc(top.x, top.y, index === selectedIndex ? 4 : 2.5, 0, TAU); ctx.fill();
+    ctx.font = "10px monospace";
+    ctx.fillText(agents[index].name.toUpperCase(), top.x + 8, top.y - 8);
+  });
+  ctx.restore();
 }
 
 export default function HolographicCore({
@@ -115,6 +202,10 @@ export default function HolographicCore({
       const cx = width / 2,
         cy = height / 2;
       ctx.clearRect(0, 0, width, height);
+      if (mode === "Graph") {
+        drawTerrain(ctx, width, height, rotation.current, time, selected);
+        return;
+      }
       ctx.save();
       ctx.strokeStyle = "#28506b";
       ctx.lineWidth = 0.65;
@@ -201,29 +292,11 @@ export default function HolographicCore({
           };
         })
         .sort((a, b) => a.depth - b.depth);
-      if (mode === "Graph") {
-        for (let i = 0; i < projected.length; i++)
-          for (let j = i + 1; j < projected.length; j++) {
-            const a = projected[i],
-              b = projected[j];
-            const distance = Math.hypot(a.x - b.x, a.y - b.y);
-            if (distance < scale * 0.34) {
-              ctx.globalAlpha = (1 - distance / (scale * 0.34)) * 0.28;
-              ctx.strokeStyle = colors[a.group];
-              ctx.beginPath();
-              ctx.moveTo(a.x, a.y);
-              ctx.lineTo(b.x, b.y);
-              ctx.stroke();
-            }
-          }
-      }
       for (const point of projected) {
         ctx.globalAlpha = Math.max(0.14, (point.depth + 1.5) / 2.6);
         ctx.fillStyle = mode === "Core" ? activeColor : colors[point.group];
         const radius =
-          mode === "Graph"
-            ? 2.5 + (point.depth + 1) * 1.3
-            : 0.6 + (point.depth + 1) * 0.5;
+          0.6 + (point.depth + 1) * 0.5;
         ctx.beginPath();
         ctx.arc(point.x, point.y, radius, 0, TAU);
         ctx.fill();
@@ -339,7 +412,7 @@ export default function HolographicCore({
           </button>
         </div>
       </div>
-      <div ref={stage} className="holo-stage">
+      <div ref={stage} className={`holo-stage ${mode === "Graph" ? "terrain-stage" : ""}`}>
         <canvas
           ref={canvas}
           aria-label={`${mode} hologram. Drag or use arrow keys to rotate the demo visualization.`}
@@ -388,6 +461,11 @@ export default function HolographicCore({
                 : "SIMULATION ACTIVE"}
           </span>
         </div>
+        {mode === "Graph" && (
+          <div className="terrain-legend" aria-label="Demo terrain height scale">
+            <span>LOW</span><span>DEMO SIGNAL HEIGHT</span><span>HIGH</span>
+          </div>
+        )}
         {renderError && (
           <p className="holo-fallback">
             Visualization unavailable. Select any agent below to continue.
@@ -400,14 +478,14 @@ export default function HolographicCore({
               ? "N E X U S"
               : mode === "Galaxy"
                 ? "M E M O R Y"
-                : "N E T W O R K"}
+                : "S I G N A L"}
           </strong>
           <span>
             {mode === "Core"
               ? "COGNITIVE CORE"
               : mode === "Galaxy"
                 ? "DEMO KNOWLEDGE FIELD"
-                : "DEMO RELATIONSHIP MAP"}
+                : "DEMO SIGNAL TERRAIN"}
           </span>
         </div>
         <div

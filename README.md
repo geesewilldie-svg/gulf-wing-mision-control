@@ -161,3 +161,24 @@ The workflow does not deploy, merge, create PRs, or perform AI code review. To m
 6. Add production identity, HTTPS provisioning, per-task conflict merging, per-display saved layouts, internet-safe remote access, full accessibility audits, and physical-device validation as separate work.
 
 No public deployment or live integration is included.
+
+### ASUS ScreenPad companion console
+
+In **Screens & TV**, choose **Open ScreenPad** (or visit `/screenpad`). This is a
+compact companion console with the same holographic Core, Galaxy, and terrain
+Graph modes, venture selection, agent selection, and mission status controls.
+It shares the main dashboard’s workspace in the same browser profile and site
+address. Other devices require the existing laptop pairing flow; display-only
+sessions cannot edit missions.
+
+On supported ASUS models, enable ScreenPad display mode in **ScreenXpert**, then
+use **Windows Settings → System → Display → Extend these displays**. Move the
+companion window to the ScreenPad and choose Fullscreen (or F11). The app cannot
+install ASUS drivers, enable a physical display, or verify ScreenPad compatibility
+remotely. Confirm the exact laptop model and installed ASUS utilities locally.
+Scroll remains available at smaller resolutions or enlarged Windows text sizes.
+
+Graph mode is an original procedural signal terrain inspired by the supplied HUD
+and wireframe references. Four labeled agent peaks react to agent selection;
+height and color are illustrative DEMO values, not measured model performance.
+Drag or use arrow keys to rotate, reset the view, pause motion, or expand it.
