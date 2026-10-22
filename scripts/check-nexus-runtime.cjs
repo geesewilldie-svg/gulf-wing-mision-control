@@ -71,15 +71,39 @@ const listen = (s) =>
         res.end(Buffer.from("RIFFfixtureWAVE"));
       });
     } else {
-      req.resume();
+      let raw = "";
+      req.on("data", (data) => (raw += data));
       req.on("end", () => {
         res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ text: "Fixture transcript" }));
+        if (raw === "decoder-error-fixture") {
+          res.statusCode = 503;
+          res.end(
+            JSON.stringify({
+              code: "audio_decoder_incompatible",
+              error: "fixture detail",
+            }),
+          );
+        } else res.end(JSON.stringify({ text: "Fixture transcript" }));
       });
     }
   });
   await listen(model);
   await listen(voice);
+  await new Promise((resolve, reject) => {
+    const setup = spawn(
+      process.execPath,
+      ["scripts/setup-local-ai.mjs", "test-model"],
+      {
+        cwd: process.cwd(),
+        env: { ...process.env, GW_SYNC_DATA_DIR: root, GW_NEXUS_MODEL: "" },
+        stdio: "ignore",
+      },
+    );
+    setup.once("error", reject);
+    setup.once("exit", (code) =>
+      code === 0 ? resolve() : reject(new Error("Local AI setup failed")),
+    );
+  });
   child = spawn(
     process.execPath,
     ["node_modules/next/dist/bin/next", "start", "--port", "3033"],
@@ -88,7 +112,7 @@ const listen = (s) =>
       env: {
         ...process.env,
         GW_SYNC_DATA_DIR: root,
-        GW_NEXUS_MODEL: "test-model",
+        GW_NEXUS_MODEL: "",
       },
       stdio: "ignore",
     },
@@ -156,6 +180,19 @@ const listen = (s) =>
   });
   if ((await transcript.json()).text !== "Fixture transcript")
     throw Error("transcription response");
+  const decoderFailure = await fetch(
+    base + "/api/sync/voice?action=transcribe",
+    {
+      method: "POST",
+      headers: { cookie, "Content-Type": "audio/webm" },
+      body: Buffer.from("decoder-error-fixture"),
+    },
+  );
+  if (
+    decoderFailure.status !== 503 ||
+    !(await decoderFailure.json()).error.includes("av==15.1.0")
+  )
+    throw Error("Actionable decoder error was lost");
   browser = await chromium.launch({
     executablePath:
       process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ||

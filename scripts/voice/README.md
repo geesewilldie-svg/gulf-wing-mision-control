@@ -114,3 +114,22 @@ Automatic protocol tests use synthetic audio/model fixtures, including two reque
 through one resident model and exact Isabella/speed parameters. The owner auditioned
 the actual model on Windows. End-to-end app playback, Windows launcher behavior,
 latency and microphone recognition still require the local activation check.
+
+## Faster-Whisper / PyAV compatibility repair
+
+If transcription fails with `TypeError: open() got an unexpected keyword argument
+'metadata_errors'`, Faster-Whisper's decoder is running against an incompatible
+PyAV release. Faster-Whisper 1.2.1 passes this option; PyAV 19 no longer accepts it.
+The voice requirements pin PyAV 15.1.0, which accepts it and has Windows Python 3.12
+wheels. From a spare repository PowerShell tab:
+
+```powershell
+.\.venv-voice\Scripts\python.exe -m pip install "av==15.1.0"
+.\.venv-voice\Scripts\python.exe scripts/voice/test_audio_compat.py
+```
+
+Stop the **voice-worker** tab using Ctrl+C, then restart
+`.\scripts\start-nexus-voice.cmd` there. Restarting is necessary to unload the old
+PyAV library from the running process. Leave the Next.js/Mission Control server
+running. Refresh Nexus, check local voice, then retry Record question. The smoke
+test decodes generated PCM audio without downloading or loading a speech model.

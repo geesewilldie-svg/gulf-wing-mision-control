@@ -10,7 +10,9 @@
     "test": "playwright test",
     "sync:setup": "node scripts/sync-setup.mjs",
     "knowledge:import": "node scripts/import-knowledge.mjs",
-    "test:nexus-runtime": "node scripts/check-nexus-runtime.cjs"
+    "test:nexus-runtime": "node scripts/check-nexus-runtime.cjs",
+    "ai:setup": "node scripts/setup-local-ai.mjs",
+    "test:nexus-setup": "node scripts/check-local-ai-setup.cjs"
   },
   "dependencies": {
     "next": "^16.0.0",

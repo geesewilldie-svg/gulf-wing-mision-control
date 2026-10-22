@@ -40,8 +40,18 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Test desktop and mobile workflows
         run: npm test -- --reporter=line,html --trace=retain-on-failure
+      - name: Test local AI setup without real model downloads
+        run: npm run test:nexus-setup
       - name: Test local Nexus model and voice protocols
         run: npm run test:nexus-runtime
+      - name: Set up Python for voice compatibility checks
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Check installed audio decoder compatibility
+        run: |
+          python -m pip install -r scripts/voice/requirements-audio.txt
+          python scripts/voice/test_audio_compat.py
       - name: Test optional Python voice worker protocol
         run: python scripts/voice/test_worker.py
       - name: Upload failure reports

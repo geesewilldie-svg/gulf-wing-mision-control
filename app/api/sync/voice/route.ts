@@ -58,7 +58,25 @@ export async function POST(request: Request) {
       body: Buffer.concat(chunks),
       signal: AbortSignal.timeout(120000),
     });
-    if (!r.ok) throw new Error();
+    if (!r.ok) {
+      const detail = await r.json().catch(() => ({}));
+      const messages: Record<string, string> = {
+        audio_decoder_incompatible:
+          "Speech decoder mismatch. Install av==15.1.0 in .venv-voice, then restart only the voice worker.",
+        transcription_failed:
+          "The voice worker is running but could not transcribe this recording. Try a short recording; if it continues, run the audio compatibility check.",
+        speech_generation_failed:
+          "The voice worker is running but could not generate speech. Check the selected model and restart the voice worker.",
+        engine_unavailable:
+          "The selected local voice engine is unavailable. Check local voice and choose a ready engine.",
+      };
+      if (typeof detail.code === "string" && messages[detail.code])
+        return Response.json(
+          { error: messages[detail.code] },
+          { status: 503, headers: { "Cache-Control": "no-store" } },
+        );
+      throw new Error();
+    }
     return new Response(await r.arrayBuffer(), {
       headers: {
         "Content-Type": action === "speak" ? "audio/wav" : "application/json",
