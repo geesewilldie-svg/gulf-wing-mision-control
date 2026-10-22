@@ -236,3 +236,186 @@ test("Nexus fits mobile without pretending to have connected agents", async ({
     ),
   ).toBe(true);
 });
+
+test("Isabella is preferred when ready and explicit Piper selection stays selected", async ({
+  page,
+}) => {
+  await page.request.post("/api/sync/session", {
+    data: { code: process.env.GW_SYNC_TEST_CODE, role: "controller" },
+  });
+  const engines: string[] = [];
+  await page.route("**/api/sync/voice**", async (route) => {
+    if (route.request().method() === "GET")
+      return route.fulfill({
+        json: {
+          available: true,
+          speech: true,
+          transcription: false,
+          engines: ["kokoro", "piper"],
+          preferred: "kokoro",
+          profile: "Isabella · British English · 0.95",
+        },
+      });
+    engines.push(route.request().postDataJSON().engine);
+    return route.fulfill({
+      contentType: "audio/wav",
+      body: Buffer.from("RIFFfixtureWAVE"),
+    });
+  });
+  await page.addInitScript(() => {
+    Object.defineProperty(window, "Audio", {
+      configurable: true,
+      value: class {
+        onended: unknown;
+        onerror: unknown;
+        play() {
+          return Promise.resolve();
+        }
+        pause() {}
+      },
+    });
+  });
+  await page.goto("/nexus");
+  await page.getByText("Nexus voice · Push to talk", { exact: true }).click();
+  await expect(page.getByText(/Current voice: Isabella/)).toBeVisible();
+  await page
+    .getByRole("button", { name: "Speak voice preview", exact: true })
+    .click();
+  await expect.poll(() => engines.length).toBe(1);
+  expect(engines[0]).toBe("kokoro");
+  await page.getByRole("button", { name: "Stop speech", exact: true }).click();
+  await page
+    .getByRole("combobox", { name: "Speech engine", exact: true })
+    .selectOption("piper");
+  await page
+    .getByRole("button", { name: "Check local voice", exact: true })
+    .click();
+  await expect(
+    page.getByRole("combobox", { name: "Speech engine", exact: true }),
+  ).toHaveValue("piper");
+  await page
+    .getByRole("button", { name: "Speak voice preview", exact: true })
+    .click();
+  await expect.poll(() => engines.length).toBe(2);
+  expect(engines[1]).toBe("piper");
+});
+
+test("Stop speech cancels a local answer while audio is still being prepared", async ({
+  page,
+}) => {
+  await page.request.post("/api/sync/session", {
+    data: { code: process.env.GW_SYNC_TEST_CODE, role: "controller" },
+  });
+  await page.route("**/api/sync/voice", (route) =>
+    route.fulfill({
+      json: { available: true, speech: true, engines: ["kokoro"] },
+    }),
+  );
+  await page.addInitScript(() => {
+    const state = {
+      started: false,
+      aborted: false,
+      blobRead: false,
+      played: false,
+      release: () => {},
+    };
+    const testWindow = window as unknown as { nexusSpeechTest: typeof state };
+    testWindow.nexusSpeechTest = state;
+    const originalFetch = window.fetch.bind(window);
+    window.fetch = (input, init) => {
+      const url =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.href
+            : input.url;
+      if (
+        url.includes("/api/sync/voice?action=speak") &&
+        init?.method === "POST"
+      ) {
+        state.started = true;
+        init.signal?.addEventListener(
+          "abort",
+          () => {
+            state.aborted = true;
+          },
+          { once: true },
+        );
+        // Deliver a late response even after abort: verify the app's stale-audio
+        // guard without leaving a cancelled Playwright network route unresolved.
+        return new Promise<Response>((resolve) => {
+          state.release = () => {
+            const response = new Response("RIFFfixtureWAVE", {
+              headers: { "Content-Type": "audio/wav" },
+            });
+            const originalBlob = response.blob.bind(response);
+            response.blob = async () => {
+              const blob = await originalBlob();
+              state.blobRead = true;
+              return blob;
+            };
+            resolve(response);
+          };
+        });
+      }
+      return originalFetch(input, init);
+    };
+    Object.defineProperty(window, "Audio", {
+      configurable: true,
+      value: class {
+        play() {
+          state.played = true;
+          return Promise.resolve();
+        }
+        pause() {}
+      },
+    });
+  });
+  await page.goto("/nexus");
+  await page.getByText("Nexus voice · Push to talk", { exact: true }).click();
+  await expect(page.getByText(/Current voice: Isabella/)).toBeVisible();
+  await page
+    .getByRole("button", { name: "Speak voice preview", exact: true })
+    .click();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as unknown as { nexusSpeechTest: { started: boolean } })
+            .nexusSpeechTest.started,
+      ),
+    )
+    .toBe(true);
+  await page.getByRole("button", { name: "Stop speech", exact: true }).click();
+  expect(
+    await page.evaluate(
+      () =>
+        (window as unknown as { nexusSpeechTest: { aborted: boolean } })
+          .nexusSpeechTest.aborted,
+    ),
+  ).toBe(true);
+  await page.evaluate(() =>
+    (
+      window as unknown as { nexusSpeechTest: { release: () => void } }
+    ).nexusSpeechTest.release(),
+  );
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as unknown as { nexusSpeechTest: { blobRead: boolean } })
+            .nexusSpeechTest.blobRead,
+      ),
+    )
+    .toBe(true);
+  await expect(
+    page.getByRole("button", { name: "Speak voice preview", exact: true }),
+  ).toBeEnabled();
+  expect(
+    await page.evaluate(
+      () =>
+        (window as unknown as { nexusSpeechTest: { played: boolean } })
+          .nexusSpeechTest.played,
+    ),
+  ).toBe(false);
+});

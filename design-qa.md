@@ -154,3 +154,21 @@ remain hardware/configuration validation. Private knowledge source imports were
 verified independently in disposable storage. No public deployment was performed.
 
 Final result for the scoped interface and protocol implementation: passed.
+
+## Approved Isabella voice integration — 2026-10-22
+
+The voice panel now shows the current engine/profile, prefers local Kokoro Isabella
+at speed 0.95, and exposes Piper/device alternatives. Explicit selections remain
+selected when checking worker availability. Stop speech also cancels audio that is
+still being prepared. Existing mobile controls retain 44px targets and wrap cleanly.
+
+Reviewed `docs/design/nexus-isabella-desktop.png` and `nexus-isabella-mobile.png`.
+These captures use synthetic health/model responses and contain no private sources.
+No horizontal overflow or page errors. They establish UI behavior, not voice quality.
+The owner separately auditioned the real Isabella model on Windows and approved it.
+
+Build/TypeScript passed; 102 browser tests passed with 8 intentional duplicate host
+cases skipped; 8 Python worker tests and local model/audio protocol checks passed.
+Windows launcher execution, microphone capture and actual end-to-end speaker output
+remain local activation checks. No deployment or paid service was added.
+Final result for this scoped integration: passed.
