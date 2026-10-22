@@ -12,21 +12,24 @@
     "knowledge:import": "node scripts/import-knowledge.mjs",
     "test:nexus-runtime": "node scripts/check-nexus-runtime.cjs",
     "ai:setup": "node scripts/setup-local-ai.mjs",
-    "test:nexus-setup": "node scripts/check-local-ai-setup.cjs"
+    "test:nexus-setup": "node scripts/check-local-ai-setup.cjs",
+    "ready": "node scripts/check-readiness.mjs"
   },
   "dependencies": {
+    "lucide-react": "^0.468.0",
     "next": "^16.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "lucide-react": "^0.468.0"
+    "read-excel-file": "9.3.12",
+    "unpdf": "1.9.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0",
     "@tailwindcss/postcss": "^4.1.0",
-    "tailwindcss": "^4.1.0",
-    "typescript": "^5.9.0",
     "@types/node": "^24.0.0",
     "@types/react": "^19.2.0",
-    "@types/react-dom": "^19.2.0"
+    "@types/react-dom": "^19.2.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.9.0"
   }
 }

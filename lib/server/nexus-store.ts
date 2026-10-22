@@ -19,13 +19,15 @@ export async function readKnowledge(): Promise<KnowledgeDocument[]> {
     );
   }
 }
-export async function saveKnowledge(value: unknown) {
+async function writeKnowledge(value: unknown) {
   let documents;
   try {
     documents = validateDocuments(value);
   } catch (error) {
     throw new SyncError(400, (error as Error).message);
   }
+  if (Buffer.byteLength(JSON.stringify(documents)) > 2_000_000)
+    throw new SyncError(413, "Keep the knowledge index below 2 MB.");
   const target = file(),
     temporary = `${target}.${randomBytes(8).toString("hex")}.tmp`;
   await fs.mkdir(path.dirname(target), { recursive: true, mode: 0o700 });
@@ -39,6 +41,43 @@ export async function saveKnowledge(value: unknown) {
     await fs.rm(temporary, { force: true });
   }
   return documents.length;
+}
+const knowledgeGlobal = globalThis as typeof globalThis & {
+  gwKnowledgeQueue?: Promise<unknown>;
+};
+export function saveKnowledge(value: unknown) {
+  const update = (knowledgeGlobal.gwKnowledgeQueue ?? Promise.resolve())
+    .catch(() => {})
+    .then(() => writeKnowledge(value));
+  knowledgeGlobal.gwKnowledgeQueue = update.catch(() => {});
+  return update;
+}
+export function mergeKnowledge(
+  documents: KnowledgeDocument[],
+  prefixes: string[],
+) {
+  const update = (knowledgeGlobal.gwKnowledgeQueue ?? Promise.resolve())
+    .catch(() => {})
+    .then(async () => {
+      const current = await readKnowledge();
+      const incoming = new Set(documents.map((d) => d.id));
+      const merged = [
+        ...current.filter(
+          (d) =>
+            !incoming.has(d.id) &&
+            !prefixes.some((prefix) => d.id.startsWith(prefix)),
+        ),
+        ...documents,
+      ];
+      await writeKnowledge(merged);
+      return {
+        sections: merged.length,
+        imported: documents.length,
+        sources: [...new Set(documents.map((d) => d.source))],
+      };
+    });
+  knowledgeGlobal.gwKnowledgeQueue = update.catch(() => {});
+  return update;
 }
 export async function configuredLocalModel(): Promise<string | null> {
   if (process.env.GW_NEXUS_MODEL?.trim())

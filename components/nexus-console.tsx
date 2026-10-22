@@ -5,6 +5,8 @@ import { useWorkspace } from "@/hooks/use-workspace";
 import NexusVoice from "./nexus-voice";
 import type { ConversationTurn } from "@/lib/conversation";
 import NexusBusiness from "./nexus-business";
+import KnowledgeImport from "./knowledge-import";
+import TeamAccess from "./team-access";
 import SyncControls from "./sync-controls";
 
 type Answer = { engine: string; answer: string; sources: KnowledgeDocument[] };
@@ -58,45 +60,6 @@ export default function NexusConsole() {
       setBusy(false);
     }
   };
-  const importFile = async (file: File) => {
-    setBusy(true);
-    setMessage("");
-    try {
-      if (file.size > 1900000)
-        throw new Error("Use a knowledge pack below 1.9 MB.");
-      const text = await file.text();
-      const docs = file.name.endsWith(".json")
-        ? JSON.parse(text)
-        : [
-            {
-              id: file.name,
-              source: file.name,
-              location: "Imported note",
-              text,
-            },
-          ];
-      if (
-        !window.confirm(
-          "Replace the private knowledge index with this file? Source files are not changed.",
-        )
-      )
-        return;
-      const r = await fetch("/api/sync/nexus", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(docs),
-      });
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.error);
-      setMessage(`Imported ${data.sections} private sections.`);
-      const state = await fetch("/api/sync/nexus");
-      if (state.ok) setStatus(await state.json());
-    } catch (e) {
-      setMessage((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
   return (
     <main className="nexus-console">
       <header className="nexus-heading">
@@ -111,6 +74,7 @@ export default function NexusConsole() {
         </p>
       </header>
       <SyncControls />
+      <TeamAccess disabled={disabled} />
       <p className="nexus-notice">
         {disabled
           ? "Pair as a controller through Connect devices to use private knowledge and operating records."
@@ -137,7 +101,7 @@ export default function NexusConsole() {
           <h2>Your business, in one question.</h2>
           <p>
             {status
-              ? `${status.sections} private knowledge sections · Local model ${status.localModel ? "available" : "not connected"}`
+              ? `${status.sections} private knowledge sections + saved operating records · Local model ${status.localModel ? "available" : "not connected"}`
               : "Pair to load knowledge status."}
           </p>
           <form
@@ -201,34 +165,14 @@ export default function NexusConsole() {
             }}
             onConversationActive={setConversationActive}
           />
-          <details>
-            <summary>Import business plans or Obsidian knowledge</summary>
-            <p>
-              Import a prepared JSON knowledge pack or a single Markdown/text
-              note. This replaces the current index and stays on the laptop,
-              outside Git. For a whole Obsidian vault, use the documented local
-              importer. PDFs and Excel files require the prepared extraction
-              pack.
-            </p>
-            <label>
-              Knowledge file
-              <input
-                type="file"
-                accept=".json,.md,.txt"
-                disabled={disabled || busy || conversationActive}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) void importFile(file);
-                  e.target.value = "";
-                }}
-              />
-            </label>
-            <ul>
-              {status?.sources.map((s) => (
-                <li key={s}>{s}</li>
-              ))}
-            </ul>
-          </details>
+          <KnowledgeImport
+            disabled={disabled || busy || conversationActive}
+            sources={status?.sources ?? []}
+            onImported={async () => {
+              const r = await fetch("/api/sync/nexus");
+              if (r.ok) setStatus(await r.json());
+            }}
+          />
         </section>
       )}
       {tab === "Co-hosting" && <NexusBusiness disabled={disabled} />}

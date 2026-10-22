@@ -1,5 +1,7 @@
 # Nexus voice, knowledge and business foundation
 
+This document records the original foundation. See [Co-hosting operating workspace review](cohosting-review.md) and [day-one guide](cohosting-day-one.md) for the subsequent intake, estimates, jobs, direct document import and shared-device workflows.
+
 ## Problem and resulting behavior
 
 Mission Control's agent nodes are simulated and previously could not search the
