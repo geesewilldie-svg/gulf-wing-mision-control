@@ -269,6 +269,7 @@ export default function Dashboard() {
           </div>
           <SyncControls />
           <ScreenControls />
+          <a className="nexus-launch" href="/nexus">Open Nexus → Voice, knowledge, Co-hosting and marketing</a>
           <div className="metrics">
             <div>
               <span className="metric-icon">

@@ -40,6 +40,10 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Test desktop and mobile workflows
         run: npm test -- --reporter=line,html --trace=retain-on-failure
+      - name: Test local Nexus model and voice protocols
+        run: npm run test:nexus-runtime
+      - name: Test optional Python voice worker protocol
+        run: python scripts/voice/test_worker.py
       - name: Upload failure reports
         if: failure()
         uses: actions/upload-artifact@v4

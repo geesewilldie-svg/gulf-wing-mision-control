@@ -129,3 +129,28 @@ rotation/reset, expanded view, reduced motion, independent ScreenPad control,
 reload, viewer permissions, and three companion viewport sizes passed.
 Physical ASUS ScreenPad connection and touch/driver behavior are unverified.
 Final result for this scoped refinement: passed.
+
+## Nexus business foundation — 2026-10-22
+
+Scoped extension of the existing command dashboard. The `/nexus` page uses navy
+panels, cyan action states, readable body copy and 44px actions. Search, operations,
+marketing and Connections are separated by named controls. Dynamic status text
+and source details distinguish real local retrieval from unconfigured agents.
+Voice recording is explicit and transcripts require review before submission.
+
+Reviewed desktop 1440px and Android-size 390px production captures:
+`docs/design/nexus-desktop.png`, `nexus-mobile.png`. Captures use synthetic source
+content and a fake local model endpoint marked test-model; no private plans,
+phone identifiers or credentials appear. They verify layout, not real model
+intelligence. No horizontal overflow or page errors were observed. Browser tests
+also checked 320px. Existing ScreenPad behavior remains covered.
+
+Production build / TypeScript passed. Full browser run: 98 passed, 8 intentional
+duplicate host cases skipped. Targeted Nexus/ScreenPad checks: 20 passed after
+adding ScreenPad navigation. Node local-model/audio protocol fixtures passed;
+Python worker protocol/failure checks passed all 4 cases. Real audio model quality,
+Windows voice availability, latency, microphone permissions and phone HTTPS setup
+remain hardware/configuration validation. Private knowledge source imports were
+verified independently in disposable storage. No public deployment was performed.
+
+Final result for the scoped interface and protocol implementation: passed.

@@ -8,7 +8,9 @@
     "start": "next start --hostname 0.0.0.0",
     "typecheck": "tsc --noEmit",
     "test": "playwright test",
-    "sync:setup": "node scripts/sync-setup.mjs"
+    "sync:setup": "node scripts/sync-setup.mjs",
+    "knowledge:import": "node scripts/import-knowledge.mjs",
+    "test:nexus-runtime": "node scripts/check-nexus-runtime.cjs"
   },
   "dependencies": {
     "next": "^16.0.0",

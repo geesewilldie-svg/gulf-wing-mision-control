@@ -182,3 +182,113 @@ Graph mode is an original procedural signal terrain inspired by the supplied HUD
 and wireframe references. Four labeled agent peaks react to agent selection;
 height and color are illustrative DEMO values, not measured model performance.
 Drag or use arrow keys to rotate, reset the view, pause motion, or expand it.
+
+## Nexus business and voice foundation
+
+Open **Open Nexus** from the dashboard or visit `/nexus`. Pair as a controller
+using the existing Connect devices panel. Nexus offers one question box (Auto by
+default), source-referenced private document search, optional local model answers,
+voice controls, Co-hosting operating records and draft estimates, and proposed
+marketing allocations. The original dashboard mission/agent simulation stays DEMO.
+Business records are separate real user-entered planning records, not automatically
+created customer contracts, bookings, invoices, or accounting entries.
+
+### Private business knowledge and Obsidian
+
+Import the private JSON pack prepared from the uploaded plans through **Ask Nexus
+→ Import business plans or Obsidian knowledge**. It contains PDF page text and
+cached spreadsheet values, with source/page/sheet references. Workbook values are
+forecasts; import does not recalculate formulas or certify accounting results.
+The pack is handed off separately and is **not committed to this repository**.
+
+A single `.md` or `.txt` note can be imported through the same control. To import
+an Obsidian vault snapshot from your Windows laptop:
+
+```powershell
+npm.cmd run knowledge:import -- "C:\Users\YOUR-NAME\Documents\YourVault"
+```
+
+This reads visible Markdown files, skips hidden directories and symlinks, and
+**replaces** the knowledge index. It never edits source notes. Import is bounded
+to 1,000 sections / 2 MB. Curate large vaults first. A live watcher, Obsidian plugin,
+embeddings/vector search and automatic multi-source incremental sync are not
+implemented. Imported document text is evidence, not executable instructions.
+
+The private index, operating records, estimates and change history live under
+`.gulf-wing/` (or `GW_SYNC_DATA_DIR`), excluded from Git and public assets. Back up
+this folder securely while the host is stopped. Local files are not encrypted by
+this app; use Windows device encryption, access controls and secure backups.
+All paired display sessions can read private data; this is a single trusted
+operator environment, not production multi-company authorization. Keep using a
+trusted private LAN; existing HTTP pairing/data remains unencrypted in transit.
+
+### Auto and optional local model
+
+Auto uses an explicitly configured laptop Ollama model, otherwise it retrieves
+source excerpts without pretending to generate an AI answer. No question is sent
+to an external provider. To enable generation after choosing/installing a model
+suited to your hardware, set `GW_NEXUS_MODEL` to its exact `ollama list` name in
+`.env.local`, then restart the app (rebuild if changing build-time settings).
+Ollama must be running on 127.0.0.1:11434. The model has no tools, billing access,
+email-sending ability or permission to execute document instructions. One model
+request runs at a time, with a 90-second timeout and a bounded response length.
+Answers show the engine and retrieved evidence; citations require human review.
+Conversation history/memory and routing across external providers are future work.
+
+ChatGPT, Claude, Gemini, both Copilots, Codex, Hermes, OpenClaw, Google Workspace,
+Meta Ads, Google Ads and LinkedIn appear in Connections as **Not connected**.
+These are setup requirements, not functional external adapters. Accounts, supported
+APIs, permissions, entitlement, quotas and cost approvals must be resolved before
+implementation. A chat subscription is not assumed to include API access.
+
+### Co-hosting and marketing
+
+Co-hosting supports saved Lead / Property / Job records, status changes and draft
+cost-plus-margin estimates. Direct cost = hours × wage × (1 + burden percentage)
++ other direct costs; draft price = cost / (1 − gross margin). It is not markup.
+Taxes, scope-specific overhead, licensing, travel, legal terms and acceptance need
+review before issuing a quote. No quote is sent from this app. The supplied plan's
+unlicensed scope excludes rental advertising, rates, reservations, rent collection
+and security deposits. These functions are not activated by this implementation.
+
+Marketing stores proposed total/channel budget allocations; channel totals cannot
+exceed the proposed total. The $500 starting total is a planning assumption, not a
+spend authorization. No platform is connected, no metrics are fabricated, and no
+ads or money are moved. Changes have a local server timestamp history and revision
+checks; conflicts require reloading before another save. This history is not a
+production identity-linked or tamper-proof audit system. CRM automation, campaign
+analytics, approval workflows, accounting and property-management integrations
+remain later implementation work.
+
+### Voice
+
+Nexus can speak using browser/device voices immediately where supported. Select a
+voice and use Speak voice preview / Speak answer / Stop speech. Device voices vary
+and may use network services; this is not guaranteed offline TTS or a cloned voice.
+For optional genuinely local Whisper/Piper, see [Windows voice setup](scripts/voice/README.md).
+No paid voice service, model, wake-word listener or external API key is installed.
+Microphone capture on the phone requires future HTTPS setup; laptop localhost can
+use push-to-talk after the optional worker is configured.
+
+### Product roadmap
+
+This is a single-host business foundation. Before resale: separate tenants and
+entity permissions, production identities, MFA, encrypted transport/backups,
+reviewed connector scopes, consent and spend approvals, robust financial records,
+recoverability testing, usage/cost budgets and commercial license review. The
+holding-company model must separate entity actuals from workbook forecasts and
+conditional expansion funding. No public deployment is included.
+
+Additional Nexus checks after `npm run build` and Playwright browser installation:
+
+```powershell
+npm.cmd run test:nexus-runtime
+py scripts/voice/test_worker.py
+```
+
+The Node check creates disposable storage and synthetic services on loopback ports
+11434, 8766 and 3033; they must be free. It refuses to replace existing services.
+It does not use real models, business documents or paid APIs. Browser screenshots
+are written under ignored `test-results/`. Python protocol tests need no optional
+model dependencies. Audio quality/latency and Windows device behavior still need
+local validation. The optional Python dependencies are separate from the npm audit.

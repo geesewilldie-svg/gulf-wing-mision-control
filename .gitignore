@@ -9,3 +9,8 @@ test-results/
 
 # Local shared workspace and pairing configuration
 .gulf-wing/
+
+# Optional Python voice worker
+__pycache__/
+*.pyc
+.venv*/
