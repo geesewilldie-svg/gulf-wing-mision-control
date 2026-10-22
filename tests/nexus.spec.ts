@@ -306,29 +306,65 @@ test("Stop speech cancels a local answer while audio is still being prepared", a
   await page.request.post("/api/sync/session", {
     data: { code: process.env.GW_SYNC_TEST_CODE, role: "controller" },
   });
-  let release: (() => void) | undefined;
-  await page.route("**/api/sync/voice**", async (route) => {
-    if (route.request().method() === "GET")
-      return route.fulfill({
-        json: { available: true, speech: true, engines: ["kokoro"] },
-      });
-    await new Promise<void>((resolve) => {
-      release = resolve;
-    });
-    await route
-      .fulfill({
-        contentType: "audio/wav",
-        body: Buffer.from("RIFFfixtureWAVE"),
-      })
-      .catch(() => {});
-  });
+  await page.route("**/api/sync/voice", (route) =>
+    route.fulfill({
+      json: { available: true, speech: true, engines: ["kokoro"] },
+    }),
+  );
   await page.addInitScript(() => {
+    const state = {
+      started: false,
+      aborted: false,
+      blobRead: false,
+      played: false,
+      release: () => {},
+    };
+    const testWindow = window as unknown as { nexusSpeechTest: typeof state };
+    testWindow.nexusSpeechTest = state;
+    const originalFetch = window.fetch.bind(window);
+    window.fetch = (input, init) => {
+      const url =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.href
+            : input.url;
+      if (
+        url.includes("/api/sync/voice?action=speak") &&
+        init?.method === "POST"
+      ) {
+        state.started = true;
+        init.signal?.addEventListener(
+          "abort",
+          () => {
+            state.aborted = true;
+          },
+          { once: true },
+        );
+        // Deliver a late response even after abort: verify the app's stale-audio
+        // guard without leaving a cancelled Playwright network route unresolved.
+        return new Promise<Response>((resolve) => {
+          state.release = () => {
+            const response = new Response("RIFFfixtureWAVE", {
+              headers: { "Content-Type": "audio/wav" },
+            });
+            const originalBlob = response.blob.bind(response);
+            response.blob = async () => {
+              const blob = await originalBlob();
+              state.blobRead = true;
+              return blob;
+            };
+            resolve(response);
+          };
+        });
+      }
+      return originalFetch(input, init);
+    };
     Object.defineProperty(window, "Audio", {
       configurable: true,
       value: class {
         play() {
-          (window as unknown as { playedAfterStop: boolean }).playedAfterStop =
-            true;
+          state.played = true;
           return Promise.resolve();
         }
         pause() {}
@@ -341,18 +377,45 @@ test("Stop speech cancels a local answer while audio is still being prepared", a
   await page
     .getByRole("button", { name: "Speak voice preview", exact: true })
     .click();
-  await expect.poll(() => Boolean(release)).toBe(true);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as unknown as { nexusSpeechTest: { started: boolean } })
+            .nexusSpeechTest.started,
+      ),
+    )
+    .toBe(true);
   await page.getByRole("button", { name: "Stop speech", exact: true }).click();
-  release!();
-  await expect(
-    page.getByRole("button", { name: "Speak voice preview", exact: true }),
-  ).toBeEnabled();
-  await page.waitForTimeout(150);
   expect(
     await page.evaluate(
       () =>
-        (window as unknown as { playedAfterStop?: boolean }).playedAfterStop ??
-        false,
+        (window as unknown as { nexusSpeechTest: { aborted: boolean } })
+          .nexusSpeechTest.aborted,
+    ),
+  ).toBe(true);
+  await page.evaluate(() =>
+    (
+      window as unknown as { nexusSpeechTest: { release: () => void } }
+    ).nexusSpeechTest.release(),
+  );
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as unknown as { nexusSpeechTest: { blobRead: boolean } })
+            .nexusSpeechTest.blobRead,
+      ),
+    )
+    .toBe(true);
+  await expect(
+    page.getByRole("button", { name: "Speak voice preview", exact: true }),
+  ).toBeEnabled();
+  expect(
+    await page.evaluate(
+      () =>
+        (window as unknown as { nexusSpeechTest: { played: boolean } })
+          .nexusSpeechTest.played,
     ),
   ).toBe(false);
 });

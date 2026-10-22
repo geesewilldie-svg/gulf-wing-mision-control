@@ -32,3 +32,22 @@ screenshots with synthetic services show no page errors or horizontal overflow:
 `docs/design/nexus-isabella-desktop.png` and `nexus-isabella-mobile.png`.
 Actual Windows `.cmd` execution and app-to-speaker playback require local activation;
 no real voice models were downloaded or executed in the cloud checks.
+
+### CI follow-up: mobile Stop speech timeout
+
+The supplied GitHub Actions log showed one timeout in the mobile speech-cancellation
+regression test; 101 tests passed and 8 duplicate cases were skipped. That fixture
+held a Playwright-intercepted speech request open while aborting it, then attempted
+to fulfill the cancelled route. The replacement controls the delayed response
+inside the browser, avoiding an unresolved intercepted request at cancellation or
+teardown. It explicitly verifies that the request signal is aborted, the late
+response body is read, playback never starts, and the Speak control is enabled.
+The fixed sleep was replaced with observable-state assertions. Application speech
+code and the approved Isabella profile are unchanged.
+
+The revised mobile case passed 20 consecutive runs with CI mode and failure tracing.
+Full CI-mode browser rerun after the fix: 102 passed, 8 intentional duplicate cases
+skipped. Local model/audio protocol checks and all 8 Python worker checks passed.
+TypeScript passed. These local browser runs used system Chromium 154; downloading
+Actions' bundled Chromium 156 was blocked by this environment's download policy.
+The new GitHub Actions run is the authoritative check for its bundled browser.
