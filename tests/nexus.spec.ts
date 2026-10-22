@@ -236,3 +236,123 @@ test("Nexus fits mobile without pretending to have connected agents", async ({
     ),
   ).toBe(true);
 });
+
+test("Isabella is preferred when ready and explicit Piper selection stays selected", async ({
+  page,
+}) => {
+  await page.request.post("/api/sync/session", {
+    data: { code: process.env.GW_SYNC_TEST_CODE, role: "controller" },
+  });
+  const engines: string[] = [];
+  await page.route("**/api/sync/voice**", async (route) => {
+    if (route.request().method() === "GET")
+      return route.fulfill({
+        json: {
+          available: true,
+          speech: true,
+          transcription: false,
+          engines: ["kokoro", "piper"],
+          preferred: "kokoro",
+          profile: "Isabella · British English · 0.95",
+        },
+      });
+    engines.push(route.request().postDataJSON().engine);
+    return route.fulfill({
+      contentType: "audio/wav",
+      body: Buffer.from("RIFFfixtureWAVE"),
+    });
+  });
+  await page.addInitScript(() => {
+    Object.defineProperty(window, "Audio", {
+      configurable: true,
+      value: class {
+        onended: unknown;
+        onerror: unknown;
+        play() {
+          return Promise.resolve();
+        }
+        pause() {}
+      },
+    });
+  });
+  await page.goto("/nexus");
+  await page.getByText("Nexus voice · Push to talk", { exact: true }).click();
+  await expect(page.getByText(/Current voice: Isabella/)).toBeVisible();
+  await page
+    .getByRole("button", { name: "Speak voice preview", exact: true })
+    .click();
+  await expect.poll(() => engines.length).toBe(1);
+  expect(engines[0]).toBe("kokoro");
+  await page.getByRole("button", { name: "Stop speech", exact: true }).click();
+  await page
+    .getByRole("combobox", { name: "Speech engine", exact: true })
+    .selectOption("piper");
+  await page
+    .getByRole("button", { name: "Check local voice", exact: true })
+    .click();
+  await expect(
+    page.getByRole("combobox", { name: "Speech engine", exact: true }),
+  ).toHaveValue("piper");
+  await page
+    .getByRole("button", { name: "Speak voice preview", exact: true })
+    .click();
+  await expect.poll(() => engines.length).toBe(2);
+  expect(engines[1]).toBe("piper");
+});
+
+test("Stop speech cancels a local answer while audio is still being prepared", async ({
+  page,
+}) => {
+  await page.request.post("/api/sync/session", {
+    data: { code: process.env.GW_SYNC_TEST_CODE, role: "controller" },
+  });
+  let release: (() => void) | undefined;
+  await page.route("**/api/sync/voice**", async (route) => {
+    if (route.request().method() === "GET")
+      return route.fulfill({
+        json: { available: true, speech: true, engines: ["kokoro"] },
+      });
+    await new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    await route
+      .fulfill({
+        contentType: "audio/wav",
+        body: Buffer.from("RIFFfixtureWAVE"),
+      })
+      .catch(() => {});
+  });
+  await page.addInitScript(() => {
+    Object.defineProperty(window, "Audio", {
+      configurable: true,
+      value: class {
+        play() {
+          (window as unknown as { playedAfterStop: boolean }).playedAfterStop =
+            true;
+          return Promise.resolve();
+        }
+        pause() {}
+      },
+    });
+  });
+  await page.goto("/nexus");
+  await page.getByText("Nexus voice · Push to talk", { exact: true }).click();
+  await expect(page.getByText(/Current voice: Isabella/)).toBeVisible();
+  await page
+    .getByRole("button", { name: "Speak voice preview", exact: true })
+    .click();
+  await expect.poll(() => Boolean(release)).toBe(true);
+  await page.getByRole("button", { name: "Stop speech", exact: true }).click();
+  release!();
+  await expect(
+    page.getByRole("button", { name: "Speak voice preview", exact: true }),
+  ).toBeEnabled();
+  await page.waitForTimeout(150);
+  expect(
+    await page.evaluate(
+      () =>
+        (window as unknown as { playedAfterStop?: boolean }).playedAfterStop ??
+        false,
+    ),
+  ).toBe(false);
+});

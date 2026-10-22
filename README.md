@@ -292,3 +292,10 @@ It does not use real models, business documents or paid APIs. Browser screenshot
 are written under ignored `test-results/`. Python protocol tests need no optional
 model dependencies. Audio quality/latency and Windows device behavior still need
 local validation. The optional Python dependencies are separate from the npm audit.
+
+Nexus's preferred local voice is now **Kokoro Isabella (`bf_isabella`), speed 0.95**.
+If you already installed and auditioned Kokoro in `.venv-kokoro`, use a spare
+PowerShell tab in the repository to run `.\scripts\start-nexus-voice.cmd`.
+See the [preferred voice activation instructions](scripts/voice/README.md#preferred-voice-kokoro-isabella).
+The app chooses Isabella when the local worker reports ready; Piper/device speech
+remain alternatives. Audio output follows Windows sound settings.

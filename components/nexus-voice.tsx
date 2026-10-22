@@ -4,6 +4,9 @@ type VoiceStatus = {
   available: boolean;
   speech?: boolean;
   transcription?: boolean;
+  engines?: string[];
+  preferred?: string | null;
+  profile?: string | null;
 };
 export default function NexusVoice({
   answer,
@@ -16,8 +19,17 @@ export default function NexusVoice({
 }) {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [voice, setVoice] = useState("");
-  const [backend, setBackend] = useState("device");
+  const [backend, setBackend] = useState("auto");
   const [local, setLocal] = useState<VoiceStatus>({ available: false });
+  const engines = local.engines ?? (local.speech ? ["piper"] : []);
+  const effectiveBackend =
+    backend === "auto"
+      ? engines.includes("kokoro")
+        ? "kokoro"
+        : engines.includes("piper")
+          ? "piper"
+          : "device"
+      : backend;
   const [message, setMessage] = useState("");
   const [recording, setRecording] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -38,6 +50,7 @@ export default function NexusVoice({
       url.current = null;
     }
     setSpeaking(false);
+    setMessage("");
   };
   useEffect(() => {
     mounted.current = true;
@@ -69,7 +82,7 @@ export default function NexusVoice({
       answer ||
       "Hello. I'm Nexus, your Gulf Wing business assistant. How can I help?"
     ).slice(0, 3000);
-    if (backend === "device") {
+    if (effectiveBackend === "device") {
       if (!window.speechSynthesis) {
         setMessage("Device speech is unavailable in this browser.");
         return;
@@ -91,25 +104,49 @@ export default function NexusVoice({
       const controller = new AbortController();
       request.current = controller;
       setSpeaking(true);
+      setMessage("Preparing local speech…");
       try {
         const r = await fetch("/api/sync/voice?action=speak", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text }),
+          body: JSON.stringify({ text, engine: effectiveBackend }),
           signal: controller.signal,
         });
         if (!r.ok) throw new Error((await r.json()).error);
-        url.current = URL.createObjectURL(await r.blob());
-        audio.current = new Audio(url.current);
+        const blob = await r.blob();
+        if (controller.signal.aborted || !mounted.current) return;
+        url.current = URL.createObjectURL(blob);
+        const player = new Audio(url.current);
+        audio.current = player;
+        audio.current.onerror = () => {
+          setSpeaking(false);
+          setMessage(
+            "Audio playback failed. Check your browser and Windows sound output.",
+          );
+          if (url.current) URL.revokeObjectURL(url.current);
+          url.current = null;
+        };
         audio.current.onended = () => {
+          setMessage("Speech finished.");
           setSpeaking(false);
           if (url.current) URL.revokeObjectURL(url.current);
           url.current = null;
         };
-        await audio.current.play();
+        await player.play();
+        if (controller.signal.aborted) {
+          player.pause();
+          return;
+        }
+        setMessage(
+          effectiveBackend === "kokoro"
+            ? "Speaking with Isabella · speed 0.95."
+            : "Speaking with Piper.",
+        );
       } catch (error) {
-        if (mounted.current) {
+        if (mounted.current && request.current === controller) {
           setSpeaking(false);
+          if (url.current) URL.revokeObjectURL(url.current);
+          url.current = null;
           if ((error as Error).name !== "AbortError")
             setMessage((error as Error).message);
         }
@@ -205,13 +242,21 @@ export default function NexusVoice({
             setBackend(e.target.value);
           }}
         >
+          <option value="auto">
+            Preferred available voice — Isabella first
+          </option>
+          <option value="kokoro" disabled={!engines.includes("kokoro")}>
+            Local Kokoro · Isabella · 0.95{" "}
+            {engines.includes("kokoro") ? "ready" : "— setup required"}
+          </option>
           <option value="device">Device speech (browser-managed)</option>
-          <option value="local" disabled={!local.speech}>
-            Local Piper {local.speech ? "ready" : "— setup required"}
+          <option value="piper" disabled={!engines.includes("piper")}>
+            Local Piper{" "}
+            {engines.includes("piper") ? "ready" : "— setup required"}
           </option>
         </select>
       </label>
-      {backend === "device" && (
+      {effectiveBackend === "device" && (
         <label>
           Device voice
           <select value={voice} onChange={(e) => setVoice(e.target.value)}>
@@ -225,6 +270,15 @@ export default function NexusVoice({
           </select>
         </label>
       )}
+      <p>
+        Current voice:{" "}
+        {effectiveBackend === "kokoro"
+          ? "Isabella · British English · speed 0.95"
+          : effectiveBackend === "piper"
+            ? "Piper · local fallback"
+            : "Browser/device voice"}
+        . Automatic selection never switches a voice you explicitly chose.
+      </p>
       <div className="nexus-buttons">
         <button onClick={speak} disabled={disabled || speaking}>
           Speak {answer ? "answer" : "voice preview"}
