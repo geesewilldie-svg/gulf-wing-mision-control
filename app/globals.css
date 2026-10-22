@@ -2665,3 +2665,61 @@ body {
     max-width: 145px;
   }
 }
+
+/* Terrain mode reserves the surface for the mesh and keeps its identity above it. */
+.terrain-stage .holo-center-label {
+  top: 0;
+  transform: translateX(-50%);
+  gap: 4px;
+}
+.terrain-stage .holo-center-label small {
+  display: none;
+}
+.terrain-stage .holo-center-label strong {
+  font-size: 16px;
+}
+.terrain-legend {
+  position: absolute;
+  bottom: 39px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(230px, 65%);
+  display: flex;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 3px solid transparent;
+  border-image: linear-gradient(90deg, #46dfff, #64f0ad, #ffd15e, #ff7464) 1;
+  color: #a5d6e3;
+  font: 7px monospace;
+  letter-spacing: 0.6px;
+  pointer-events: none;
+}
+
+.screenpad-console { min-height: 100dvh; padding: 12px 18px; background: #06121e; color: #d4f3ff; }
+.screenpad-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; font: 11px monospace; }
+.screenpad-header a, .screenpad-header button { display: inline-flex; align-items: center; gap: 6px; }
+.screenpad-header strong { color: #8deaff; letter-spacing: 1px; }
+.screenpad-header strong span { color: #ffcf83; }
+.screenpad-header button, .screenpad-actions button, .screenpad-console select { border: 1px solid #28546b; border-radius: 6px; background: #0b2433; color: #c4f2ff; padding: 8px; min-height: 44px; }
+.screenpad-console button[aria-pressed="true"] { border-color: #69e6ff; background: #154559; }
+.screenpad-console button:disabled { opacity: .55; cursor: not-allowed; }
+.screenpad-layout { display: grid; grid-template-columns: 1.15fr 1fr; gap: 18px; margin-top: 10px; }
+.screenpad-visual { min-width: 0; }
+.screenpad-visual .holo-stage { height: clamp(200px, 45dvh, 360px); }
+.screenpad-actions { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.screenpad-actions label, .screenpad-console footer { font: 10px monospace; color: #94bacb; }
+.screenpad-actions select { width: 100%; }
+.screenpad-agent-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.screenpad-actions h1 { font-size: 16px; margin: 3px 0 0; }
+.screenpad-hint { color: #94bacb; font-size: 11px; margin: 0; }
+.screenpad-queue { max-height: 40dvh; overflow: auto; display: grid; gap: 6px; }
+.screenpad-queue button { display: flex; flex-direction: column; gap: 4px; text-align: left; }
+.screenpad-queue button strong { font-size: 12px; overflow-wrap: anywhere; }
+.screenpad-queue button span { font-size: 10px; color: #8dc9da; }
+.screenpad-console footer { margin-top: 10px; }
+@media (max-width: 640px) {
+  .screenpad-console { padding: 10px; }
+  .screenpad-header { flex-wrap: wrap; font-size: 9px; }
+  .screenpad-layout { grid-template-columns: 1fr; }
+  .screenpad-queue { max-height: none; }
+}

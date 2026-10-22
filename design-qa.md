@@ -106,3 +106,26 @@ Production build and TypeScript passed. The full suite passed **76 tests**; **8 
 Physical Samsung S25 Ultra, LG OLED65A1PUA, ASUS ScreenPad, Windows Firewall, Wi-Fi isolation, HDMI, and Smart View behavior remain hardware checks. Recommended use is the Windows laptop hosting the app, a Windows presentation window on the HDMI-connected TV, and the Android phone paired on the same trusted private LAN. No public deployment, cloud identity, paid service, or model API integration was added. The README contains Windows setup, pairing, recovery, and private-network constraints.
 
 Final result for this phase: passed.
+
+## Terrain Graph and ScreenPad refinement — 2026-10-22
+
+Scope: improve the existing application using the user's four HUD/terrain images
+as inspiration, especially the colored elevation meshes. This is an original
+interactive visualization, not a pixel reproduction of licensed stock artwork.
+The graph now has a planar mesh, four labeled agent peaks, an elevation color
+legend, floor grid, and scan sweep; Core and Galaxy keep their orbital identities.
+
+Reviewed production screenshots at desktop 1440px, mobile 390px, expanded desktop,
+and ScreenPad 1000x500. Evidence: `docs/design/terrain-desktop.png`,
+`terrain-mobile.png`, `terrain-expanded.png`, `terrain-screenpad.png`.
+No page errors or horizontal overflow were observed. Dense HUD annotations remain
+secondary to agent/mission controls. The separate ScreenPad console shares the
+navy/cyan design, provides 44px primary touch controls, and avoids repeating the
+full dashboard. Short displays can scroll; hardware display placement is manual.
+
+Production build and TypeScript passed. Full browser suite: 88 passed and 8
+intentional duplicate host-sync cases skipped. Graph mode, agent selection,
+rotation/reset, expanded view, reduced motion, independent ScreenPad control,
+reload, viewer permissions, and three companion viewport sizes passed.
+Physical ASUS ScreenPad connection and touch/driver behavior are unverified.
+Final result for this scoped refinement: passed.

@@ -124,8 +124,7 @@ test("blocked pop-ups show a usable same-tab fallback", async ({ page }) => {
     .click();
   await expect(page.locator(".screen-message")).toContainText("blocked");
   await page
-    .getByRole("link", { name: "Open here", exact: true })
-    .first()
+    .locator('a[href="/display?view=overview"]')
     .click();
   await expect(page).toHaveURL(/display\?view=overview/);
   await expect(
