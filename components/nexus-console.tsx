@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { connections, type KnowledgeDocument } from "@/lib/nexus";
 import { useWorkspace } from "@/hooks/use-workspace";
 import NexusVoice from "./nexus-voice";
+import type { ConversationTurn } from "@/lib/conversation";
 import NexusBusiness from "./nexus-business";
 import SyncControls from "./sync-controls";
 
@@ -14,6 +15,7 @@ export default function NexusConsole() {
   const [mode, setMode] = useState("auto");
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [busy, setBusy] = useState(false);
+  const [conversationActive, setConversationActive] = useState(false);
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<{
     sections: number;
@@ -30,20 +32,28 @@ export default function NexusConsole() {
       .catch(() => {});
     return () => abort.abort();
   }, [sync.mode]);
-  const ask = async () => {
+  const ask = async (
+    text: string,
+    history: ConversationTurn[] = [],
+    signal?: AbortSignal,
+  ) => {
     setBusy(true);
     setMessage("");
     try {
       const r = await fetch("/api/sync/nexus", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, mode }),
+        body: JSON.stringify({ query: text, mode, history }),
+        signal,
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error);
+      if (signal?.aborted) throw new DOMException("Stopped", "AbortError");
       setAnswer(data);
+      return data.answer as string;
     } catch (e) {
-      setMessage((e as Error).message);
+      if ((e as Error).name !== "AbortError") setMessage((e as Error).message);
+      throw e;
     } finally {
       setBusy(false);
     }
@@ -133,12 +143,16 @@ export default function NexusConsole() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              void ask();
+              void ask(query).catch(() => {});
             }}
           >
             <label>
               Routing
-              <select value={mode} onChange={(e) => setMode(e.target.value)}>
+              <select
+                disabled={conversationActive}
+                value={mode}
+                onChange={(e) => setMode(e.target.value)}
+              >
                 <option value="auto">
                   Auto — local model if configured, otherwise document search
                 </option>
@@ -155,7 +169,7 @@ export default function NexusConsole() {
                 placeholder="What services can Co-hosting offer?"
               />
             </label>
-            <button disabled={disabled || busy}>
+            <button disabled={disabled || busy || conversationActive}>
               {busy ? "Working…" : "Ask Nexus"}
             </button>
           </form>
@@ -181,6 +195,11 @@ export default function NexusConsole() {
             disabled={disabled}
             answer={answer?.answer ?? ""}
             onTranscript={setQuery}
+            onAsk={(text, history, signal) => {
+              setQuery(text);
+              return ask(text, history, signal);
+            }}
+            onConversationActive={setConversationActive}
           />
           <details>
             <summary>Import business plans or Obsidian knowledge</summary>
@@ -196,7 +215,7 @@ export default function NexusConsole() {
               <input
                 type="file"
                 accept=".json,.md,.txt"
-                disabled={disabled || busy}
+                disabled={disabled || busy || conversationActive}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) void importFile(file);

@@ -41,7 +41,13 @@ const listen = (s) =>
       const body = JSON.parse(raw);
       if (
         body.model !== "test-model" ||
-        !body.messages[0].content.includes("Fixture services")
+        !body.messages[0].content.includes("Fixture services") ||
+        (body.messages.length > 2 &&
+          (body.messages[1]?.role !== "user" ||
+            body.messages[1]?.content !== "Earlier question" ||
+            body.messages[2]?.role !== "assistant" ||
+            body.messages[2]?.content !== "Earlier answer" ||
+            body.messages[3]?.content !== "cleaning"))
       ) {
         res.writeHead(400);
         res.end();
@@ -149,7 +155,14 @@ const listen = (s) =>
     fetch(base + "/api/sync/nexus", {
       method: "POST",
       headers,
-      body: JSON.stringify({ query: "cleaning", mode: "auto" }),
+      body: JSON.stringify({
+        query: "cleaning",
+        mode: "auto",
+        history: [
+          { role: "user", content: "Earlier question" },
+          { role: "assistant", content: "Earlier answer" },
+        ],
+      }),
     });
   const responses = await Promise.all([ask(), ask()]);
   if (
