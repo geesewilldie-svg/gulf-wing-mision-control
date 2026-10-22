@@ -1,0 +1,2 @@
+# Match the decoder API used by Faster-Whisper 1.2.1.
+av==15.1.0
