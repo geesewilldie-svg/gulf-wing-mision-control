@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { SpeechBoundary, type ConversationTurn } from "@/lib/conversation";
 
 export type AskConversation = (
@@ -23,8 +24,40 @@ function wait(ms: number, signal: AbortSignal) {
   });
 }
 
+function startAudio(operation: Promise<void>, signal: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    if (signal.aborted) {
+      void operation.catch(() => {});
+      reject(aborted());
+      return;
+    }
+    const cancel = () => finish(aborted());
+    const timer = setTimeout(
+      () =>
+        finish(
+          new Error(
+            "Audio did not start. Check browser microphone and sound permissions, then start again.",
+          ),
+        ),
+      8000,
+    );
+    const finish = (error?: Error) => {
+      clearTimeout(timer);
+      signal.removeEventListener("abort", cancel);
+      if (error) reject(error);
+      else resolve();
+    };
+    signal.addEventListener("abort", cancel, { once: true });
+    void operation.then(
+      () => finish(),
+      (error) => finish(error),
+    );
+  });
+}
+
 export default function NexusConversation({
   disabled,
+  section,
   transcriptionReady,
   engine,
   voice,
@@ -32,17 +65,22 @@ export default function NexusConversation({
   onActive,
 }: {
   disabled: boolean;
+  section: string;
   transcriptionReady: boolean;
   engine: string;
   voice: SpeechSynthesisVoice | null;
   onAsk: AskConversation;
   onActive: (active: boolean) => void;
 }) {
+  const [background, setBackground] = useState(false);
+  const backgroundRef = useRef(false);
+  const previousSection = useRef(section);
   const [active, setActive] = useState(false);
   const [phase, setPhase] = useState("Microphone off");
   const [message, setMessage] = useState("");
   const [heard, setHeard] = useState("");
   const root = useRef<HTMLElement | null>(null);
+  const ownership = useRef<BroadcastChannel | null>(null);
   const session = useRef<AbortController | null>(null);
   const handlers = useRef({ onAsk, onActive });
   handlers.current = { onAsk, onActive };
@@ -62,29 +100,68 @@ export default function NexusConversation({
   useEffect(() => {
     mounted.current = true;
     const hidden = () => {
-      if (document.hidden)
+      if (document.hidden && session.current && !backgroundRef.current)
         stopRef.current(
           "Conversation stopped because the tab is hidden. Start it again when ready.",
         );
     };
     document.addEventListener("visibilitychange", hidden);
+    if (typeof BroadcastChannel !== "undefined") {
+      const channel = new BroadcastChannel("gulf-wing-nexus-conversation");
+      ownership.current = channel;
+      channel.onmessage = (event) => {
+        if (event.data === "started" && session.current)
+          stopRef.current(
+            "Another Nexus window started a conversation. This window is muted.",
+          );
+      };
+    }
+    const leaving = () => stopRef.current();
+    window.addEventListener("pagehide", leaving);
+    const muteKey = (event: KeyboardEvent) => {
+      if (
+        event.ctrlKey &&
+        event.altKey &&
+        event.code === "KeyM" &&
+        session.current
+      ) {
+        event.preventDefault();
+        stopRef.current();
+      }
+    };
+    document.addEventListener("keydown", muteKey);
     const details = root.current?.closest("details");
     const collapsed = () => {
-      if (details && !details.open && session.current) stopRef.current();
+      if (details && !details.open && session.current && !backgroundRef.current)
+        stopRef.current();
     };
     details?.addEventListener("toggle", collapsed);
     return () => {
+      ownership.current?.close();
+      ownership.current = null;
       details?.removeEventListener("toggle", collapsed);
       mounted.current = false;
       session.current?.abort();
       session.current = null;
       handlers.current.onActive(false);
       document.removeEventListener("visibilitychange", hidden);
+      window.removeEventListener("pagehide", leaving);
+      document.removeEventListener("keydown", muteKey);
     };
   }, []);
   useEffect(() => {
     if (disabled) stopRef.current();
   }, [disabled]);
+
+  useEffect(() => {
+    if (
+      previousSection.current !== section &&
+      session.current &&
+      !backgroundRef.current
+    )
+      stopRef.current();
+    previousSection.current = section;
+  }, [section]);
 
   async function capture(signal: AbortSignal): Promise<Blob | null> {
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -101,13 +178,21 @@ export default function NexusConversation({
     let context: AudioContext | undefined;
     try {
       context = new AudioContext();
-      await context.resume();
-    } catch {
+      await startAudio(context.resume(), signal);
+      if (backgroundRef.current) {
+        if (!context.audioWorklet || !window.AudioWorkletNode)
+          throw new Error(
+            "Background audio monitoring is unavailable. Use Chrome or Edge on laptop localhost.",
+          );
+        await startAudio(
+          context.audioWorklet.addModule("/nexus-audio-meter.js"),
+          signal,
+        );
+      }
+    } catch (error) {
       void context?.close().catch(() => {});
       stream.getTracks().forEach((track) => track.stop());
-      throw new Error(
-        "Audio monitoring could not start. Check microphone permissions.",
-      );
+      throw error;
     }
     if (signal.aborted) {
       stream.getTracks().forEach((track) => track.stop());
@@ -118,10 +203,16 @@ export default function NexusConversation({
     return new Promise((resolve, reject) => {
       let media: MediaRecorder | undefined;
       let interval: ReturnType<typeof setInterval> | undefined;
+      let meter: AudioWorkletNode | undefined;
       let done = false;
       const chunks: Blob[] = [];
       const cleanup = () => {
         if (interval) clearInterval(interval);
+        if (meter) {
+          meter.port.onmessage = null;
+          meter.onprocessorerror = null;
+          meter.disconnect();
+        }
         signal.removeEventListener("abort", cancel);
         if (media) {
           media.onstop = null;
@@ -143,11 +234,24 @@ export default function NexusConversation({
       signal.addEventListener("abort", cancel, { once: true });
       try {
         const source = audioContext.createMediaStreamSource(stream);
-        const analyser = audioContext.createAnalyser();
-        analyser.fftSize = 1024;
-        source.connect(analyser);
-        const values = new Float32Array(analyser.fftSize);
-        const detector = new SpeechBoundary(performance.now());
+        const detector = new SpeechBoundary(
+          backgroundRef.current ? 0 : performance.now(),
+        );
+        const sample = (rms: number, now: number) => {
+          if (done) return;
+          const boundary = detector.sample(rms, now);
+          if (boundary === "limit")
+            finish(
+              null,
+              new Error(
+                "That turn reached 30 seconds. Start again and use a shorter question.",
+              ),
+            );
+          else if (boundary && media?.state === "recording") {
+            if (interval) clearInterval(interval);
+            media.stop();
+          }
+        };
         media = new MediaRecorder(stream);
         media.ondataavailable = (event) => {
           if (event.data.size) chunks.push(event.data);
@@ -176,34 +280,55 @@ export default function NexusConversation({
         });
         media.start();
         setPhase("Listening");
-        interval = setInterval(() => {
-          try {
-            analyser.getFloatTimeDomainData(values);
-            const rms = Math.sqrt(
-              values.reduce((sum, value) => sum + value * value, 0) /
-                values.length,
-            );
-            const boundary = detector.sample(rms, performance.now());
-            if (boundary === "limit")
-              finish(
-                null,
-                new Error(
-                  "That turn reached 30 seconds. Start again and use a shorter question.",
-                ),
-              );
-            else if (boundary && media?.state === "recording") {
-              if (interval) clearInterval(interval);
-              media.stop();
-            }
-          } catch {
+        if (backgroundRef.current) {
+          meter = new AudioWorkletNode(audioContext, "nexus-audio-meter");
+          const silence = audioContext.createGain();
+          silence.gain.value = 0;
+          source.connect(meter);
+          meter.connect(silence);
+          silence.connect(audioContext.destination);
+          meter.port.onmessage = (event) => {
+            const { rms, elapsed } = event.data ?? {};
+            if (
+              typeof rms === "number" &&
+              typeof elapsed === "number" &&
+              Number.isFinite(rms) &&
+              Number.isFinite(elapsed)
+            )
+              sample(rms, elapsed);
+          };
+          meter.onprocessorerror = () =>
             finish(
               null,
               new Error(
-                "Audio monitoring failed. Check your microphone and start again.",
+                "Background audio monitoring stopped. Check your microphone and start again.",
               ),
             );
-          }
-        }, 80);
+        } else {
+          const analyser = audioContext.createAnalyser();
+          analyser.fftSize = 1024;
+          source.connect(analyser);
+          const values = new Float32Array(analyser.fftSize);
+          interval = setInterval(() => {
+            try {
+              analyser.getFloatTimeDomainData(values);
+              sample(
+                Math.sqrt(
+                  values.reduce((sum, value) => sum + value * value, 0) /
+                    values.length,
+                ),
+                performance.now(),
+              );
+            } catch {
+              finish(
+                null,
+                new Error(
+                  "Audio monitoring failed. Check your microphone and start again.",
+                ),
+              );
+            }
+          }, 80);
+        }
       } catch {
         finish(
           null,
@@ -307,7 +432,7 @@ export default function NexusConversation({
     }
   }
 
-  async function start() {
+  async function start(inBackground = false) {
     if (session.current || disabled) return;
     if (
       !window.isSecureContext ||
@@ -324,8 +449,11 @@ export default function NexusConversation({
       setMessage("Start the local voice worker and check local voice first.");
       return;
     }
+    backgroundRef.current = inBackground;
+    setBackground(inBackground);
     const controller = new AbortController();
     session.current = controller;
+    ownership.current?.postMessage("started");
     setActive(true);
     handlers.current.onActive(true);
     setMessage("");
@@ -405,6 +533,11 @@ export default function NexusConversation({
         again. The microphone is off while Nexus thinks and speaks. Silence of
         about 1.4 seconds ends your turn.
       </p>
+      <p>
+        Background assistant mode keeps listening when you switch apps or Nexus
+        sections. Speech picked up in that mode is automatically submitted to
+        Nexus. Mute it for calls or private conversations.
+      </p>
       <div className="nexus-buttons">
         <button
           onClick={() => void start()}
@@ -412,20 +545,50 @@ export default function NexusConversation({
         >
           Start conversation
         </button>
+        <button
+          onClick={() => void start(true)}
+          disabled={disabled || active || !transcriptionReady}
+        >
+          Start background assistant
+        </button>
         <button onClick={() => stop()} disabled={!active}>
           Stop conversation / Mute
         </button>
       </div>
       <p role="status" aria-live="polite" className="conversation-phase">
         <span aria-hidden="true">{active ? "●" : "○"}</span> {phase}
+        {active && background && <span> · Background assistant on</span>}
       </p>
       {heard && <p>Last heard: {heard}</p>}
       {message && <p role="status">{message}</p>}
       <small>
         Microphone access starts only after your click. Say “stop listening” to
-        end. Switching tabs or leaving this page stops conversation. Recent
-        context stays in this session only; no background wake word.
+        end while listening. Ctrl+Alt+M mutes while this Nexus window has focus
+        (not a Windows-wide hotkey). Normal conversation stops when hidden;
+        background assistant keeps running while the browser and laptop stay
+        awake. Closing the normal voice panel stops normal conversation.
+        Background mode can keep the panel collapsed; use Mute Nexus to stop.
+        Refreshing, leaving this page or losing controller access stops both
+        modes. No auto-start after reopening and no wake word. Recent context
+        stays in this session only.
       </small>
+      {active &&
+        background &&
+        createPortal(
+          <aside
+            className="nexus-assistant-dock"
+            aria-label="Nexus background assistant"
+          >
+            <div>
+              <strong>NEXUS · Background assistant on</strong>
+              <p role="status">{phase}</p>
+            </div>
+            <button type="button" onClick={() => stop()}>
+              Mute Nexus
+            </button>
+          </aside>,
+          document.body,
+        )}
     </section>
   );
 }

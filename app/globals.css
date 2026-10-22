@@ -2785,3 +2785,10 @@ body {
   .estimate-print article { border:0;padding:0; }
   .estimate-print h1,.estimate-print h2,.estimate-print h3 { color:#111; }
 }
+
+.nexus-assistant-card { margin-block: 1rem; }
+.nexus-assistant-dock { position:fixed; z-index:100; bottom:16px; right:16px; max-width:calc(100vw - 32px); display:flex; align-items:center; gap:16px; padding:12px 16px; color:#dcf8ff; background:#071b2bf5; border:1px solid #62dce8; border-radius:12px; box-shadow:0 8px 32px #0008; font-size:13px; }
+.nexus-assistant-dock strong { display:block; color:#8cecf2; }
+.nexus-assistant-dock p { margin:4px 0 0; }
+.nexus-assistant-dock button { min-height:44px; padding:10px 14px; border:1px solid #61d8e6; border-radius:8px; background:#15384b; color:#e1faff; cursor:pointer; }
+@media(max-width:420px) { .nexus-assistant-dock { left:12px; right:12px; bottom:12px; max-width:none; gap:10px; font-size:11px; } }

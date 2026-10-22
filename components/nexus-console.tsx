@@ -24,7 +24,8 @@ export default function NexusConsole() {
     sources: string[];
     localModel: boolean;
   } | null>(null);
-  const disabled = sync.mode !== "shared" || sync.role === "display";
+  const disabled =
+    sync.mode !== "shared" || sync.role === "display" || sync.needsPair;
   useEffect(() => {
     const abort = new AbortController();
     fetch("/api/sync/nexus", { signal: abort.signal })
@@ -155,16 +156,6 @@ export default function NexusConsole() {
               ))}
             </article>
           )}
-          <NexusVoice
-            disabled={disabled}
-            answer={answer?.answer ?? ""}
-            onTranscript={setQuery}
-            onAsk={(text, history, signal) => {
-              setQuery(text);
-              return ask(text, history, signal);
-            }}
-            onConversationActive={setConversationActive}
-          />
           <KnowledgeImport
             disabled={disabled || busy || conversationActive}
             sources={status?.sources ?? []}
@@ -175,6 +166,22 @@ export default function NexusConsole() {
           />
         </section>
       )}
+      <section
+        className="nexus-card nexus-assistant-card"
+        aria-label="Nexus assistant controls"
+      >
+        <NexusVoice
+          disabled={disabled}
+          section={tab}
+          answer={answer?.answer ?? ""}
+          onTranscript={setQuery}
+          onAsk={(text, history, signal) => {
+            setQuery(text);
+            return ask(text, history, signal);
+          }}
+          onConversationActive={setConversationActive}
+        />
+      </section>
       {tab === "Co-hosting" && <NexusBusiness disabled={disabled} />}
       {tab === "Marketing" && <NexusBusiness marketing disabled={disabled} />}
       {tab === "Connections" && (
