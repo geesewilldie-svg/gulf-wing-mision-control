@@ -137,7 +137,7 @@ class Handler(BaseHTTPRequestHandler):
                 if engine not in ["kokoro", "piper"]:
                     return self.reply(400, {"error": "Unsupported speech engine"})
                 if engine not in speech_engines():
-                    return self.reply(503, {"error": "Selected speech engine is unavailable"})
+                    return self.reply(503, {"error": "Selected speech engine is unavailable", "code": "engine_unavailable"})
                 if not isinstance(text, str) or not text.strip() or len(text) > 3000:
                     return self.reply(400, {"error": "Speech text must be 1–3,000 characters"})
                 with tempfile.TemporaryDirectory() as directory:
@@ -149,8 +149,13 @@ class Handler(BaseHTTPRequestHandler):
                                        input=text, text=True, check=True, capture_output=True, timeout=90)
                     return self.reply(200, output.read_bytes(), "audio/wav")
             self.reply(503, {"error": "Requested local voice model is not configured"})
-        except Exception:
-            self.reply(503, {"error": "Local voice processing failed"})
+        except Exception as error:
+            if self.path == "/transcribe" and isinstance(error, TypeError) and "metadata_errors" in str(error):
+                self.reply(503, {"error": "Audio decoder is incompatible with Faster-Whisper", "code": "audio_decoder_incompatible"})
+            elif self.path == "/transcribe":
+                self.reply(503, {"error": "Local transcription failed", "code": "transcription_failed"})
+            else:
+                self.reply(503, {"error": "Local speech generation failed", "code": "speech_generation_failed"})
 
 if __name__ == "__main__":
     print("Nexus voice worker: laptop loopback only, port 8766. No wake-word listener.")

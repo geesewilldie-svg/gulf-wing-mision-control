@@ -299,3 +299,40 @@ PowerShell tab in the repository to run `.\scripts\start-nexus-voice.cmd`.
 See the [preferred voice activation instructions](scripts/voice/README.md#preferred-voice-kokoro-isabella).
 The app chooses Isabella when the local worker reports ready; Piper/device speech
 remain alternatives. Audio output follows Windows sound settings.
+
+### One-command local AI setup on Windows
+
+After installing Ollama for Windows, run this from a spare PowerShell tab in the
+repository (leave Mission Control and the voice worker running):
+
+```powershell
+npm.cmd run ai:setup
+```
+
+The setup finds the per-user Ollama executable even if the current terminal has
+an old PATH. If needed it starts a loopback-only Ollama service. It downloads the
+small `qwen2.5:1.5b` model if missing and writes the model choice privately to
+`.gulf-wing/nexus-config.json`. An already-installed model is reused. A failed
+download preserves previous settings. The first download is substantial; actual
+response quality and latency need testing on the 8 GB ASUS. No paid API is used.
+The script does not install the Ollama application itself, modify firewall rules,
+rotate pairing codes, or change existing knowledge/operating records.
+
+Refresh `/nexus` after setup and leave Routing on Auto. A newly saved model choice
+is read at runtime; no `.env` editing, rebuild or app restart is needed. An explicit
+`GW_NEXUS_MODEL` environment variable still takes precedence. To choose a different
+installed/downloadable model, use `npm.cmd run ai:setup -- MODEL-NAME`.
+
+Model requests use a 4,096-token context window, at most 256 generated tokens and
+up to 6,000 retrieved source-text characters, with a two-minute keep-alive to reduce
+idle memory use. This is a lightweight starting point, not a claim that every
+question can be answered accurately or that all provider agents are connected.
+The system prompt instructs the model to distinguish forecasts from actuals and
+cite available evidence; human review is still necessary. Follow the model's
+license before redistributing it or a packaged Nexus product.
+
+`npm run test:nexus-setup` checks setup against a synthetic local Ollama server,
+including download/no-download paths, validation and preservation on failure.
+Voice processing errors now distinguish an incompatible decoder from a running
+worker that failed transcription or speech generation. These errors contain
+fixed troubleshooting messages, not transcripts, private paths or tracebacks.

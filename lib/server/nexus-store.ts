@@ -40,8 +40,35 @@ export async function saveKnowledge(value: unknown) {
   }
   return documents.length;
 }
+export async function configuredLocalModel(): Promise<string | null> {
+  if (process.env.GW_NEXUS_MODEL?.trim())
+    return process.env.GW_NEXUS_MODEL.trim();
+  try {
+    const raw = JSON.parse(
+      await fs.readFile(
+        path.join(path.dirname(file()), "nexus-config.json"),
+        "utf8",
+      ),
+    );
+    if (
+      raw.version !== 1 ||
+      typeof raw.model !== "string" ||
+      raw.model.length > 120 ||
+      !/^[a-z0-9][a-z0-9._/-]*(?::[a-z0-9._-]+)?$/i.test(raw.model)
+    )
+      throw new Error();
+    return raw.model;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw new SyncError(
+      503,
+      "Nexus model settings could not be read. Run local AI setup to check the saved configuration.",
+    );
+  }
+}
 export async function localModelReady() {
-  if (!process.env.GW_NEXUS_MODEL) return false;
+  const model = await configuredLocalModel();
+  if (!model) return false;
   try {
     const result = await fetch("http://127.0.0.1:11434/api/tags", {
       signal: AbortSignal.timeout(2000),
@@ -51,9 +78,7 @@ export async function localModelReady() {
     return (
       result.ok &&
       Array.isArray(body.models) &&
-      body.models.some(
-        (m: { name: string }) => m.name === process.env.GW_NEXUS_MODEL,
-      )
+      body.models.some((m: { name: string }) => m.name === model)
     );
   } catch {
     return false;

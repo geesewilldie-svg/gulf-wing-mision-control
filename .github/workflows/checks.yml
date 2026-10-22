@@ -40,6 +40,8 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Test desktop and mobile workflows
         run: npm test -- --reporter=line,html --trace=retain-on-failure
+      - name: Test local AI setup without real model downloads
+        run: npm run test:nexus-setup
       - name: Test local Nexus model and voice protocols
         run: npm run test:nexus-runtime
       - name: Set up Python for voice compatibility checks

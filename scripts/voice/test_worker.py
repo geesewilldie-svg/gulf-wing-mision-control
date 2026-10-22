@@ -109,6 +109,18 @@ class VoiceProtocolTests(unittest.TestCase):
                     bridge.close()
                 self.assertFalse(bridge.available)
 
+    def test_decoder_mismatch_reports_safe_actionable_code(self):
+        class IncompatibleDecoder:
+            def transcribe(self, *_args, **_kwargs):
+                raise TypeError("open() got an unexpected keyword argument 'metadata_errors'")
+        with patch.object(worker, "whisper", IncompatibleDecoder()):
+            with self.assertRaises(urllib.error.HTTPError) as result:
+                urllib.request.urlopen(urllib.request.Request(self.base + "/transcribe", data=b"test-recording"))
+            self.assertEqual(result.exception.code, 503)
+            body = json.load(result.exception)
+            self.assertEqual(body["code"], "audio_decoder_incompatible")
+            self.assertNotIn("test-recording", str(body))
+
     def test_empty_body_is_rejected(self):
         with self.assertRaises(urllib.error.HTTPError) as result:
             urllib.request.urlopen(urllib.request.Request(self.base + "/speak", data=b""))
