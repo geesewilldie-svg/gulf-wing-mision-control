@@ -2723,3 +2723,33 @@ body {
   .screenpad-layout { grid-template-columns: 1fr; }
   .screenpad-queue { max-height: none; }
 }
+
+.nexus-launch { display: block; padding: 16px; margin: 12px 0; border: 1px solid #307084; border-radius: 9px; color: #96edff; background: #0b2433; }
+.nexus-console { max-width: 1320px; margin: auto; padding: 32px; color: #d4edfa; }
+.nexus-heading > a { color: #8ee4ff; }
+.nexus-heading > span { display: block; margin-top: 24px; color: #87b7c8; font: 11px monospace; letter-spacing: 2px; }
+.nexus-heading h1 { margin: 12px 0; font-size: clamp(40px,6vw,76px); font-weight: 400; }
+.nexus-heading h1 span { color: #4cdeff; }
+.nexus-heading p, .nexus-card p, .nexus-notice { line-height: 1.6; color: #9dbfce; }
+.nexus-tabs, .nexus-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0; }
+.nexus-console button { min-height: 44px; padding: 10px 16px; color: #b9efff; background: #102d40; border: 1px solid #32637a; border-radius: 7px; }
+.nexus-console button[aria-pressed="true"] { border-color: #69dfff; background: #17465c; }
+.nexus-console button:disabled { opacity: .5; cursor: not-allowed; }
+.nexus-card { border: 1px solid #244c60; border-radius: 14px; padding: 24px; background: #081b29e8; }
+.nexus-card h2 { font-size: 24px; font-weight: 400; margin-top: 0; }
+.nexus-card h3 { margin: 18px 0 10px; }
+.nexus-card label { display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: #add5e6; margin: 12px 0; }
+.nexus-card input, .nexus-card textarea, .nexus-card select { min-width: 0; width: 100%; padding: 12px; color: #d8f3ff; background: #06131f; border: 1px solid #355568; border-radius: 6px; font: inherit; }
+.nexus-card textarea { min-height: 90px; resize: vertical; }
+.nexus-card select { min-height: 44px; }
+.nexus-card details { margin: 16px 0; padding: 12px; border: 1px solid #244c60; border-radius: 7px; }
+.nexus-card summary { cursor: pointer; color: #9eeaff; padding: 6px 0; }
+.nexus-answer { margin: 24px 0; border-left: 2px solid #4cddff; padding-left: 18px; }
+.nexus-answer p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.nexus-fields, .nexus-connections { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 14px; }
+.nexus-connections article { border: 1px solid #274b60; padding: 16px; border-radius: 8px; }
+.nexus-connections strong { font: 12px monospace; color: #ffc885; }
+.nexus-records { list-style: none; padding: 0; }
+.nexus-records li { padding: 14px; margin: 10px 0; background: #0c2434; border-radius: 8px; overflow-wrap: anywhere; }
+.nexus-message { color: #a5e7f5; overflow-wrap: anywhere; }
+@media(max-width:640px) { .nexus-console { padding: 16px; } .nexus-card { padding: 16px; } .nexus-fields,.nexus-connections { grid-template-columns: minmax(0,1fr); } }
