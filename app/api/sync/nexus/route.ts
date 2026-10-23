@@ -13,6 +13,7 @@ import {
   saveKnowledge,
 } from "@/lib/server/nexus-store";
 import { searchDocuments } from "@/lib/nexus";
+import { ventureKnowledge } from "@/lib/server/venture-store";
 import { businessKnowledge } from "@/lib/server/business-knowledge";
 import { parseHistory } from "@/lib/conversation";
 export const runtime = "nodejs";
@@ -74,6 +75,7 @@ export async function POST(request: Request) {
     const documents = [
       ...(await readKnowledge()),
       ...(await businessKnowledge()),
+      ...(await ventureKnowledge()),
     ];
     const previousQuestion = history
       .filter((turn) => turn.role === "user")

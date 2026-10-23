@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { agents, costs, Task, ventures } from "@/lib/demo";
+import VentureWorkspace from "./venture-workspace";
 import WorkspacePanel from "./workspace-panel";
 import HolographicCore from "./holographic-core";
 import ScreenControls from "./screen-controls";
@@ -207,17 +208,17 @@ export default function Dashboard() {
         </a>
         <div className="sidebar-bottom">
           <div className="sandbox-card">
-            <span className="status-dot" /> DEMO ENVIRONMENT
+            <span className="status-dot" /> LOCAL WORKSPACE
             <p>
-              Your command center, in preview.
+              Pair to save private records.
               <br />
-              No live connections or charges.
+              Agent network remains simulated.
             </p>
           </div>
           <div className="profile">
             <span className="avatar">GW</span>
             <div>
-              Gulf Wing Operator<small>Local demo workspace</small>
+              Gulf Wing Operator<small>Business desks + demo agents</small>
             </div>
             <Command size={16} />
           </div>
@@ -238,9 +239,9 @@ export default function Dashboard() {
             <span>{venture}</span>
           </div>
           <div className="top-status">
-            <span className="demo-tag">DEMO</span>
+            <span className="demo-tag">DEMO AGENTS</span>
             <span className="connection">
-              <span className="status-dot" /> Simulation online
+              <span className="status-dot" /> Agent simulation
             </span>
             <span className="operator">GW</span>
           </div>
@@ -250,7 +251,7 @@ export default function Dashboard() {
             <div>
               <div className="eyebrow">
                 <span /> GULF WING OPERATING SYSTEM{" "}
-                <span className="version">/ PHASE 01</span>
+                <span className="version">/ OPERATING DESKS</span>
               </div>
               <h1>
                 Mission control<span>.</span>
@@ -269,7 +270,18 @@ export default function Dashboard() {
           </div>
           <SyncControls />
           <ScreenControls />
-          <a className="nexus-launch" href="/nexus">Open Nexus → Voice, knowledge, Co-hosting and marketing</a>
+          <a className="nexus-launch" href="/nexus">
+            Open Nexus → Voice, knowledge, Co-hosting and marketing
+          </a>
+          <VentureWorkspace
+            venture={venture}
+            enabled={
+              sync.mode === "shared" &&
+              sync.role === "controller" &&
+              !sync.needsPair
+            }
+            onSelect={setVenture}
+          />
           <div className="metrics">
             <div>
               <span className="metric-icon">
@@ -422,7 +434,7 @@ export default function Dashboard() {
           <div className="storage-bar">
             <span>
               {storageMessage
-                ? "Local demo workspace"
+                ? "Business desks + demo agents"
                 : sync.mode === "shared"
                   ? sync.status + " · DEMO"
                   : "Saved locally in this browser · DEMO"}

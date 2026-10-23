@@ -13,6 +13,12 @@ type Answer = { engine: string; answer: string; sources: KnowledgeDocument[] };
 export default function NexusConsole() {
   const { sync } = useWorkspace();
   const [tab, setTab] = useState("Ask Nexus");
+  useEffect(() => {
+    if (
+      new URLSearchParams(window.location.search).get("section") === "cohosting"
+    )
+      setTab("Co-hosting");
+  }, []);
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState("auto");
   const [answer, setAnswer] = useState<Answer | null>(null);
