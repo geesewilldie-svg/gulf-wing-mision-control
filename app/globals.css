@@ -2792,3 +2792,399 @@ body {
 .nexus-assistant-dock p { margin:4px 0 0; }
 .nexus-assistant-dock button { min-height:44px; padding:10px 14px; border:1px solid #61d8e6; border-radius:8px; background:#15384b; color:#e1faff; cursor:pointer; }
 @media(max-width:420px) { .nexus-assistant-dock { left:12px; right:12px; bottom:12px; max-width:none; gap:10px; font-size:11px; } }
+
+
+/* Venture operating desks share the command-center palette; artwork is original SVG. */
+.venture-workspace {
+  margin: 24px 0;
+  padding: 24px;
+  border: 1px solid #1d566f;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #0b2132ed, #08131fe8);
+  box-shadow: inset 0 1px #6edbff12;
+  overflow: hidden;
+  min-width: 0;
+}
+.venture-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 24px;
+  position: relative;
+  min-height: 240px;
+  background: radial-gradient(ellipse at 80% 50%, #16aaf516, transparent 65%);
+}
+.venture-intro {
+  position: relative;
+  z-index: 1;
+}
+.venture-intro .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.venture-intro .eyebrow svg {
+  width: 16px;
+  height: 16px;
+}
+.venture-intro h2 {
+  font-size: clamp(24px, 2.5vw, 38px);
+  line-height: 1.15;
+  max-width: 540px;
+  margin: 16px 0;
+}
+.venture-workspace p {
+  color: #a3bdcb;
+  line-height: 1.6;
+}
+.venture-mode {
+  font: 10px monospace;
+  letter-spacing: 1.5px;
+  color: #65d9f8;
+}
+.aircraft-blueprint {
+  width: 100%;
+  color: #51d9f5;
+  filter: drop-shadow(0 0 9px #22d3ee50);
+  transform: rotate(-10deg);
+}
+.venture-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0;
+}
+.venture-toolbar button,
+.venture-workspace button:not(.portfolio-grid button) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #2d5c70;
+  border-radius: 8px;
+  padding: 10px 14px;
+  background: #102b3c;
+  color: #d6eff8;
+  cursor: pointer;
+  font-size: 13px;
+}
+.venture-workspace button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.venture-workspace button:hover:not(:disabled) {
+  border-color: #63dcff;
+  background: #163a4e;
+}
+.venture-workspace :focus-visible {
+  outline: 2px solid #6fe3ff;
+  outline-offset: 3px;
+}
+.venture-message {
+  min-height: 1em;
+}
+.venture-callout {
+  padding: 12px;
+  border-left: 2px solid #f7bc6c;
+  background: #f7bc6c09;
+}
+.venture-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid #294454;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.venture-stats div {
+  padding: 18px;
+  border-right: 1px solid #294454;
+}
+.venture-stats small {
+  display: block;
+  color: #85a9bc;
+  font: 10px monospace;
+  letter-spacing: 1px;
+}
+.venture-stats strong {
+  display: block;
+  color: #6de0ff;
+  font-size: 28px;
+  margin-top: 8px;
+}
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 20px 0;
+}
+.portfolio-grid button,
+.portfolio-grid a {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 10px;
+  padding: 18px;
+  background: #0b2332;
+  border: 1px solid #25546a;
+  border-radius: 10px;
+  color: #dcf5ff;
+  text-decoration: none;
+  cursor: pointer;
+  min-width: 0;
+}
+.portfolio-grid small {
+  color: #79bad2;
+}
+.portfolio-grid strong {
+  font-size: 15px;
+}
+.venture-controls,
+.venture-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 20px 0;
+}
+.venture-workspace label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #b8d4e1;
+  font-size: 13px;
+  min-width: 0;
+}
+.venture-workspace input,
+.venture-workspace select,
+.venture-workspace textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 10px;
+  border: 1px solid #31576a;
+  border-radius: 7px;
+  background: #061723;
+  color: #e2f2f8;
+  font: inherit;
+  color-scheme: dark;
+}
+.operating-records {
+  display: grid;
+  gap: 12px;
+}
+.operating-records article {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border: 1px solid #294958;
+  background: #06152277;
+  padding: 18px;
+  border-radius: 10px;
+  min-width: 0;
+}
+.operating-records article > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.operating-records h3 {
+  margin: 8px 0;
+  font-size: 17px;
+}
+.operating-records p {
+  margin: 8px 0;
+  font-size: 13px;
+}
+.operating-records small,
+.record-category {
+  font: 11px monospace;
+  color: #70c9e9;
+}
+.venture-editor {
+  margin: 20px 0;
+  padding: 22px;
+  border: 1px solid #47b8e0;
+  border-radius: 10px;
+  background: #071724;
+}
+.venture-editor fieldset {
+  margin: 20px 0;
+  border: 1px solid #31576a;
+  padding: 16px;
+  border-radius: 8px;
+  min-width: 0;
+}
+.venture-editor legend {
+  color: #83d8f0;
+  padding: 0 8px;
+}
+.venture-editor .venture-check {
+  flex-direction: row;
+  align-items: flex-start;
+  margin: 12px 0;
+  line-height: 1.5;
+}
+.venture-check input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: #40c8f2;
+}
+.venture-evidence,
+.venture-footer {
+  font-size: 12px;
+  color: #84a8ba;
+  line-height: 1.6;
+}
+.venture-readiness {
+  border-top: 1px solid #234454;
+  padding: 16px 0;
+  margin-top: 16px;
+}
+.venture-readiness summary {
+  cursor: pointer;
+  color: #b8e8f7;
+  line-height: 1.6;
+}
+.venture-readiness summary svg {
+  vertical-align: middle;
+  margin-right: 6px;
+}
+.venture-readiness ul {
+  color: #a4bdcc;
+  padding-left: 20px;
+  line-height: 1.9;
+}
+.venture-footer {
+  margin-top: 16px;
+}
+.venture-emblem {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 20px;
+  color: #4ebada;
+  padding: 30px;
+  text-align: center;
+}
+.venture-emblem > svg {
+  width: 95px;
+  height: 95px;
+  stroke-width: 0.7;
+  filter: drop-shadow(0 0 15px #21bde055);
+}
+.venture-emblem span {
+  font: 10px monospace;
+  letter-spacing: 2px;
+}
+.mission-radar {
+  width: 205px;
+  height: 205px;
+  border: 1px solid #46c9ed88;
+  border-radius: 50%;
+  position: relative;
+  margin: auto;
+  background:
+    repeating-radial-gradient(circle, transparent 0 31px, #56cfee28 32px 33px),
+    linear-gradient(90deg, transparent 49.8%, #5fe3ff44 50%, transparent 50.2%),
+    linear-gradient(transparent 49.8%, #5fe3ff44 50%, transparent 50.2%);
+}
+.mission-radar span {
+  position: absolute;
+  inset: 10px;
+  border-radius: 50%;
+  background: conic-gradient(transparent 65%, #58d8ed30 95%, transparent);
+  animation: radar-sweep 18s linear infinite;
+}
+.mission-radar i {
+  position: absolute;
+  top: 50px;
+  left: 130px;
+  width: 5px;
+  height: 5px;
+  background: #70e1ee;
+  border-radius: 50%;
+  box-shadow:
+    -65px 75px #70e1ee,
+    28px 60px #e5b96a;
+}
+.mission-radar b {
+  position: absolute;
+  inset: 90px 0;
+  text-align: center;
+  font: 11px monospace;
+  color: #99dff3;
+}
+.cohosting-shortcut .primary-button {
+  display: inline-flex;
+  margin-top: 12px;
+}
+.venture-security {
+  border-color: #305e70;
+  background: linear-gradient(135deg, #0c2330, #071722);
+}
+.venture-future {
+  background:
+    radial-gradient(ellipse at top right, #6843a026, transparent 70%), #0b1929;
+}
+.venture-holding {
+  background:
+    radial-gradient(ellipse at top right, #24678426, transparent 70%), #0a1a28;
+}
+@keyframes radar-sweep {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mission-radar span {
+    animation: none;
+  }
+}
+@media (max-width: 700px) {
+  .venture-workspace {
+    padding: 16px;
+  }
+  .venture-hero {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .aircraft-blueprint {
+    max-height: 200px;
+    transform: none;
+  }
+  .venture-emblem {
+    display: none;
+  }
+  .mission-radar {
+    width: 160px;
+    height: 160px;
+  }
+  .mission-radar b {
+    inset: 70px 0;
+  }
+  .venture-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .venture-stats div {
+    padding: 12px;
+  }
+  .venture-fields,
+  .venture-controls,
+  .portfolio-grid {
+    grid-template-columns: 1fr;
+  }
+  .operating-records article {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .venture-editor {
+    padding: 14px;
+  }
+  .venture-toolbar button {
+    flex: 1 1 180px;
+  }
+}
+.venture-readiness summary svg{display:inline-block}
+.venture-aviation{position:relative}
+.venture-aviation::before{content:"";pointer-events:none;position:absolute;right:-40px;bottom:70px;width:440px;height:220px;opacity:.045;transform:rotate(18deg);background:center/contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 720 300'%3E%3Cg fill='none' stroke='%2370dcff' stroke-width='2'%3E%3Cpath d='M85 156Q82 143 112 140L316 129 445 36 485 36 398 131 566 141 618 105 636 107 604 151 636 195 618 197 566 162 398 171 485 267 445 267 316 174 112 164ZM86 153H604M316 129V174M398 131V171M445 36L398 151 445 267'/%3E%3C/g%3E%3C/svg%3E")}
