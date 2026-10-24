@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Nexus · Neural Field</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --cyan: #61e2ff;
+        --muted: #789bae;
+        --edge: #275368;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #020914;
+        color: #c9e6ee;
+        font:
+          12px "Segoe UI",
+          Arial,
+          sans-serif;
+        overflow: hidden;
+      }
+      canvas {
+        z-index: 0;
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      .hud {
+        z-index: 1;
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          ellipse at 58% 47%,
+          transparent 20%,
+          #02091338 78%
+        );
+        padding: 34px 38px 26px 190px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      header,
+      footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+      }
+      header {
+        border-top: 1px solid #315a6b77;
+        padding-top: 17px;
+      }
+      .brand {
+        font-size: 25px;
+        letter-spacing: 9px;
+        font-weight: 300;
+        color: #e0f8ff;
+      }
+      .sub {
+        font:
+          9px Consolas,
+          monospace;
+        letter-spacing: 3px;
+        color: #67b9d1;
+        margin-top: 10px;
+      }
+      .tag {
+        font:
+          9px Consolas,
+          monospace;
+        letter-spacing: 2px;
+        color: #8eabb9;
+      }
+      .tag:before {
+        content: "";
+        display: inline-block;
+        width: 5px;
+        height: 5px;
+        border-radius: 100%;
+        background: #77deed;
+        box-shadow: 0 0 10px #28dafc;
+        margin-right: 10px;
+      }
+      .side {
+        position: absolute;
+        top: 26%;
+        width: 210px;
+        display: grid;
+        gap: 26px;
+      }
+      .left {
+        left: 190px;
+      }
+      .right {
+        right: 38px;
+        top: 30%;
+        width: 180px;
+      }
+      .panel {
+        padding: 16px 14px;
+        border-left: 1px solid #49d9ff55;
+        background: linear-gradient(90deg, #1542582b, transparent);
+        position: relative;
+      }
+      .panel:before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 35px;
+        border-top: 1px solid #65cde4;
+      }
+      .kicker {
+        color: #71aac0;
+        letter-spacing: 2px;
+        font:
+          9px Consolas,
+          monospace;
+        margin-bottom: 13px;
+      }
+      .value {
+        color: #a5e8f9;
+        font:
+          20px Consolas,
+          monospace;
+        font-weight: 300;
+      }
+      .desc {
+        font-size: 10px;
+        color: #809fac;
+        line-height: 1.8;
+        margin-top: 10px;
+      }
+      .rule {
+        height: 2px;
+        background: #275267;
+        margin-top: 15px;
+        width: 100%;
+        position: relative;
+      }
+      .rule:after {
+        content: "";
+        position: absolute;
+        inset: 0 35% 0 0;
+        background: #60cce5;
+        box-shadow: 0 0 7px #30baf055;
+      }
+      .bars {
+        display: flex;
+        align-items: end;
+        gap: 5px;
+        height: 42px;
+        margin-top: 17px;
+      }
+      .bars i {
+        width: 5px;
+        background: linear-gradient(#73e0f1, #14476c);
+        height: var(--h);
+        opacity: 0.7;
+      }
+      .rows {
+        display: grid;
+        gap: 12px;
+        font:
+          10px Consolas,
+          monospace;
+        color: #85b4c8;
+      }
+      .rows div {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .rows b {
+        font-weight: normal;
+        color: #77ddf0;
+      }
+      .dial {
+        width: 70px;
+        height: 70px;
+        border: 1px solid #2e718a;
+        border-radius: 50%;
+        margin: 8px 0 15px;
+        display: grid;
+        place-items: center;
+        outline: 1px dashed #27566c;
+        outline-offset: 7px;
+        background: radial-gradient(#16415a55, transparent);
+        font:
+          10px Consolas,
+          monospace;
+        color: #67d3ee;
+      }
+      .caption {
+        position: absolute;
+        left: 58%;
+        top: 82%;
+        transform: translateX(-50%);
+        text-align: center;
+      }
+      .caption strong {
+        font-size: 13px;
+        font-weight: 400;
+        letter-spacing: 7px;
+        color: #9bdeee;
+      }
+      .caption p {
+        font:
+          9px Consolas,
+          monospace;
+        letter-spacing: 2px;
+        color: #68899a;
+        margin-top: 13px;
+      }
+      footer {
+        border-bottom: 1px solid #315a6b77;
+        padding-bottom: 12px;
+        font:
+          9px Consolas,
+          monospace;
+        letter-spacing: 2px;
+        color: #678e9f;
+      }
+      .clock {
+        font-size: 17px;
+        letter-spacing: 3px;
+        color: #92c8db;
+      }
+      .controls {
+        z-index: 2;
+        position: fixed;
+        bottom: 14px;
+        left: 18px;
+        display: flex;
+        gap: 7px;
+        opacity: 0.35;
+        transition: opacity 0.2s;
+      }
+      .controls:hover,
+      .controls:focus-within {
+        opacity: 1;
+      }
+      button {
+        border: 1px solid #335b6b;
+        border-radius: 5px;
+        color: #9fc7d5;
+        background: #071623;
+        padding: 8px 10px;
+        font:
+          10px "Segoe UI",
+          sans-serif;
+        cursor: pointer;
+      }
+      button:focus-visible {
+        outline: 2px solid #7de5ff;
+        outline-offset: 3px;
+      }
+      .hidden-panels .side {
+        display: none;
+      }
+      @media (max-width: 1100px) {
+        .hud {
+        z-index: 1;
+          padding-left: 100px;
+        }
+        .left {
+          left: 100px;
+          width: 150px;
+        }
+        .right {
+          width: 140px;
+        }
+        .sub {
+          letter-spacing: 1.5px;
+        }
+        .caption {
+          top: 81%;
+        }
+      }
+      @media (max-width: 700px) {
+        .hud {
+        z-index: 1;
+          padding: 20px;
+        }
+        .brand {
+          font-size: 20px;
+        }
+        .side {
+          display: none;
+        }
+        .tag {
+          font-size: 8px;
+          max-width: 150px;
+          line-height: 1.8;
+        }
+        .caption {
+          left: 50%;
+          top: 77%;
+          width: 100%;
+        }
+        .caption strong {
+          letter-spacing: 4px;
+          font-size: 11px;
+        }
+        footer {
+          font-size: 8px;
+          letter-spacing: 1px;
+        }
+        .controls {
+        z-index: 2;
+          bottom: 60px;
+          left: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas
+      id="field"
+      role="img"
+      aria-label="Animated cyan Nexus globe with illustrative neural connections and traveling amber pulses. No live agent activity."
+    ></canvas>
+    <div class="hud">
+      <header>
+        <div>
+          <div class="brand">NEXUS</div>
+          <div class="sub">GULF WING / NEURAL FIELD</div>
+        </div>
+        <div class="tag">
+          AMBIENT VISUALIZATION<br /><span
+            style="display: inline-block; margin-top: 9px; color: #658698"
+            >NO LIVE CONNECTIONS</span
+          >
+        </div>
+      </header>
+      <aside class="side left" aria-label="Decorative holographic panels">
+        <section class="panel">
+          <div class="kicker">01 / CORE GEOMETRY</div>
+          <div class="value">NEURAL SPHERE</div>
+          <div class="desc">
+            A constellation of ideas.<br />One connected field.
+          </div>
+          <div class="rule"></div>
+        </section>
+        <section class="panel">
+          <div class="kicker">02 / SIGNAL STUDY</div>
+          <div class="bars" aria-hidden="true">
+            <i style="--h: 30%"></i><i style="--h: 60%"></i
+            ><i style="--h: 45%"></i><i style="--h: 90%"></i
+            ><i style="--h: 65%"></i><i style="--h: 100%"></i
+            ><i style="--h: 50%"></i><i style="--h: 70%"></i
+            ><i style="--h: 35%"></i><i style="--h: 80%"></i
+            ><i style="--h: 55%"></i><i style="--h: 30%"></i>
+          </div>
+          <div class="desc">
+            Synthetic signal pattern<br />Original procedural artwork
+          </div>
+        </section>
+        <section class="panel">
+          <div class="kicker">03 / DESKTOP COMPANION</div>
+          <div class="rows">
+            <div><span>VOICE CAPTURE</span><b>OFF</b></div>
+            <div><span>NETWORK ACCESS</span><b>NONE</b></div>
+            <div><span>DATA SOURCE</span><b>GENERATED</b></div>
+          </div>
+        </section>
+      </aside>
+      <aside class="side right" aria-label="Rendering information">
+        <section class="panel">
+          <div class="kicker">ORBITAL STRUCTURE</div>
+          <div class="dial">GW / N</div>
+          <div class="rows">
+            <div><span>AGENT MARKERS</span><b>06</b></div>
+            <div><span>FIELD</span><b>AMBIENT</b></div>
+            <div><span>MOTION</span><b id="motion-state">ACTIVE</b></div>
+          </div>
+          <div class="desc">
+            Agent names are illustrative.<br />Light pulses are decorative.
+          </div>
+        </section>
+        <section class="panel">
+          <div class="kicker">LOCAL TIME</div>
+          <time class="clock" id="clock">--:--</time>
+          <div class="desc" id="date"></div>
+        </section>
+      </aside>
+      <div class="caption">
+        <strong>INTELLIGENCE, IN ORBIT</strong>
+        <p>CONNECTION / CURIOSITY / POSSIBILITY</p>
+      </div>
+      <footer>
+        <span>NEXUS / HOLOGRAPHIC DESKTOP</span
+        ><span>LOCAL ARTWORK · NO TELEMETRY</span>
+      </footer>
+    </div>
+    <div class="controls" aria-label="Wallpaper controls">
+      <button id="pause" aria-pressed="false">Pause motion</button
+      ><button id="panels" aria-pressed="false">Hide panels</button>
+    </div>
+    <script>
+      "use strict";
+      (() => {
+        const canvas = document.getElementById("field"),
+          ctx = canvas.getContext("2d", { alpha: false });
+        if (!ctx) {
+          document.getElementById("motion-state").textContent = "UNAVAILABLE";
+          return;
+        }
+        const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+        let width = 0,
+          height = 0,
+          dpr = 1,
+          t = 0,
+          previous = 0,
+          paused = reduced.matches,
+          suspended = false,
+          frame = 0;
+        const points = [],
+          stars = [];
+        for (let i = 0; i < 820; i++) {
+          const y = 1 - (2 * (i + 0.5)) / 820,
+            r = Math.sqrt(1 - y * y),
+            a = i * 2.3999632297;
+          points.push([Math.cos(a) * r, y, Math.sin(a) * r]);
+        }
+        for (let i = 0; i < 105; i++)
+          stars.push([
+            ((i * 73.37) % 997) / 997,
+            ((i * 47.13) % 991) / 991,
+            0.3 + (i % 5) * 0.15,
+          ]);
+        const names = ["GPT", "CLAUDE", "GEMINI", "HERMES", "CODEX", "COPILOT"];
+        function resize() {
+          width = innerWidth;
+          height = innerHeight;
+          dpr = Math.min(
+            devicePixelRatio || 1,
+            1.25,
+            Math.sqrt(2600000 / (width * height)),
+          );
+          canvas.width = Math.round(width * dpr);
+          canvas.height = Math.round(height * dpr);
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          draw();
+        }
+        function line(x1, y1, x2, y2, color, w = 1) {
+          ctx.strokeStyle = color;
+          ctx.lineWidth = w;
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.stroke();
+        }
+        function dot(x, y, r, color) {
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        function arc(cx, cy, r, start, end, color, w = 1) {
+          ctx.lineWidth = w;
+          ctx.strokeStyle = color;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, start, end);
+          ctx.stroke();
+        }
+        function draw() {
+          ctx.fillStyle = "#020914";
+          ctx.fillRect(0, 0, width, height);
+          const small = width < 700,
+            cx = width * (small ? 0.5 : 0.58),
+            cy = height * (small ? 0.47 : 0.49),
+            radius = Math.min(width * (small ? 0.25 : 0.165), height * 0.255),
+            a = t * 0.075;
+          const halo = ctx.createRadialGradient(
+            cx,
+            cy,
+            0,
+            cx,
+            cy,
+            radius * 2.15,
+          );
+          halo.addColorStop(0, "#07384a");
+          halo.addColorStop(0.45, "#041b2c");
+          halo.addColorStop(1, "#020914");
+          ctx.fillStyle = halo;
+          ctx.fillRect(0, 0, width, height);
+          ctx.strokeStyle = "#113246";
+          ctx.lineWidth = 0.5;
+          for (let x = 0; x < width; x += 64) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, height);
+            ctx.stroke();
+          }
+          for (let y = 0; y < height; y += 64) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+          }
+          for (const [x, y, b] of stars)
+            dot(
+              x * width,
+              y * height,
+              0.65,
+              "rgba(99,203,231," + b * 0.35 + ")",
+            );
+          for (let ring = 0; ring < 4; ring++) {
+            const r = radius * (1.14 + ring * 0.105);
+            arc(cx, cy, r, 0, Math.PI * 2, "#2a84962b");
+          }
+          for (let i = 0; i < 120; i++) {
+            const ang = (i * Math.PI) / 60,
+              outer = radius * 1.47,
+              inner = outer - (i % 5 === 0 ? 10 : 4);
+            line(
+              cx + Math.cos(ang) * inner,
+              cy + Math.sin(ang) * inner,
+              cx + Math.cos(ang) * outer,
+              cy + Math.sin(ang) * outer,
+              i % 5 === 0 ? "#58d6ec83" : "#31849b55",
+            );
+          }
+          for (let k = 0; k < 3; k++) {
+            let off = k * 2.094 + t * (k % 2 ? -0.035 : 0.035);
+            arc(
+              cx,
+              cy,
+              radius * (1.17 + k * 0.065),
+              off,
+              off + 0.75,
+              k === 1 ? "#e9ad5680" : "#36c4de9c",
+              k === 1 ? 3 : 2,
+            );
+          }
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(-0.3);
+          ctx.scale(1, 0.33);
+          arc(0, 0, radius * 1.46, 0, Math.PI * 2, "#5cd9e774", 1.2);
+          ctx.restore();
+          const projected = points.map(([x, y, z]) => {
+            const rx = x * Math.cos(a) + z * Math.sin(a),
+              rz = z * Math.cos(a) - x * Math.sin(a),
+              ry = y * 0.94 + rz * 0.16;
+            return [cx + rx * radius, cy + ry * radius, rz];
+          });
+          // Only nearby points in small neighborhoods connect; bounded work for an 8 GB laptop.
+          for (let i = 0; i < projected.length; i++) {
+            const p = projected[i];
+            if (p[2] < -0.15) continue;
+            for (const offset of [21, 34, 55]) {
+              const q = projected[(i + offset) % projected.length],
+                dist = Math.hypot(p[0] - q[0], p[1] - q[1]);
+              if (q[2] > 0.05 && dist < radius * 0.29)
+                line(
+                  p[0],
+                  p[1],
+                  q[0],
+                  q[1],
+                  "rgba(59,204,227," + 0.3 * (1 - dist / (radius * 0.29)) + ")",
+                  0.7,
+                );
+            }
+          }
+          for (let k = 0; k < 16; k++) {
+            const i = (Math.floor(t * 0.8) * 23 + k * 47) % projected.length,
+              p = projected[i],
+              q = projected[(i + 34) % projected.length];
+            if (
+              p[2] > 0.1 &&
+              q[2] > 0.1 &&
+              Math.hypot(p[0] - q[0], p[1] - q[1]) < radius * 0.4
+            ) {
+              const phase = (t * 0.6 + k * 0.17) % 1;
+              line(p[0], p[1], q[0], q[1], "#55e0ef70", 0.9);
+              dot(
+                p[0] + (q[0] - p[0]) * phase,
+                p[1] + (q[1] - p[1]) * phase,
+                1.7,
+                k % 4 === 0 ? "#ffd18d" : "#d9fbff",
+              );
+            }
+          }
+
+          for (let i = 0; i < projected.length; i++) {
+            const p = projected[i],
+              bright = (p[2] + 1) / 2;
+            dot(
+              p[0],
+              p[1],
+              0.45 + bright * 0.85,
+              "rgba(89,226,248," + (0.1 + bright * 0.72) + ")",
+            );
+            if (i % 91 === 0 && p[2] > 0.1) {
+              dot(p[0], p[1], 3, "#60deee25");
+              dot(p[0], p[1], 1.2, "#c7fbff");
+            }
+          }
+          arc(cx, cy, radius, 0, Math.PI * 2, "#79e3ec23", 0.6);
+          for (let i = 0; i < 6; i++) {
+            const angle = (i * Math.PI) / 3 - Math.PI / 2,
+              ex = cx + Math.cos(angle) * radius * 1.89,
+              ey = cy + Math.sin(angle) * radius * 1.66;
+            const sx = cx + Math.cos(angle + 0.18) * radius * 0.83,
+              sy = cy + Math.sin(angle + 0.18) * radius * 0.83;
+            const mx = cx + Math.cos(angle) * radius * 1.36,
+              my = cy + Math.sin(angle) * radius * 1.26;
+            line(sx, sy, mx, my, "#44c8dd67");
+            line(mx, my, ex, ey, "#44c8dd85");
+            const phase = (t * 0.21 + i * 0.183) % 1,
+              back = i % 2 === 0,
+              p = back ? 1 - phase : phase;
+            const px =
+                p < 0.5
+                  ? sx + (mx - sx) * p * 2
+                  : mx + (ex - mx) * (p - 0.5) * 2,
+              py =
+                p < 0.5
+                  ? sy + (my - sy) * p * 2
+                  : my + (ey - my) * (p - 0.5) * 2;
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = i % 3 === 0 ? "#ffc778" : "#42e8ff";
+            dot(px, py, 2, i % 3 === 0 ? "#ffcc7d" : "#b5f7ff");
+            ctx.shadowBlur = 0;
+            arc(ex, ey, 12, 0, Math.PI * 2, "#388da477");
+            arc(
+              ex,
+              ey,
+              17,
+              phase * Math.PI * 2,
+              phase * Math.PI * 2 + 1.7,
+              "#69daf17a",
+            );
+            dot(ex, ey, 3.4, "#7be2f4");
+            dot(ex, ey, 7, "#5ce6ff16");
+            ctx.font = (small ? "8" : "10") + "px Consolas,monospace";
+            ctx.fillStyle = "#8dc1d1";
+            ctx.textAlign = "center";
+            ctx.fillText(names[i], ex, ey + 31);
+          }
+          ctx.textAlign = "center";
+          ctx.font = "9px Consolas,monospace";
+          ctx.fillStyle = "#5ca2b9";
+          ctx.fillText("N E X U S   /   C O R E", cx, cy + radius * 1.03);
+        }
+        function loop(stamp) {
+          if (!previous) previous = stamp;
+          if (stamp - previous >= 1000 / 24) {
+            const delta = Math.min((stamp - previous) / 1000, 0.1);
+            previous = stamp;
+            if (!paused && !suspended) {
+              t += delta;
+              draw();
+            }
+          }
+          frame = requestAnimationFrame(loop);
+        }
+        function clock() {
+          const now = new Date();
+          document.getElementById("clock").textContent = now.toLocaleTimeString(
+            [],
+            { hour: "2-digit", minute: "2-digit" },
+          );
+          document.getElementById("date").textContent = now.toLocaleDateString(
+            [],
+            { weekday: "long", month: "short", day: "numeric" },
+          );
+        }
+        function update() {
+          const b = document.getElementById("pause");
+          b.textContent = paused ? "Resume motion" : "Pause motion";
+          b.setAttribute("aria-pressed", String(paused));
+          document.getElementById("motion-state").textContent = paused
+            ? "PAUSED"
+            : "ACTIVE";
+        }
+        document.getElementById("pause").onclick = () => {
+          paused = !paused;
+          update();
+          draw();
+        };
+        document.getElementById("panels").onclick = () => {
+          const hidden = document.body.classList.toggle("hidden-panels"),
+            b = document.getElementById("panels");
+          b.textContent = hidden ? "Show panels" : "Hide panels";
+          b.setAttribute("aria-pressed", String(hidden));
+        };
+        document.addEventListener("visibilitychange", () => {
+          suspended = document.hidden;
+          previous = 0;
+        });
+        reduced.addEventListener("change", (e) => {
+          paused = e.matches;
+          update();
+          draw();
+        });
+        // Lively's host can suspend motion when applications cover the desktop.
+        window.livelyWallpaperPlaybackChanged = function (data) {
+          try {
+            const d = typeof data === "string" ? JSON.parse(data) : data;
+            if (d && typeof d.IsPaused === "boolean") suspended = d.IsPaused;
+          } catch {}
+        };
+        addEventListener("resize", resize);
+        addEventListener("pagehide", () => cancelAnimationFrame(frame));
+        clock();
+        setInterval(clock, 15000);
+        resize();
+        update();
+        frame = requestAnimationFrame(loop);
+      })();
+    </script>
+  </body>
+</html>

@@ -13,7 +13,8 @@
     "test:nexus-runtime": "node scripts/check-nexus-runtime.cjs",
     "ai:setup": "node scripts/setup-local-ai.mjs",
     "test:nexus-setup": "node scripts/check-local-ai-setup.cjs",
-    "ready": "node scripts/check-readiness.mjs"
+    "ready": "node scripts/check-readiness.mjs",
+    "test:wallpaper": "node scripts/check-nexus-wallpaper.cjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",

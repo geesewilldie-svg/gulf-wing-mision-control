@@ -364,3 +364,9 @@ This mode uses an audio-thread worklet for speech-boundary monitoring instead of
 ### Venture operating desks
 
 The Holding Company, Aviation, Security Operations and Future Ventures navigation now opens distinct operating desks with private saved records, responsible owners, dates, status filters, readiness checklists and JSON backup/restore. Aviation includes an original holographic aircraft schematic; Security uses a mission-desk layout. Pair as a Controller, choose **Load venture records**, then create and save a record. These are manual operating/planning tools, separate from the DEMO missions. Saved records are searchable through Nexus. See [venture workspace instructions and limitations](docs/venture-workspaces.md).
+
+### Nexus live desktop wallpaper
+
+[Neural Field](public/nexus-wallpaper/index.html) is an original, self-contained animated globe with firing neural paths and a holographic HUD. Download `public/Nexus-Neural-Field.zip` and import it into the free Lively Wallpaper Windows application, or extract and choose `index.html` in Lively. It works offline independently of Mission Control. Agent labels and pulses are decorative, not live integrations. [Windows instructions](public/nexus-wallpaper/README-WINDOWS.txt) and a static `preview.jpg` are included. The renderer targets 24 fps and caps drawing resolution; actual ASUS/ScreenPad and Lively acceptance must be checked on the laptop.
+
+Run `npm run test:wallpaper` after installing Playwright Chromium (or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`). It checks animation, pause, panel toggle, reduced motion, viewport scaling, page errors and absence of network requests. Set `GW_WALLPAPER_PREVIEW=1` to regenerate the thumbnail. Rebuild the ZIP from the four files in `public/nexus-wallpaper/` after changing the wallpaper.
