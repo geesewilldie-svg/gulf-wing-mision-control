@@ -366,3 +366,7 @@ The Holding Company, Aviation, Security Operations and Future Ventures navigatio
 ### Unified Nexus search and agent router
 
 Nexus now combines imported knowledge and saved business records with optional fresh Obsidian Markdown reads. Auto, explicit model selection, Knowledge only and Compare are available. Local Ollama remains the default. External OpenAI/Claude/Gemini adapters require host configuration, a durable daily request allowance and per-question permission; none are enabled automatically. Optional public research uses separately entered public terms (Wikipedia, or a configured local SearXNG instance). The new request-activity globe reflects actual request events and remains distinct from the original DEMO network. See [setup, privacy, testing and limitations](docs/nexus-agent-router.md).
+
+### Downloaded tools and local connection checks
+
+The Connections tab now includes a separate inventory for Cursor, GrockBot, Manus and OpenClaw, with truthful roles and verification status. No downloaded app is automatically connected. Cursor project guidance and private-data indexing exclusions are included; those exclusions are not a terminal security sandbox. Run `npm.cmd run connections:check` on the laptop to check local router/Ollama/voice readiness without model prompts, provider requests or credential output. See [the onboarding sequence](docs/tools-onboarding.md). Test the diagnostic with `npm run test:connections`.

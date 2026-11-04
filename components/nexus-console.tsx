@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { connections, type KnowledgeDocument } from "@/lib/nexus";
 import { useWorkspace } from "@/hooks/use-workspace";
+import { toolInventory } from "@/lib/tool-inventory";
 import NexusAgentActivity from "./nexus-agent-activity";
 import type { ProviderStatus, AgentResult } from "@/lib/agent-router";
 import NexusVoice from "./nexus-voice";
@@ -316,6 +317,33 @@ export default function NexusConsole() {
             permission. Existing chat subscriptions do not grant API access. No
             paid service or credential has been enabled for you.
           </p>
+          <details className="nexus-tool-inventory">
+            <summary>Downloaded tools — setup and connection status</summary>
+            <p>
+              These websites were supplied by you. Listing a tool does not
+              verify its publisher, detect a local installation or connect it to
+              Nexus. Cursor is a development companion; the others remain
+              evaluation candidates.
+            </p>
+            <div className="nexus-connections">
+              {toolInventory.map((tool) => (
+                <article key={tool.name}>
+                  <h3>{tool.name}</h3>
+                  <strong>{tool.status}</strong>
+                  <p>{tool.role}</p>
+                  <p>{tool.next}</p>
+                  <a href={tool.url} target="_blank" rel="noopener noreferrer">
+                    Provided {tool.name} website ↗
+                  </a>
+                </article>
+              ))}
+            </div>
+            <p>
+              On the laptop, run <code>npm.cmd run connections:check</code> in
+              Setup &amp; Diagnostics. This makes local checks only and does not
+              activate external providers.
+            </p>
+          </details>
           <div className="nexus-connections">
             <article>
               <h3>Local knowledge / Obsidian</h3>

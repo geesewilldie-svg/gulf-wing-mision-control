@@ -36,6 +36,8 @@ jobs:
         run: npm run build
       - name: Check TypeScript
         run: npm run typecheck
+      - name: Test local connection diagnostic
+        run: npm run test:connections
       - name: Install Chromium and system dependencies
         run: npx playwright install --with-deps chromium
       - name: Test desktop and mobile workflows

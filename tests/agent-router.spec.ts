@@ -380,3 +380,37 @@ test("sharing permission and separate public terms are one-question controls", a
     "",
   );
 });
+
+test("downloaded tool inventory distinguishes development, evaluation and unverified tools", async ({
+  page,
+}) => {
+  await page.request.post("/api/sync/session", {
+    data: { code: process.env.GW_SYNC_TEST_CODE, role: "controller" },
+  });
+  await page.goto("/nexus");
+  await page.getByRole("button", { name: "Connections", exact: true }).click();
+  await page
+    .getByText("Downloaded tools — setup and connection status", {
+      exact: true,
+    })
+    .click();
+  const inventory = page.locator(".nexus-tool-inventory");
+  for (const name of ["Cursor", "GrockBot", "Manus", "OpenClaw"])
+    await expect(
+      inventory.getByRole("heading", { name, exact: true }),
+    ).toBeVisible();
+  await expect(
+    inventory.getByText("Unverified — kept separate", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    inventory.getByText("Execution disabled — not connected", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    inventory.getByRole("link", { name: "Provided Manus website ↗" }),
+  ).toHaveAttribute("href", "https://manus.im/");
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBeTruthy();
+});
