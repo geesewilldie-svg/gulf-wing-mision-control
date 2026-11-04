@@ -15,7 +15,9 @@
     "test:nexus-setup": "node scripts/check-local-ai-setup.cjs",
     "ready": "node scripts/check-readiness.mjs",
     "connections:check": "node scripts/check-nexus-connections.mjs",
-    "test:connections": "node --test scripts/check-nexus-connections.test.mjs"
+    "test:connections": "node --test scripts/check-nexus-connections.test.mjs",
+    "launch:windows": "node scripts/start-nexus.mjs",
+    "test:launcher": "node scripts/nexus-launcher.test.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",

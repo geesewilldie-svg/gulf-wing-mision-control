@@ -38,6 +38,8 @@ jobs:
         run: npm run typecheck
       - name: Test local connection diagnostic
         run: npm run test:connections
+      - name: Test Windows launcher decisions
+        run: npm run test:launcher
       - name: Install Chromium and system dependencies
         run: npx playwright install --with-deps chromium
       - name: Test desktop and mobile workflows

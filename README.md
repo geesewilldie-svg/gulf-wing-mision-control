@@ -370,3 +370,7 @@ Nexus now combines imported knowledge and saved business records with optional f
 ### Downloaded tools and local connection checks
 
 The Connections tab now includes a separate inventory for Cursor, GrockBot, Manus and OpenClaw, with truthful roles and verification status. No downloaded app is automatically connected. Cursor project guidance and private-data indexing exclusions are included; those exclusions are not a terminal security sandbox. Run `npm.cmd run connections:check` on the laptop to check local router/Ollama/voice readiness without model prompts, provider requests or credential output. See [the onboarding sequence](docs/tools-onboarding.md). Test the diagnostic with `npm run test:connections`.
+
+### One-click Windows startup
+
+Double-click `Start-Nexus.cmd` to start existing Mission Control, Ollama and Nexus Voice in the background and open Nexus. Recognized running services are reused, and unrelated occupied ports are never cleared by killing processes. Optional Desktop/sign-in shortcuts are provided in `scripts/install-nexus-shortcuts.ps1`; nothing is installed at sign-in automatically. Microphone listening remains opt-in. See [Windows launcher setup and limitations](docs/windows-launcher.md). Run `npm run test:launcher` for platform-neutral startup-decision checks; native Windows acceptance remains required.
