@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { agents, costs, Task, ventures } from "@/lib/demo";
+import NexusAgentActivity from "./nexus-agent-activity";
 import VentureWorkspace from "./venture-workspace";
 import WorkspacePanel from "./workspace-panel";
 import HolographicCore from "./holographic-core";
@@ -281,6 +282,13 @@ export default function Dashboard() {
               !sync.needsPair
             }
             onSelect={setVenture}
+          />
+          <NexusAgentActivity
+            enabled={
+              sync.mode === "shared" &&
+              sync.role === "controller" &&
+              !sync.needsPair
+            }
           />
           <div className="metrics">
             <div>

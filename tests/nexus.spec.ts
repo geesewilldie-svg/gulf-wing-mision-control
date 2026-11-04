@@ -4,7 +4,7 @@ const documents = [
     id: "cohosting-test",
     source: "Test business plan",
     location: "Page 2",
-    text: "Co-hosting provides cleaning and property readiness. Forecast only; no actual revenue.",
+    text: "Co-hosting provides cleaning and property readiness. Forecast only; no actual revenue. SyntheticNexusCleaningFixture.",
   },
   {
     id: "marketing-test",
@@ -48,7 +48,7 @@ test.describe("Nexus private business foundation", () => {
       ).status(),
     ).toBe(403);
     const result = await page.request.post("/api/sync/nexus", {
-      data: { query: "cleaning", mode: "auto" },
+      data: { query: "SyntheticNexusCleaningFixture", mode: "auto" },
     });
     expect(result.ok()).toBe(true);
     expect(result.headers()["cache-control"]).toBe("no-store");
@@ -91,7 +91,7 @@ test.describe("Nexus private business foundation", () => {
       });
     });
     await page.goto("/nexus");
-    await page.getByLabel("Ask Nexus", { exact: true }).fill("cleaning");
+    await page.getByLabel("Ask Nexus", { exact: true }).fill("SyntheticNexusCleaningFixture");
     await page
       .locator("form")
       .getByRole("button", { name: "Ask Nexus", exact: true })

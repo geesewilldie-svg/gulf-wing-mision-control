@@ -105,19 +105,35 @@ export function searchDocuments(documents: KnowledgeDocument[], query: string) {
         "our",
       ].includes(word),
   );
-  return documents
-    .map((document) => {
-      const text = `${document.source} ${document.text}`.toLowerCase();
-      return {
-        ...document,
-        score: terms.reduce(
-          (score, term) => score + (text.includes(term) ? 1 : 0),
-          0,
+  const normalized = documents.map((document) => ({
+    document,
+    text: `${document.source} ${document.location} ${document.text}`.toLowerCase(),
+    title: `${document.source} ${document.location}`.toLowerCase(),
+  }));
+  const weight = new Map(
+    terms.map((term) => [
+      term,
+      1 +
+        Math.log(
+          1 +
+            documents.length /
+              (1 + normalized.filter((d) => d.text.includes(term)).length),
         ),
-      };
-    })
+    ]),
+  );
+  return normalized
+    .map(({ document, text, title }) => ({
+      ...document,
+      score: terms.reduce(
+        (score, term) =>
+          score +
+          (text.includes(term) ? weight.get(term)! : 0) +
+          (title.includes(term) ? weight.get(term)! : 0),
+        0,
+      ),
+    }))
     .filter((document) => document.score > 0)
-    .sort((a, b) => b.score - a.score)
+    .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id))
     .slice(0, 5);
 }
 export function estimateService(

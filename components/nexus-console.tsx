@@ -1,7 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { connections, type KnowledgeDocument } from "@/lib/nexus";
 import { useWorkspace } from "@/hooks/use-workspace";
+import NexusAgentActivity from "./nexus-agent-activity";
+import type { ProviderStatus, AgentResult } from "@/lib/agent-router";
 import NexusVoice from "./nexus-voice";
 import type { ConversationTurn } from "@/lib/conversation";
 import NexusBusiness from "./nexus-business";
@@ -9,7 +11,14 @@ import KnowledgeImport from "./knowledge-import";
 import TeamAccess from "./team-access";
 import SyncControls from "./sync-controls";
 
-type Answer = { engine: string; answer: string; sources: KnowledgeDocument[] };
+type Answer = {
+  engine: string;
+  answer: string;
+  sources: KnowledgeDocument[];
+  warnings?: string[];
+  agents?: AgentResult[];
+  routing?: { reason: string };
+};
 export default function NexusConsole() {
   const { sync } = useWorkspace();
   const [tab, setTab] = useState("Ask Nexus");
@@ -21,14 +30,21 @@ export default function NexusConsole() {
   }, []);
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState("auto");
+  const [allowExternal, setAllowExternal] = useState(false);
+  const [publicQuery, setPublicQuery] = useState("");
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [busy, setBusy] = useState(false);
+  const pendingAnswer = useRef<AbortController | null>(null);
+  useEffect(() => () => pendingAnswer.current?.abort(), []);
   const [conversationActive, setConversationActive] = useState(false);
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<{
     sections: number;
     sources: string[];
     localModel: boolean;
+    providers?: ProviderStatus[];
+    obsidian?: boolean;
+    webProvider?: string;
   } | null>(null);
   const disabled =
     sync.mode !== "shared" || sync.role === "display" || sync.needsPair;
@@ -46,24 +62,39 @@ export default function NexusConsole() {
     history: ConversationTurn[] = [],
     signal?: AbortSignal,
   ) => {
+    const controller = signal ? null : new AbortController();
+    if (controller) pendingAnswer.current = controller;
+    const requestSignal = signal || controller!.signal;
     setBusy(true);
+    setAnswer(null);
     setMessage("");
+    setAllowExternal(false);
+    setPublicQuery("");
     try {
       const r = await fetch("/api/sync/nexus", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: text, mode, history }),
-        signal,
+        body: JSON.stringify({
+          query: text,
+          mode,
+          history,
+          allowExternal,
+          publicQuery,
+        }),
+        signal: requestSignal,
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error);
-      if (signal?.aborted) throw new DOMException("Stopped", "AbortError");
+      if (requestSignal.aborted)
+        throw new DOMException("Stopped", "AbortError");
       setAnswer(data);
       return data.answer as string;
     } catch (e) {
       if ((e as Error).name !== "AbortError") setMessage((e as Error).message);
       throw e;
     } finally {
+      if (controller && pendingAnswer.current === controller)
+        pendingAnswer.current = null;
       setBusy(false);
     }
   };
@@ -120,16 +151,56 @@ export default function NexusConsole() {
             <label>
               Routing
               <select
+                aria-label="Routing"
                 disabled={conversationActive}
                 value={mode}
                 onChange={(e) => setMode(e.target.value)}
               >
                 <option value="auto">
-                  Auto — local model if configured, otherwise document search
+                  Auto — local first, permitted agents only
                 </option>
                 <option value="knowledge">Knowledge only — no model</option>
+                <option value="local">Choose agent — local Ollama</option>
+                <option value="compare">
+                  Compare answers — up to two permitted models
+                </option>
+                {(status?.providers ?? [])
+                  .filter((p) => p.external)
+                  .map((p) => (
+                    <option key={p.id} value={p.id} disabled={!p.configured}>
+                      {p.name}
+                      {p.configured ? "" : " — disabled"}
+                    </option>
+                  ))}
               </select>
             </label>
+            <label className="nexus-sharing">
+              <input
+                type="checkbox"
+                checked={allowExternal}
+                disabled={busy || conversationActive}
+                onChange={(e) => setAllowExternal(e.target.checked)}
+              />
+              Allow configured external models to receive my question, selected
+              private excerpts and recent conversation for the next answer.
+              Provider billing may apply. Off by default.
+            </label>
+            <label>
+              Optional public research terms
+              <input
+                maxLength={300}
+                value={publicQuery}
+                disabled={busy || conversationActive}
+                onChange={(e) => setPublicQuery(e.target.value)}
+                placeholder="Public terms only — sent to the research source when you ask"
+              />
+            </label>
+            <p className="nexus-router-note">
+              Research source:{" "}
+              {status?.webProvider || "English Wikipedia (encyclopedia only)"}.
+              Leave blank to avoid public research requests. External sharing
+              and public terms reset after each question.
+            </p>
             <label>
               Ask Nexus
               <textarea
@@ -143,11 +214,48 @@ export default function NexusConsole() {
             <button disabled={disabled || busy || conversationActive}>
               {busy ? "Working…" : "Ask Nexus"}
             </button>
+            {busy && !conversationActive && (
+              <button
+                type="button"
+                onClick={() => pendingAnswer.current?.abort()}
+              >
+                Cancel answer
+              </button>
+            )}
           </form>
           {answer && (
             <article className="nexus-answer">
               <h3>{answer.engine}</h3>
               <p>{answer.answer}</p>
+              {answer.agents?.length ? (
+                <p className="nexus-router-note">
+                  Answered by:{" "}
+                  {answer.agents
+                    .filter((a) => a.answer)
+                    .map((a) => a.name)
+                    .join(", ")}
+                  . Verify generated claims against the sources.
+                </p>
+              ) : null}
+              {answer.routing && (
+                <p className="nexus-router-note">{answer.routing.reason}</p>
+              )}
+              {answer.warnings?.map((w) => (
+                <p className="nexus-router-note" key={w}>
+                  {w}
+                </p>
+              ))}
+              {answer.agents && answer.agents.length > 1 && (
+                <details>
+                  <summary>Individual agent responses</summary>
+                  {answer.agents.map((a) => (
+                    <section key={a.provider}>
+                      <h4>{a.name}</h4>
+                      <p>{a.answer || a.error}</p>
+                    </section>
+                  ))}
+                </details>
+              )}
               <h4>
                 Retrieved sources · verify generated claims against these
                 passages
@@ -157,6 +265,15 @@ export default function NexusConsole() {
                   <summary>
                     [{i + 1}] {source.source} · {source.location}
                   </summary>
+                  {/^(https?:)\/\//.test(source.location) && (
+                    <a
+                      href={source.location}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Open public source ↗
+                    </a>
+                  )}
                   <p>{source.text}</p>
                 </details>
               ))}
@@ -194,9 +311,10 @@ export default function NexusConsole() {
         <section className="nexus-card">
           <h2>Connections and agents</h2>
           <p>
-            External adapters are not installed. Existing chat subscriptions do
-            not automatically grant API access. No paid services or credentials
-            have been added.
+            Local-first routing is available. OpenAI, Claude and Gemini adapters
+            require explicit server configuration and per-question sharing
+            permission. Existing chat subscriptions do not grant API access. No
+            paid service or credential has been enabled for you.
           </p>
           <div className="nexus-connections">
             <article>
@@ -204,7 +322,11 @@ export default function NexusConsole() {
               <strong>
                 {status?.sections ? "Imported snapshot" : "Not imported"}
               </strong>
-              <p>Read-only search of imported notes. No live vault sync.</p>
+              <p>
+                {status?.obsidian
+                  ? "Configured vault is read again for each question within scan limits. Imported snapshots are retained."
+                  : "Read-only imported snapshots. Optional host vault configuration enables fresh Markdown reads per question."}
+              </p>
             </article>
             <article>
               <h3>Local model</h3>
@@ -216,17 +338,35 @@ export default function NexusConsole() {
                 tools.
               </p>
             </article>
-            {connections.map(([name, role, setup]) => (
-              <article key={name}>
-                <h3>{name}</h3>
-                <strong>Not connected</strong>
-                <p>{role}</p>
-                <small>{setup}</small>
-              </article>
-            ))}
+            {status?.providers
+              ?.filter((p) => p.external)
+              .map((p) => (
+                <article key={p.id}>
+                  <h3>{p.name}</h3>
+                  <strong>
+                    {p.configured
+                      ? "Configured — availability unverified"
+                      : "Not connected"}
+                  </strong>
+                  <p>{p.detail}</p>
+                </article>
+              ))}
+            {connections
+              .filter(
+                ([name]) => !["ChatGPT", "Claude", "Gemini"].includes(name),
+              )
+              .map(([name, role, setup]) => (
+                <article key={name}>
+                  <h3>{name}</h3>
+                  <strong>Not connected</strong>
+                  <p>{role}</p>
+                  <small>{setup}</small>
+                </article>
+              ))}
           </div>
         </section>
       )}
+      <NexusAgentActivity enabled={!disabled} />
       <p role="status" className="nexus-message">
         {message}
       </p>

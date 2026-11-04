@@ -2,7 +2,7 @@
 
 An original, futuristic command workspace built with Next.js App Router, TypeScript, Tailwind CSS, and Lucide icons. General command-dashboard concepts are the inspiration; no proprietary Agentic OS code or assets are used.
 
-**Everything is DEMO.** GPT, Claude, Hermes, and Codex nodes are interface simulations. There are no model calls, connected accounts, telemetry services, actual charges, or API keys. Demo missions, task statuses, activity, selected venture/agent, and panel layouts are saved locally in this browser. No paid services are required.
+**Demo visuals and real local tools are separate.** The original GPT, Claude, Hermes and Codex dashboard nodes, agent feed and model costs are simulations. Private device pairing, saved business records, imported knowledge and the optional local Nexus voice/Ollama runtime are real laptop-hosted tools. The Nexus agent router supports explicitly configured providers and opt-in public research; external models remain disabled by default. No paid service or credential is supplied. See the setup sections below for storage, permissions and limitations.
 
 ## Windows local setup
 
@@ -11,8 +11,6 @@ Install Node.js 24 LTS and Git for Windows. In PowerShell:
 ```powershell
 git clone https://github.com/geesewilldie-svg/gulf-wing-mision-control.git
 cd gulf-wing-mision-control
-# To review the saved-workspaces feature before it merges:
-git checkout feat/saved-demo-workspaces
 npm ci
 npm run dev
 ```
@@ -112,7 +110,7 @@ This prints a new code, invalidates old sessions, and retains shared workspace d
 - Reset in shared mode explicitly confirms that the reset affects every paired device. Disconnect returns to the separately preserved browser-only workspace.
 - Without pairing, same-browser pop-outs retain their previous local synchronization. No cloud service, subscription, external API key, automatic TV discovery, or public deployment is added.
 
-All agents and model costs remain **DEMO**. Laptop storage and device synchronization are real local infrastructure; they do not execute model calls. Physical S25 Ultra/LG/ASUS connectivity must be checked on your hardware. Automated tests use isolated desktop and Android browser contexts, not actual phones or TVs.
+The original dashboard agents and model costs remain **DEMO**. Laptop storage and device synchronization are real local infrastructure; Nexus has separate optional local inference and configured-provider routing. Physical S25 Ultra/LG/ASUS connectivity must be checked on your hardware. Automated tests use isolated desktop and Android browser contexts, not actual phones or TVs.
 
 The cinematic design references supplied for this phase are recorded in [docs/design/references](docs/design/references/README.md). They guide the original segmented cyan HUD and multi-display composition; the application does not embed film screenshots or source branding.
 
@@ -160,7 +158,7 @@ The workflow does not deploy, merge, create PRs, or perform AI code review. To m
 5. Connect each venture to authorized systems through narrowly scoped adapters; validate permissions and data retention before enabling automation.
 6. Add production identity, HTTPS provisioning, per-task conflict merging, per-display saved layouts, internet-safe remote access, full accessibility audits, and physical-device validation as separate work.
 
-No public deployment or live integration is included.
+No public deployment is included. See the Nexus sections for the implemented local runtime and optional provider adapters.
 
 ### ASUS ScreenPad companion console
 
@@ -364,3 +362,7 @@ This mode uses an audio-thread worklet for speech-boundary monitoring instead of
 ### Venture operating desks
 
 The Holding Company, Aviation, Security Operations and Future Ventures navigation now opens distinct operating desks with private saved records, responsible owners, dates, status filters, readiness checklists and JSON backup/restore. Aviation includes an original holographic aircraft schematic; Security uses a mission-desk layout. Pair as a Controller, choose **Load venture records**, then create and save a record. These are manual operating/planning tools, separate from the DEMO missions. Saved records are searchable through Nexus. See [venture workspace instructions and limitations](docs/venture-workspaces.md).
+
+### Unified Nexus search and agent router
+
+Nexus now combines imported knowledge and saved business records with optional fresh Obsidian Markdown reads. Auto, explicit model selection, Knowledge only and Compare are available. Local Ollama remains the default. External OpenAI/Claude/Gemini adapters require host configuration, a durable daily request allowance and per-question permission; none are enabled automatically. Optional public research uses separately entered public terms (Wikipedia, or a configured local SearXNG instance). The new request-activity globe reflects actual request events and remains distinct from the original DEMO network. See [setup, privacy, testing and limitations](docs/nexus-agent-router.md).
