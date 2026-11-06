@@ -9,3 +9,7 @@ These five images were supplied as visual references for this phase. They are do
 - `blue-orbital-console.jpg`: cool blue highlights, orbit geometry, dense but organized information.
 
 Gulf Wing uses original programmatic visualization geometry and its own copy/data. The visual direction emphasizes a radial core, restrained cyan light, transparent-looking dark panels, accessible HTML controls, Android phone operation, and Windows multi-monitor presentation. Hardware-looking gauges must describe actual demo workspace data rather than inventing CPU, weather, or device telemetry.
+
+## Additional video reference — pending review
+
+The operator supplied https://www.youtube.com/watch?v=tG5L2mEsHCc on 2026-11-06 and asked to retain the original Nexus holographic/Jarvis-inspired direction while evaluating useful product ideas. The video, title and transcript could not be accessed (proxy 403); no tips are attributed to it. Await a transcript or timestamped excerpts. See [market-readiness priorities](../../nexus-market-readiness.md) for independently grounded release work.

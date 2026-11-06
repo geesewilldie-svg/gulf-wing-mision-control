@@ -382,3 +382,7 @@ Enable **Automatically resume background listening on this device** in Nexus voi
 ### Fish Audio and future commercial licensing
 
 Fish Audio remains disabled while current hosted API pricing, service terms and the selected voice's commercial rights are verified. The current laptop is not recommended for local deployment of the documented full Fish models. See the [dated hardware/licensing review](docs/fish-audio-evaluation.md), which distinguishes the self-hosting community license, separately licensed weights, hosted API terms and voice-specific rights. Nexus's subscription/client-product goal requires a complete dependency/model/voice review and production tenant security; those are not implied by a successful local prototype.
+
+### Product direction and market readiness
+
+Nexus is intended to remain an original holographic business command center with potential client/subscription use. [Release priorities and acceptance gates](docs/nexus-market-readiness.md) distinguish the local prototype, native voice acceptance, core Co-hosting workflow, voice/model rights and future production customer security. The supplied YouTube reference is recorded as pending transcript review; no inaccessible video content is presented as a verified recommendation.
