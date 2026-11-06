@@ -2,13 +2,13 @@
 
 Updated 2026-11-06. This is an internal release plan, not a claim that Nexus is ready for sale. The operator wants an original Jarvis-inspired holographic business command center with potential subscription/client licensing. Preserve Nexus as the product/assistant identity. No public deployment, advertising spend, provider purchase or commercial launch is authorized by this plan.
 
-## Video reference — review pending
+## Video reference — transcript reviewed
 
 Operator-supplied reference: https://www.youtube.com/watch?v=tG5L2mEsHCc
 
-The video page, share redirect and metadata requests returned 403 from the environment proxy. Title, creator, transcript and video content were not accessible. No recommendation below is attributed to this video. Review its transcript or supplied timestamps before recording any video-derived tip, comparison, quotation or implementation requirement. A tutorial's working demo is not evidence of scalability, hardware performance, licenses or customer demand.
+The video page and metadata remain inaccessible, but the operator supplied its timestamped transcript on 2026-11-06. The transcript has now been reviewed. [Timestamped findings and implementation mapping](video-review-jarvis-workflows.md) distinguish useful workflow patterns from unverified promotional, entitlement and latency claims. Visuals, title, publication date, linked code and account offers were not independently verified.
 
-When available, record each useful point as: timestamp / what the presenter demonstrates / benefit to Nexus / implementation scope / verification test. Keep original visual assets and code; use general interaction ideas rather than copying another product's branding or proprietary implementation.
+Adopt modular voice components, task-specific agents, read-only data grounding, evidence-based recommendations and durable background-job visibility. These are proposed extensions where the current product lacks them, not claims of completed integrations. Preserve original visual assets and Nexus branding. A tutorial demo is not proof of commercial terms, scalability or customer demand.
 
 ## Product focus
 
@@ -58,9 +58,9 @@ Exit evidence: a small authorized pilot can operate and recover without develope
 
 ## Pending inputs
 
-1. Video transcript or specific timestamped tips, to complete the reference review.
+1. Native voice acceptance and a scoped durable-job/worker-monitor implementation are the next technical priorities; the video transcript review is complete.
 2. Current Fish Audio API pricing/service terms and voice-specific publisher/usage details.
 3. Native acceptance of the published voice startup fix and automatic-listening setup.
 4. A decision, after the above checks, on the first external-customer deployment/licensing model.
 
-The sequence above comes from existing operator requirements and repository capabilities, not the inaccessible video. It adds no service, credential, spending authority or public deployment.
+The sequence combines existing operator requirements, repository evidence and the supplied transcript review. It adds no service, credential, spending authority or public deployment.
