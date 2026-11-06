@@ -386,3 +386,7 @@ Fish Audio remains disabled while current hosted API pricing, service terms and 
 ### Product direction and market readiness
 
 Nexus is intended to remain an original holographic business command center with potential client/subscription use. [Release priorities and acceptance gates](docs/nexus-market-readiness.md) distinguish the local prototype, native voice acceptance, core Co-hosting workflow, voice/model rights and future production customer security. The supplied YouTube transcript has been reviewed in a [timestamped implementation mapping](docs/video-review-jarvis-workflows.md). Video visuals, promotional offers, subscription entitlements and latency claims have not been independently verified.
+
+### Service-business automation target
+
+The [Nexus operating blueprint](docs/nexus-service-business-blueprint.md) records the requested lead → estimate → approved contractor → job evidence → acceptance → invoice/settlement workflow and reusable company subscriptions. It clearly separates existing local tools from unbuilt connectors, contractor access, image review and money movement. No outreach, hiring, ad spend, payment or subscription activation is performed by the blueprint.

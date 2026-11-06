@@ -10,6 +10,10 @@ The video page and metadata remain inaccessible, but the operator supplied its t
 
 Adopt modular voice components, task-specific agents, read-only data grounding, evidence-based recommendations and durable background-job visibility. These are proposed extensions where the current product lacks them, not claims of completed integrations. Preserve original visual assets and Nexus branding. A tutorial demo is not proof of commercial terms, scalability or customer demand.
 
+## Expanded operating requirements
+
+The operator specified a lead-to-settlement service-business platform: client acquisition/contact, intake and estimates, contractor onboarding/assignment, category-based photographic evidence/review, marketing optimization, reconciled receipts/payouts and configurable Nexus subscriptions for other businesses. See [the detailed workflow, approval boundaries and build sequence](nexus-service-business-blueprint.md). These new requirements are not implemented merely by recording them; human hiring review, verified provider authorization and company/assignment isolation are explicit prerequisites.
+
 ## Product focus
 
 Start with a single-company Windows pilot centered on Co-hosting knowledge, intake, estimates and job checklists. Holding, Aviation, Security Operations and Future Ventures retain their distinct manual operating desks; no live flight/security dispatch or regulatory clearance is implied. Future subscription architecture is a separate release gate from the current trusted-laptop prototype.
