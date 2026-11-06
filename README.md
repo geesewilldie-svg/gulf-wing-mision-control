@@ -378,3 +378,7 @@ Double-click `Start-Nexus.cmd` to start existing Mission Control, Ollama and Nex
 ### Automatic background listening preference
 
 Enable **Automatically resume background listening on this device** in Nexus voice once to request background conversation on future page loads after Controller access, local transcription and granted browser permission are ready. Mute disables this saved preference. A blocked browser shows a visible Resume listening action; browser/OS restrictions cannot be bypassed. The shortcut installer now accepts `-AtSignIn -OpenAtSignIn` to open the laptop browser after service startup. Closed-browser listening and interruption during Nexus's replies are not implemented. See [automatic listening and limits](docs/background-assistant.md).
+
+### Fish Audio and future commercial licensing
+
+Fish Audio remains disabled while current hosted API pricing, service terms and the selected voice's commercial rights are verified. The current laptop is not recommended for local deployment of the documented full Fish models. See the [dated hardware/licensing review](docs/fish-audio-evaluation.md), which distinguishes the self-hosting community license, separately licensed weights, hosted API terms and voice-specific rights. Nexus's subscription/client-product goal requires a complete dependency/model/voice review and production tenant security; those are not implied by a successful local prototype.
