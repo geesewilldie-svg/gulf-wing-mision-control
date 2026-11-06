@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { startServices } from "./nexus-launcher-lib.mjs";
+import { startServices, backgroundVoicePython } from "./nexus-launcher-lib.mjs";
 const services = [
   { id: "ollama", name: "Ollama", port: 11434 },
   { id: "server", name: "Mission Control", port: 3000 },
@@ -71,4 +71,30 @@ test("missing files and failed voice do not prevent an independently healthy das
     result.map((r) => r.state),
     ["missing", "ready", "failed"],
   );
+});
+
+test("background voice requires pythonw rather than silently falling back to a terminal interpreter", async () => {
+  const folder = "voice-scripts";
+  const selected = await backgroundVoicePython(folder, async (file) =>
+    file.endsWith("pythonw.exe"),
+  );
+  assert.ok(selected.endsWith("pythonw.exe"));
+  assert.equal(
+    await backgroundVoicePython(folder, async (file) =>
+      file.endsWith("python.exe"),
+    ),
+    null,
+  );
+});
+
+test("an exited process is reported differently from a still-loading worker", async () => {
+  const logs = [];
+  await startServices([services[2]], {
+    log: (s) => logs.push(s),
+    probe: async () => "down",
+    prepare: async () => true,
+    start: async () => 42,
+    wait: async () => "failed",
+  });
+  assert.ok(logs.some((s) => s.includes("process exited before readiness")));
 });

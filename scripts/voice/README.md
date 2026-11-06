@@ -133,3 +133,11 @@ Stop the **voice-worker** tab using Ctrl+C, then restart
 PyAV library from the running process. Leave the Next.js/Mission Control server
 running. Refresh Nexus, check local voice, then retry Record question. The smoke
 test decodes generated PCM audio without downloading or loading a speech model.
+
+Windows background startup uses the repository launcher's `pythonw.exe` path to
+avoid terminal-close events from the numerical runtime. Kokoro and Piper child
+processes request `CREATE_NO_WINDOW` on Windows; their data pipes remain unchanged.
+The manual `start-nexus-voice.cmd` command is still a foreground diagnostic: keep
+that window open. Launcher logs now include per-attempt timestamps and loading
+milestones. Existing `window-CLOSE` errors in an appended log can be historical;
+check current worker health before restarting. No new dependencies are required.

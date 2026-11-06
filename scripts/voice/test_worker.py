@@ -32,6 +32,10 @@ class VoiceProtocolTests(unittest.TestCase):
         cls.server.shutdown()
         cls.server.server_close()
 
+    def test_windows_subprocesses_use_no_console_without_changing_other_platforms(self):
+        self.assertEqual(worker.background_subprocess_options("nt"), {"creationflags": 0x08000000})
+        self.assertEqual(worker.background_subprocess_options("posix"), {})
+
     def test_health_reports_missing_models(self):
         with urllib.request.urlopen(self.base + "/health") as response:
             self.assertEqual(json.load(response), {"available": True, "speech": False, "transcription": False, "engines": [], "preferred": None, "profile": None})

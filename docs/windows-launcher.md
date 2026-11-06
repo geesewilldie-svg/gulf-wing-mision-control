@@ -49,3 +49,11 @@ No sign-in shortcut has been installed by building or downloading this repositor
 - For troubleshooting, run `Start-Nexus.cmd` from PowerShell so messages remain visible. Native Windows detached-process lifetime, shortcut creation, sign-in behavior and actual voice/model readiness still need acceptance on the ASUS laptop.
 
 Automated tests cover the platform-neutral startup decisions (reuse, no duplicates, occupied ports, warming models, missing files and component failure). They do not claim a native Windows installation was tested on Linux.
+
+## Windows console-close voice failures
+
+A `forrtl: error (200) ... window-CLOSE event` entry indicates console-close handling in the numeric runtime. An appended log may contain entries from older attempts; it does not by itself prove that the latest worker is stopped. Check current `/health` and the timestamped launcher header before changing processes.
+
+Background voice now uses `.venv-voice/Scripts/pythonw.exe` with unbuffered output rather than attaching console Python to the launcher. Kokoro and Piper subprocesses use Windows `CREATE_NO_WINDOW` while retaining their pipes and output capture. No model packages or downloads change. The worker reports loading/readiness milestones without logging audio or prompts. If `pythonw.exe` is missing, the background launch reports missing setup rather than silently using console Python; the original foreground `scripts/start-nexus-voice.cmd` remains available for diagnosis with its window kept open.
+
+The launcher conservatively treats a previously tracked live PID as pending even if the interpreter choice changed, avoiding a duplicate worker during an update. A healthy old worker is reused. To test the new background runtime, first identify and stop only the confirmed project voice worker if it is still running, then relaunch. Native console-close survival must be verified on the laptop; Linux fixture tests only validate startup choices, flags and protocol behavior.

@@ -3,7 +3,7 @@ import path from "node:path";
 import net from "node:net";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { startServices } from "./nexus-launcher-lib.mjs";
+import { startServices, backgroundVoicePython } from "./nexus-launcher-lib.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const privateDir = path.join(root, ".gulf-wing");
@@ -31,7 +31,6 @@ async function managedProbe(service) {
   if (state !== "down") return state;
   const entry = managed[service.id];
   return entry &&
-    entry.command === service.command &&
     Number.isSafeInteger(entry.pid) &&
     entry.pid > 0 &&
     alive(entry.pid)
@@ -89,6 +88,9 @@ async function launchLogged(service) {
   }
   const log = await fs.open(logFile, "a", 0o600);
   try {
+    await log.write(
+      `\n[${new Date().toISOString()}] Launcher starting ${service.id}${service.id === "voice" ? " with console-free Python" : ""}.\n`,
+    );
     return await new Promise((resolve, reject) => {
       const child = spawn(service.command, service.args, {
         cwd: root,
@@ -204,11 +206,12 @@ async function main() {
       "NEXUS — one-click Windows startup\nNo updates, downloads or pairing changes. Browser listening follows your saved device preference.",
     );
     const ollama = await ollamaPath(),
-      python = path.join(root, ".venv-voice", "Scripts", "python.exe"),
-      voiceScripts = path.dirname(python);
+      voiceScripts = path.join(root, ".venv-voice", "Scripts"),
+      python = await backgroundVoicePython(voiceScripts, exists);
     const env = {
       ...process.env,
       PATH: voiceScripts + path.delimiter + (process.env.PATH || ""),
+      PYTHONUNBUFFERED: "1",
       NEXUS_WHISPER_MODEL: "",
       NEXUS_KOKORO_PYTHON: "",
       NEXUS_PIPER_MODEL: path.join(
@@ -276,7 +279,7 @@ async function main() {
         port: 8766,
         url: "http://127.0.0.1:8766/health",
         command: python,
-        args: [path.join(root, "scripts", "voice", "worker.py")],
+        args: ["-u", path.join(root, "scripts", "voice", "worker.py")],
         env,
         timeout: 90000,
       },

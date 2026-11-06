@@ -1,3 +1,4 @@
+import path from "node:path";
 // Platform-neutral orchestration, separated from Windows process launch for testing.
 export async function startServices(services, io) {
   const results = [];
@@ -36,7 +37,7 @@ export async function startServices(services, io) {
       const process = await io.start(service);
       const ready = await io.wait(service, process);
       io.log(
-        `${service.name}: ${ready === "ready" ? "ready" : ready === "degraded" ? "running; check capabilities" : "not ready yet; inspect the private launcher logs before retrying"}.`,
+        `${service.name}: ${ready === "ready" ? "ready" : ready === "degraded" ? "running; check capabilities" : ready === "failed" ? "process exited before readiness; inspect the current timestamp in the private launcher log" : "still warming up; inspect the private launcher logs before retrying"}.`,
       );
       results.push({ id: service.id, state: ready });
     } catch {
@@ -47,4 +48,10 @@ export async function startServices(services, io) {
     }
   }
   return results;
+}
+
+// Windowed Python avoids attaching the voice worker to a closing terminal console.
+export async function backgroundVoicePython(scriptsDirectory, exists) {
+  const windowed = path.join(scriptsDirectory, "pythonw.exe");
+  return (await exists(windowed)) ? windowed : null;
 }

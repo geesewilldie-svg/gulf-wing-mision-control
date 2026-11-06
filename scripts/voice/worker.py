@@ -16,12 +16,20 @@ import atexit
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+def background_subprocess_options(platform=None):
+    """Keep numeric speech subprocesses off Windows terminal consoles."""
+    if (platform or os.name) == "nt":
+        return {"creationflags": getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)}
+    return {}
+
 whisper = None
 whisper_path = os.environ.get("NEXUS_WHISPER_MODEL", "")
 piper_path = os.environ.get("NEXUS_PIPER_MODEL", "")
 if whisper_path and Path(whisper_path).is_dir():
+    print("Nexus voice: loading local transcription model.", flush=True)
     from faster_whisper import WhisperModel
     whisper = WhisperModel(whisper_path, device="cpu", compute_type="int8", local_files_only=True)
+    print("Nexus voice: local transcription model ready.", flush=True)
 piper_ready = bool(shutil.which("piper") and piper_path and Path(piper_path).is_file() and Path(piper_path + ".json").is_file())
 
 class KokoroBridge:
@@ -37,6 +45,7 @@ class KokoroBridge:
             [python, "-u", str(Path(__file__).with_name("kokoro_bridge.py"))],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
             text=True, encoding="utf-8", env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+            **background_subprocess_options(),
         )
         atexit.register(self.close)
         threading.Thread(target=self._read, daemon=True).start()
@@ -84,7 +93,9 @@ class KokoroBridge:
 kokoro = None
 if os.environ.get("NEXUS_KOKORO_PYTHON"):
     try:
+        print("Nexus voice: loading local Kokoro speech model.", flush=True)
         kokoro = KokoroBridge()
+        print("Nexus voice: local Kokoro speech model ready.", flush=True)
     except Exception:
         print("Kokoro could not start. Check its venv and model paths; Piper remains independent.")
 
@@ -146,7 +157,7 @@ class Handler(BaseHTTPRequestHandler):
                         kokoro.speak(text, output)
                     else:
                         subprocess.run(["piper", "--model", piper_path, "--length-scale", "0.9", "--sentence-silence", "0.08", "--output_file", str(output)],
-                                       input=text, text=True, check=True, capture_output=True, timeout=90)
+                                       input=text, text=True, check=True, capture_output=True, timeout=90, **background_subprocess_options())
                     return self.reply(200, output.read_bytes(), "audio/wav")
             self.reply(503, {"error": "Requested local voice model is not configured"})
         except Exception as error:
@@ -158,5 +169,5 @@ class Handler(BaseHTTPRequestHandler):
                 self.reply(503, {"error": "Local speech generation failed", "code": "speech_generation_failed"})
 
 if __name__ == "__main__":
-    print("Nexus voice worker: laptop loopback only, port 8766. No wake-word listener.")
+    print("Nexus voice worker: laptop loopback only, port 8766. No wake-word listener.", flush=True)
     HTTPServer(("127.0.0.1", 8766), Handler).serve_forever()
