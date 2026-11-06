@@ -2,7 +2,7 @@
 
 After the reviewed launcher files are on the laptop, double-click **Start-Nexus.cmd** in the project folder. It starts installed Ollama, the built Mission Control app and the existing Nexus Voice worker in the background, then opens `http://localhost:3000/nexus`. No PowerShell tabs need to stay open for processes started by this launcher. Existing manually started services retain their original lifetime: keep their windows open until you intentionally stop them and let the launcher start them next time.
 
-This starts existing tools only: no package/model downloads, git pull, build, pairing-code rotation, external provider activation or microphone recording. It needs Node, the installed dependencies, a completed production build, Ollama, and the voice environments/models already set up. Missing components produce instructions; they are not silently installed. The voice setup matches `scripts/start-nexus-voice.cmd`, including Isabella/Kokoro when the files exist.
+This starts existing tools only: no package/model downloads, git pull, build, pairing-code rotation, external provider activation or independent microphone recording. It needs Node, the installed dependencies, a completed production build, Ollama, and the voice environments/models already set up. Missing components produce instructions; they are not silently installed. The voice setup matches `scripts/start-nexus-voice.cmd`, including Isabella/Kokoro when the files exist.
 
 ## Desktop shortcut and optional sign-in startup
 
@@ -20,7 +20,15 @@ To also start services automatically when **you sign in to Windows**, run instea
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-nexus-shortcuts.ps1 -AtSignIn
 ```
 
-The sign-in shortcut starts the components without opening a browser or microphone. Double-click the Desktop shortcut when you want the Nexus page. Browser microphone permission and **Start background assistant** remain explicit actions. This does not record audio while Windows starts.
+For the quiet command above, the sign-in shortcut starts the components without opening a browser or microphone. Double-click the Desktop shortcut when you want the Nexus page. Browser microphone permission and **Start background assistant** remain explicit actions. This does not record audio while Windows starts.
+
+To open Nexus at sign-in as well (for the saved automatic-listening preference):
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-nexus-shortcuts.ps1 -AtSignIn -OpenAtSignIn
+```
+
+Then enable **Automatically resume background listening on this device** in the laptop browser once. Use localhost consistently. Previously granted microphone permission, Controller access and ready local voice are required. Browser sound policy may still require Resume listening. This opens the browser after the local service startup checks; it does not add a native microphone service or bypass Windows/browser permissions. Mute disables the saved listening preference.
 
 To remove automatic startup while retaining the Desktop shortcut:
 

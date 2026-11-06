@@ -480,3 +480,111 @@ test("starting another Nexus window mutes the existing background session", asyn
     .click();
   await other.close();
 });
+
+async function automaticAudio(
+  page: import("@playwright/test").Page,
+  permission = "granted",
+) {
+  await syntheticAudio(page);
+  await page.addInitScript((permission) => {
+    // Synthetic capture only: keep fixtures independent of Chromium autoplay policy.
+    window.AudioContext.prototype.resume = function () {
+      return Promise.resolve();
+    };
+    Object.defineProperty(navigator.permissions, "query", {
+      configurable: true,
+      value: async () => ({ state: permission }),
+    });
+  }, permission);
+}
+
+test("saved automatic listening resumes on reload and explicit mute persists off", async ({
+  page,
+}) => {
+  await automaticAudio(page);
+  await page.goto("/nexus");
+  await page.getByText("Nexus voice · Push to talk", { exact: true }).click();
+  const pref = page.getByLabel(
+    "Automatically resume background listening on this device",
+  );
+  await expect(pref).not.toBeChecked();
+  await pref.check();
+  await expect(page.locator(".conversation-phase")).toContainText("Listening");
+  await page.reload();
+  await expect(
+    page.getByRole("complementary", { name: "Nexus background assistant" }),
+  ).toBeVisible();
+  await expect
+    .poll(() => page.evaluate(() => (window as any).mics.length))
+    .toBe(1);
+  await page.getByRole("button", { name: "Mute Nexus", exact: true }).click();
+  expect(
+    await page.evaluate(() =>
+      localStorage.getItem("gulf-wing.nexus-auto-listen.v1"),
+    ),
+  ).toBe("disabled");
+  await page.reload();
+  await page.waitForTimeout(400);
+  expect(await page.evaluate(() => (window as any).mics.length)).toBe(0);
+});
+
+test("automatic listening waits for controller and permission, with a visible resume fallback", async ({
+  page,
+}) => {
+  await automaticAudio(page, "prompt");
+  await page.addInitScript(() =>
+    localStorage.setItem("gulf-wing.nexus-auto-listen.v1", "enabled"),
+  );
+  await page.goto("/nexus");
+  const dock = page.getByRole("complementary", {
+    name: "Nexus background assistant",
+  });
+  await expect(dock).toContainText("Allow microphone access");
+  expect(await page.evaluate(() => (window as any).mics.length)).toBe(0);
+  await dock.getByRole("button", { name: "Resume listening" }).click();
+  await expect(dock).toContainText("Listening");
+  await dock.getByRole("button", { name: "Mute Nexus" }).click();
+});
+
+test("saved automatic listening does not steal a conversation from another active window", async ({
+  page,
+  context,
+}) => {
+  await automaticAudio(page);
+  await page.goto("/nexus");
+  await page.getByText("Nexus voice · Push to talk", { exact: true }).click();
+  await page
+    .getByLabel("Automatically resume background listening on this device")
+    .check();
+  await expect(page.locator(".conversation-phase")).toContainText("Listening");
+  const second = await context.newPage();
+  await automaticAudio(second);
+  await second.goto("/nexus");
+  await expect(
+    second.getByRole("complementary", { name: "Nexus background assistant" }),
+  ).toContainText("Another Nexus window");
+  expect(await second.evaluate(() => (window as any).mics.length)).toBe(0);
+  await page.getByRole("button", { name: "Mute Nexus" }).click();
+  await second.close();
+});
+
+test("display-only access never auto-captures even with a saved listening preference", async ({
+  page,
+}) => {
+  await automaticAudio(page);
+  await page.request.post("/api/sync/session", {
+    data: { code: process.env.GW_SYNC_TEST_CODE, role: "display" },
+  });
+  await page.addInitScript(() =>
+    localStorage.setItem("gulf-wing.nexus-auto-listen.v1", "enabled"),
+  );
+  await page.goto("/nexus");
+  const dock = page.getByRole("complementary", {
+    name: "Nexus background assistant",
+  });
+  await expect(
+    dock.getByRole("button", { name: "Resume listening" }),
+  ).toBeDisabled();
+  expect(await page.evaluate(() => (window as any).mics.length)).toBe(0);
+  await dock.getByRole("button", { name: "Mute Nexus" }).click();
+});

@@ -83,6 +83,29 @@ export default function NexusVoice({
       if (timer.current) clearTimeout(timer.current);
     };
   }, [disabled]);
+  useEffect(() => {
+    if (disabled || local.transcription) return;
+    const controller = new AbortController();
+    let pending = false;
+    const timer = setInterval(() => {
+      if (pending) return;
+      pending = true;
+      void fetch("/api/sync/voice", {
+        signal: AbortSignal.any([controller.signal, AbortSignal.timeout(4000)]),
+      })
+        .then(async (r) => {
+          if (r.ok && !controller.signal.aborted) setLocal(await r.json());
+        })
+        .catch(() => {})
+        .finally(() => {
+          pending = false;
+        });
+    }, 8000);
+    return () => {
+      controller.abort();
+      clearInterval(timer);
+    };
+  }, [disabled, local.transcription]);
   const speak = async () => {
     stopSpeech();
     setMessage("");

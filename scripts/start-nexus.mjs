@@ -201,7 +201,7 @@ async function main() {
       if (e.code !== "ENOENT") throw Error("Invalid launcher process state.");
     }
     console.log(
-      "NEXUS — one-click Windows startup\nNo updates, downloads, pairing changes or microphone activation.",
+      "NEXUS — one-click Windows startup\nNo updates, downloads or pairing changes. Browser listening follows your saved device preference.",
     );
     const ollama = await ollamaPath(),
       python = path.join(root, ".venv-voice", "Scripts", "python.exe"),

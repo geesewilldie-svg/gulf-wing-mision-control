@@ -72,6 +72,16 @@ export default function NexusConversation({
   onAsk: AskConversation;
   onActive: (active: boolean) => void;
 }) {
+  const preferenceKey = "gulf-wing.nexus-auto-listen.v1";
+  const [autoResume, setAutoResume] = useState(false);
+  const [preferenceLoaded, setPreferenceLoaded] = useState(false);
+  const [preferenceNotice, setPreferenceNotice] = useState("");
+  const autoAttempted = useRef(false);
+  const autoProbe = useRef<AbortController | null>(null);
+  const autoRequested = useRef(autoResume);
+  autoRequested.current = autoResume;
+  const anotherActive = useRef(false);
+  const autoStart = useRef<() => Promise<void>>(async () => {});
   const [background, setBackground] = useState(false);
   const backgroundRef = useRef(false);
   const previousSection = useRef(section);
@@ -95,6 +105,46 @@ export default function NexusConversation({
     }
     handlers.current.onActive(false);
   };
+  const remember = (value: boolean) => {
+    autoRequested.current = value;
+    if (!value) autoProbe.current?.abort();
+    setAutoResume(value);
+    autoAttempted.current = false;
+    try {
+      localStorage.setItem(preferenceKey, value ? "enabled" : "disabled");
+      setPreferenceNotice("");
+    } catch {
+      setPreferenceNotice(
+        "This browser could not save the listening preference. It applies to this page only.",
+      );
+    }
+  };
+  const mute = () => {
+    remember(false);
+    stop("Muted. Automatic listening is off for this device.");
+  };
+  const muteRef = useRef(mute);
+  muteRef.current = mute;
+  useEffect(() => {
+    try {
+      setAutoResume(localStorage.getItem(preferenceKey) === "enabled");
+    } catch {
+      setPreferenceNotice(
+        "Saved listening settings could not be read. Start listening manually.",
+      );
+    }
+    setPreferenceLoaded(true);
+    const changed = (event: StorageEvent) => {
+      if (event.key === preferenceKey && event.newValue !== "enabled") {
+        autoProbe.current?.abort();
+        setAutoResume(false);
+        autoAttempted.current = true;
+        stopRef.current("Muted from another Nexus window. Microphone is off.");
+      }
+    };
+    window.addEventListener("storage", changed);
+    return () => window.removeEventListener("storage", changed);
+  }, []);
   const stopRef = useRef(stop);
   stopRef.current = stop;
   useEffect(() => {
@@ -110,6 +160,9 @@ export default function NexusConversation({
       const channel = new BroadcastChannel("gulf-wing-nexus-conversation");
       ownership.current = channel;
       channel.onmessage = (event) => {
+        if (event.data === "probe-active" && session.current)
+          channel.postMessage("active");
+        if (event.data === "active") anotherActive.current = true;
         if (event.data === "started" && session.current)
           stopRef.current(
             "Another Nexus window started a conversation. This window is muted.",
@@ -123,10 +176,10 @@ export default function NexusConversation({
         event.ctrlKey &&
         event.altKey &&
         event.code === "KeyM" &&
-        session.current
+        (session.current || autoRequested.current)
       ) {
         event.preventDefault();
-        stopRef.current();
+        muteRef.current();
       }
     };
     document.addEventListener("keydown", muteKey);
@@ -162,6 +215,60 @@ export default function NexusConversation({
       stopRef.current();
     previousSection.current = section;
   }, [section]);
+
+  useEffect(() => {
+    if (disabled) {
+      autoAttempted.current = false;
+      return;
+    }
+    if (
+      !preferenceLoaded ||
+      !autoResume ||
+      !transcriptionReady ||
+      autoAttempted.current ||
+      session.current
+    )
+      return;
+    autoAttempted.current = true;
+    const controller = new AbortController();
+    autoProbe.current = controller;
+    void (async () => {
+      try {
+        if (!window.isSecureContext || !navigator.permissions?.query) {
+          setMessage(
+            "Automatic listening needs localhost/HTTPS and browser permission. Use Resume listening.",
+          );
+          return;
+        }
+        const permission = await navigator.permissions.query({
+          name: "microphone" as PermissionName,
+        });
+        if (controller.signal.aborted) return;
+        if (permission.state !== "granted") {
+          setMessage(
+            "Allow microphone access, then use Resume listening. Automatic retries are paused.",
+          );
+          return;
+        }
+        anotherActive.current = false;
+        ownership.current?.postMessage("probe-active");
+        await wait(180, controller.signal);
+        if (anotherActive.current) {
+          setMessage(
+            "Another Nexus window is already listening. This window stays muted.",
+          );
+          return;
+        }
+        if (!session.current) await autoStart.current();
+      } catch {
+        if (!controller.signal.aborted)
+          setMessage(
+            "Automatic listening could not start. Use Resume listening.",
+          );
+      }
+    })();
+    return () => controller.abort();
+  }, [disabled, preferenceLoaded, autoResume, transcriptionReady]);
 
   async function capture(signal: AbortSignal): Promise<Blob | null> {
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -493,7 +600,7 @@ export default function NexusConversation({
             text,
           )
         ) {
-          stop("Stopped by voice command. Microphone is off.");
+          muteRef.current();
           break;
         }
         setPhase("Thinking");
@@ -521,6 +628,8 @@ export default function NexusConversation({
     }
   }
 
+  autoStart.current = () => start(true);
+
   return (
     <section
       ref={root}
@@ -538,6 +647,28 @@ export default function NexusConversation({
         sections. Speech picked up in that mode is automatically submitted to
         Nexus. Mute it for calls or private conversations.
       </p>
+      <label className="nexus-sharing">
+        <input
+          type="checkbox"
+          checked={autoResume}
+          disabled={disabled}
+          onChange={(e) => {
+            const enabled = e.target.checked;
+            remember(enabled);
+            if (enabled) {
+              autoAttempted.current = true;
+              if (session.current && !backgroundRef.current) stop();
+              if (!session.current && transcriptionReady) void start(true);
+              else if (!transcriptionReady) {
+                autoAttempted.current = false;
+                setMessage("Waiting for local transcription readiness.");
+              }
+            } else stop("Automatic listening disabled. Microphone is off.");
+          }}
+        />
+        Automatically resume background listening on this device
+      </label>
+      {preferenceNotice && <p>{preferenceNotice}</p>}
       <div className="nexus-buttons">
         <button
           onClick={() => void start()}
@@ -551,7 +682,7 @@ export default function NexusConversation({
         >
           Start background assistant
         </button>
-        <button onClick={() => stop()} disabled={!active}>
+        <button onClick={() => muteRef.current()} disabled={!active}>
           Stop conversation / Mute
         </button>
       </div>
@@ -562,28 +693,51 @@ export default function NexusConversation({
       {heard && <p>Last heard: {heard}</p>}
       {message && <p role="status">{message}</p>}
       <small>
-        Microphone access starts only after your click. Say “stop listening” to
-        end while listening. Ctrl+Alt+M mutes while this Nexus window has focus
-        (not a Windows-wide hotkey). Normal conversation stops when hidden;
-        background assistant keeps running while the browser and laptop stay
-        awake. Closing the normal voice panel stops normal conversation.
-        Background mode can keep the panel collapsed; use Mute Nexus to stop.
-        Refreshing, leaving this page or losing controller access stops both
-        modes. No auto-start after reopening and no wake word. Recent context
-        stays in this session only.
+        Enable the device setting once to resume background listening on future
+        page loads when controller access, local transcription and browser
+        microphone permission are ready. Mute, Ctrl+Alt+M (while this window has
+        focus), or “stop listening” turns this setting off. The microphone
+        remains off while Nexus thinks and speaks. Browser autoplay restrictions
+        can require Resume listening. Closing the browser, navigating away,
+        sign-out, sleep or losing controller access stops capture. This is not a
+        Windows microphone service or a wake-word listener. Recent conversation
+        context stays in this session only.
       </small>
-      {active &&
-        background &&
+      {((active && background) || (autoResume && preferenceLoaded)) &&
         createPortal(
           <aside
             className="nexus-assistant-dock"
             aria-label="Nexus background assistant"
           >
             <div>
-              <strong>NEXUS · Background assistant on</strong>
+              <strong>
+                NEXUS ·{" "}
+                {active
+                  ? "Background assistant on"
+                  : "Automatic listening requested"}
+              </strong>
               <p role="status">{phase}</p>
+              {!active && (
+                <p>
+                  {message ||
+                    (!transcriptionReady
+                      ? "Waiting for local voice readiness."
+                      : disabled
+                        ? "Controller access required."
+                        : "Checking saved microphone permission…")}
+                </p>
+              )}
             </div>
-            <button type="button" onClick={() => stop()}>
+            {!active && (
+              <button
+                type="button"
+                disabled={disabled || !transcriptionReady}
+                onClick={() => void start(true)}
+              >
+                Resume listening
+              </button>
+            )}
+            <button type="button" onClick={() => muteRef.current()}>
               Mute Nexus
             </button>
           </aside>,
