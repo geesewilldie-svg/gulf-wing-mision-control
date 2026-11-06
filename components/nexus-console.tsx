@@ -9,6 +9,7 @@ import NexusVoice from "./nexus-voice";
 import type { ConversationTurn } from "@/lib/conversation";
 import NexusBusiness from "./nexus-business";
 import KnowledgeImport from "./knowledge-import";
+import DailyBrief from "./daily-brief";
 import TeamAccess from "./team-access";
 import SyncControls from "./sync-controls";
 
@@ -122,7 +123,13 @@ export default function NexusConsole() {
         or property-management system.
       </p>
       <nav className="nexus-tabs" aria-label="Nexus sections">
-        {["Ask Nexus", "Co-hosting", "Marketing", "Connections"].map((item) => (
+        {[
+          "Ask Nexus",
+          "Daily brief",
+          "Co-hosting",
+          "Marketing",
+          "Connections",
+        ].map((item) => (
           <button
             key={item}
             aria-pressed={tab === item}
@@ -306,6 +313,7 @@ export default function NexusConsole() {
           onConversationActive={setConversationActive}
         />
       </section>
+      {tab === "Daily brief" && <DailyBrief disabled={disabled} />}
       {tab === "Co-hosting" && <NexusBusiness disabled={disabled} />}
       {tab === "Marketing" && <NexusBusiness marketing disabled={disabled} />}
       {tab === "Connections" && (

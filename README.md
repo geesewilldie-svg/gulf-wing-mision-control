@@ -390,3 +390,7 @@ Nexus is intended to remain an original holographic business command center with
 ### Service-business automation target
 
 The [Nexus operating blueprint](docs/nexus-service-business-blueprint.md) records the requested lead → estimate → approved contractor → job evidence → acceptance → invoice/settlement workflow and reusable company subscriptions. It clearly separates existing local tools from unbuilt connectors, contractor access, image review and money movement. No outreach, hiring, ad spend, payment or subscription activation is performed by the blueprint.
+
+### Daily brief preparation and product delivery status
+
+The **Daily brief** Nexus tab saves real tasks and protected-time preferences on the laptop and provides a manual task-only preview. It excludes DEMO missions. Google Calendar, scheduled email and automatic delivery are not connected in this increment. See [delivery status and next gates](docs/nexus-delivery-status.md) and [customer/workforce app requirements](docs/nexus-client-contractor-apps.md).
