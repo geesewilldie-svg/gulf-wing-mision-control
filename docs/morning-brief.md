@@ -4,7 +4,7 @@
 
 In Nexus → Daily brief, select **Enable local weekday 5 a.m. briefs and automatic morning display**, then save. The laptop server checks every minute in the configured IANA timezone. It creates one saved snapshot per local weekday at/after 5 a.m.; if started late it catches up and labels the brief late. Sleep, power loss and a stopped server prevent timely execution. Startup or opening Nexus can catch up on the same weekday; missed days are not sent retroactively.
 
-Real saved tasks and dated incomplete records from the selected industry supply priorities. Co-hosting uses saved Co-hosting records; Aviation/Security use their corresponding venture records. General combines saved venture records. DEMO board missions are excluded. Industry selection is configuration, not company account isolation. Calendar meetings, conflicts and interruptions remain explicitly unknown until Google is connected. No email is sent.
+Real saved tasks and dated incomplete records from the selected industry supply priorities. Co-hosting uses saved Co-hosting records; Aviation/Security use their corresponding venture records. General combines saved venture records. DEMO board missions are excluded. Industry selection is configuration, not company account isolation. [Google Calendar setup](google-calendar.md) is now available; calendar meetings, conflicts and interruptions remain explicitly unknown until that account is connected. No email is sent.
 
 Opening the controller Nexus page displays the saved brief. Dismissal is remembered for that date and timezone on that browser; it is not a shared user acknowledgement. Start an enabled hands-free voice session before noon to hear the brief through the existing player before the microphone opens. After successful speech it is remembered on that device for that day; failure leaves it eligible to retry. Ask **“read my morning brief”** during conversation to replay. Calendar text is not passed to a model by this delivery path. Browser restrictions may block playback until a user gesture. Display-only access cannot read private briefs.
 
@@ -12,7 +12,7 @@ The saved snapshot does not change when tasks are edited later that day; task pr
 
 ## Still required
 
-Google OAuth, read-only calendars, email to the verified connected account, partial-source indicators and provider delivery history. No Google integration or email configuration has been enabled. No guarantee of 5 a.m. execution while the laptop sleeps. Named roles and tenant isolation remain prerequisites for customer deployment.
+Real Google client setup/account authorization, email to the verified connected account and provider delivery history. The Google adapter is implemented, but no real account or email configuration has been enabled by development. No guarantee of 5 a.m. execution while the laptop sleeps. Named roles and tenant isolation remain prerequisites for customer deployment.
 
 ## Laptop command execution
 

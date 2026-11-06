@@ -18,7 +18,7 @@ Opt-in Windows maintenance controls provide fixed connection checks and starting
 
 ## Next delivery gates
 
-1. Google OAuth read-only calendar access and self-email delivery, securely stored tokens, calendar selection, actual business/job priority aggregation, email-delivery scheduler and extended brief history. Test late startup, duplicates, revoked access, partial calendars and delivery failure. Not connected or scheduled yet. Laptop sleep prevents local execution.
+1. Read-only Google Calendar OAuth is implemented with local token storage, primary-calendar reads and brief aggregation; actual laptop client setup/account authorization is still required. See [Google setup](google-calendar.md). Self-email delivery, a multi-calendar picker and extended brief history remain unfinished. Laptop sleep prevents local execution.
 2. Named roles and server-enforced company/customer/assignment isolation before external users.
 3. Customer and workforce app workflow, private photo evidence, review/rework and acceptance.
 4. Approved service pricing/cost inputs, payment-provider sandbox collection/reconciliation and contractor payables. No live money movement without configured accounts and release policies.

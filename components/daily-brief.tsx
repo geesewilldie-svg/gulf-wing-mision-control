@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import GoogleCalendar from "./google-calendar";
 import { composeBrief, type BriefSettings } from "@/lib/daily-brief";
 
 export default function DailyBrief({ disabled }: { disabled: boolean }) {
@@ -47,10 +48,12 @@ export default function DailyBrief({ disabled }: { disabled: boolean }) {
   return (
     <section className="glass-panel" aria-label="Daily brief and real tasks">
       <h2>Daily brief · real tasks</h2>
+      <GoogleCalendar disabled={disabled} />
       <p>
         Target: weekdays at 5 a.m., with a Monday–Sunday view on Mondays. Google
-        Calendar and email delivery are not connected yet. Local weekday
-        scheduling runs while the laptop server is awake.
+        Connect Google below for calendar events. Email delivery is not
+        connected. Local weekday scheduling runs while the laptop server is
+        awake.
       </p>
       <p>
         Real tasks are stored privately on the laptop and shared with trusted

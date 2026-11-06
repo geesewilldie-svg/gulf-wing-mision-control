@@ -68,7 +68,8 @@ export default function MorningBriefNotice({
           <h2>Your morning brief · {brief.date}</h2>
           <p>
             {brief.late ? "Generated after the 5 a.m. target. " : ""}Saved
-            snapshot · {brief.timezone}. Calendar and email are not connected.
+            snapshot · {brief.timezone}. Calendar availability is shown in the
+            brief. Email delivery is not connected.
           </p>
           <pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
             {brief.text}

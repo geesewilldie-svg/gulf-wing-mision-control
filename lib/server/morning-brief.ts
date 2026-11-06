@@ -5,6 +5,7 @@ import { composeBrief, localParts, type BriefSettings } from "../daily-brief";
 import { loadBriefSettings, briefFile } from "./brief-store";
 import { loadBusiness } from "./business-store";
 import { loadOperations } from "./venture-store";
+import { googleEvents } from "./google-calendar";
 import { SyncError } from "./sync-store";
 export type MorningBrief = {
   version: 1;
@@ -60,9 +61,19 @@ export async function buildMorning(
         reason: string;
         priority?: string;
       }[] = [];
-      const warnings = [
-        "Google Calendar and email are not connected. Meetings, conflicts and calendar availability are unknown.",
-      ];
+      const warnings: string[] = [];
+      let calendarAvailable = false;
+      let events: import("../daily-brief").CalendarItem[] = [];
+      try {
+        const calendar = await googleEvents(s, now);
+        events = calendar.events;
+        warnings.push(...calendar.warnings);
+        calendarAvailable = calendar.warnings.length === 0;
+      } catch {
+        warnings.push(
+          "Google Calendar unavailable or not connected. Meetings, conflicts and availability are unknown.",
+        );
+      }
       const sources = ["Saved real Nexus tasks"];
       try {
         if (s.industry === "Co-hosting") {
@@ -101,22 +112,25 @@ export async function buildMorning(
           "Business records unavailable; priorities may be incomplete.",
         );
       }
-      const b = composeBrief(s, [], now, candidates, warnings);
+      if (calendarAvailable) sources.push("Google Calendar (read-only)");
+      const b = composeBrief(s, events, now, candidates, warnings);
       // A missing integration must never produce an apparent calendar all-clear.
-      const text = b.text
-        .replace(
-          "No calendar items found in the selected calendars.",
-          "Calendar unavailable: Google is not connected.",
-        )
-        .replace(
-          "No timed overlaps found in available selected-calendar data.",
-          "Unknown: calendar connection required.",
-        )
-        .replace(
-          "No title-matched admin intrusion found. Unclassified meetings still need review.",
-          "Unknown: calendar connection required to flag interruptions.",
-        )
-        .replace(/: 0 calendar items/g, ": calendar unavailable");
+      const text = calendarAvailable
+        ? b.text
+        : b.text
+            .replace(
+              "No calendar items found in the selected calendars.",
+              "Calendar unavailable: Google is not connected or results are incomplete.",
+            )
+            .replace(
+              "No timed overlaps found in available selected-calendar data.",
+              "Unknown: calendar connection required.",
+            )
+            .replace(
+              "No title-matched admin intrusion found. Unclassified meetings still need review.",
+              "Unknown: calendar connection required to flag interruptions.",
+            )
+            .replace(/: 0 calendar items/g, ": calendar unavailable");
       const result: MorningBrief = {
         version: 1,
         date: p.date,

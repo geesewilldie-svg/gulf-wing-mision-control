@@ -398,3 +398,7 @@ The **Daily brief** Nexus tab saves real tasks and protected-time preferences on
 ### Laptop maintenance controls
 
 After installing the reviewed update on Windows, double-click **Enable-Nexus-Maintenance.cmd** once. Nexus → Connections then offers connection checks and starting missing installed services. There is no arbitrary PowerShell execution, remote Codex connection or software download. Use **Disable-Nexus-Maintenance.cmd** to revoke future operations. See [setup and access boundaries](docs/laptop-maintenance.md).
+
+### Google Calendar (read-only)
+
+Nexus now includes an official Google OAuth connection for calendar events used in the morning brief. No account is connected automatically. Create a Google web-client configuration, import it locally with **Setup-Google-Calendar.cmd**, then connect from Nexus → Connections on localhost. See [step-by-step account setup, privacy and limitations](docs/google-calendar.md). No Gmail permissions, email delivery, calendar edits or paid services are enabled.
