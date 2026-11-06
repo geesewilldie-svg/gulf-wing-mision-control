@@ -102,10 +102,10 @@ export function validBriefSettings(v: unknown): BriefSettings {
       done: t.done,
     };
   });
-  if (s.enabled) throw Error("Scheduled delivery is not connected yet.");
+
   return {
     revision: s.revision,
-    enabled: false,
+    enabled: s.enabled,
     company: s.company.trim(),
     industry: s.industry,
     timezone: s.timezone,

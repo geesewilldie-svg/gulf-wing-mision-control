@@ -9,6 +9,7 @@ import NexusVoice from "./nexus-voice";
 import type { ConversationTurn } from "@/lib/conversation";
 import NexusBusiness from "./nexus-business";
 import KnowledgeImport from "./knowledge-import";
+import MorningBriefNotice from "./morning-brief";
 import DailyBrief from "./daily-brief";
 import TeamAccess from "./team-access";
 import SyncControls from "./sync-controls";
@@ -114,6 +115,10 @@ export default function NexusConsole() {
         </p>
       </header>
       <SyncControls />
+      <MorningBriefNotice
+        disabled={disabled}
+        voiceActive={conversationActive}
+      />
       <TeamAccess disabled={disabled} />
       <p className="nexus-notice">
         {disabled
@@ -308,6 +313,20 @@ export default function NexusConsole() {
           onTranscript={setQuery}
           onAsk={(text, history, signal) => {
             setQuery(text);
+            if (
+              /\b(read|give|show|what)\b.*\b(morning|daily) brief\b/i.test(text)
+            ) {
+              return fetch("/api/sync/brief/morning", { signal }).then(
+                async (r) => {
+                  const d = await r.json();
+                  if (!r.ok) throw Error(d.error);
+                  return (
+                    d.brief?.text ||
+                    "No saved morning brief is available. Enable local weekday briefs in Daily brief settings."
+                  );
+                },
+              );
+            }
             return ask(text, history, signal);
           }}
           onConversationActive={setConversationActive}

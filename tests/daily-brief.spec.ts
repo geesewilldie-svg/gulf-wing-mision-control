@@ -64,10 +64,10 @@ test("real priorities exclude completed tasks; calendar overlaps and admin remai
   expect(b.text).not.toContain("Already finished");
   expect(b.text).toContain("no events changed");
 });
-test("malformed tasks and premature schedule enablement are rejected", () => {
-  expect(() =>
-    validBriefSettings({ ...defaultBriefSettings(), enabled: true }),
-  ).toThrow();
+test("malformed tasks are rejected and local scheduling can be enabled", () => {
+  expect(
+    validBriefSettings({ ...defaultBriefSettings(), enabled: true }).enabled,
+  ).toBe(true);
   expect(() =>
     validBriefSettings({
       ...defaultBriefSettings(),
@@ -123,18 +123,31 @@ test("private tasks persist, stale saves fail and display access is denied", asy
   await display.dispose();
 });
 
-test('daily brief task controls work on the Nexus page',async({page,context})=>{
- await context.request.post('/api/sync/session',{data:{code:process.env.GW_SYNC_TEST_CODE,role:'controller'}});
- await page.goto('/nexus');
- await page.getByRole('button',{name:'Daily brief',exact:true}).click();
- await page.getByLabel('New real task').fill('Synthetic mobile task');
- await page.getByRole('button',{name:'Add task',exact:true}).click();
- await page.getByRole('button',{name:'Save tasks and preferences'}).click();
- await expect(page.getByRole('status').filter({hasText:'Saved on your laptop'})).toBeVisible();
- await page.getByRole('button',{name:'Preview task brief'}).click();
- await expect(page.locator('pre')).toContainText('Synthetic mobile task');
- await expect(page.locator('pre')).toContainText('Google Calendar is not connected');
- await page.reload();
- await page.getByRole('button',{name:'Daily brief',exact:true}).click();
- await expect(page.getByRole('checkbox',{name:'Synthetic mobile task'})).toBeVisible();
+test("daily brief task controls work on the Nexus page", async ({
+  page,
+  context,
+}) => {
+  await context.request.post("/api/sync/session", {
+    data: { code: process.env.GW_SYNC_TEST_CODE, role: "controller" },
+  });
+  await page.goto("/nexus");
+  await page.getByRole("button", { name: "Daily brief", exact: true }).click();
+  await page.getByLabel("New real task").fill("Synthetic mobile task");
+  await page.getByRole("button", { name: "Add task", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Save tasks and preferences" })
+    .click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Saved on your laptop" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Preview task brief" }).click();
+  await expect(page.locator("pre")).toContainText("Synthetic mobile task");
+  await expect(page.locator("pre")).toContainText(
+    "Google Calendar is not connected",
+  );
+  await page.reload();
+  await page.getByRole("button", { name: "Daily brief", exact: true }).click();
+  await expect(
+    page.getByRole("checkbox", { name: "Synthetic mobile task" }),
+  ).toBeVisible();
 });

@@ -393,4 +393,4 @@ The [Nexus operating blueprint](docs/nexus-service-business-blueprint.md) record
 
 ### Daily brief preparation and product delivery status
 
-The **Daily brief** Nexus tab saves real tasks and protected-time preferences on the laptop and provides a manual task-only preview. It excludes DEMO missions. Google Calendar, scheduled email and automatic delivery are not connected in this increment. See [delivery status and next gates](docs/nexus-delivery-status.md) and [customer/workforce app requirements](docs/nexus-client-contractor-apps.md).
+The **Daily brief** Nexus tab saves real tasks and protected-time preferences on the laptop and provides a manual task-only preview. It excludes DEMO missions. Opt-in local weekday scheduling, automatic display and morning conversation speech are available; see [morning brief setup and limits](docs/morning-brief.md). Google Calendar and scheduled email are not connected. See [delivery status and next gates](docs/nexus-delivery-status.md) and [customer/workforce app requirements](docs/nexus-client-contractor-apps.md).

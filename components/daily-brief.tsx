@@ -35,7 +35,9 @@ export default function DailyBrief({ disabled }: { disabled: boolean }) {
       const d = await r.json();
       if (!r.ok) throw Error(d.error);
       setSettings(d);
-      setMessage("Saved on your laptop. Scheduled email is not enabled.");
+      setMessage(
+        "Saved on your laptop. Email is not connected. Local scheduling follows your saved preference.",
+      );
     } catch (e) {
       setMessage((e as Error).message);
     } finally {
@@ -47,7 +49,8 @@ export default function DailyBrief({ disabled }: { disabled: boolean }) {
       <h2>Daily brief · real tasks</h2>
       <p>
         Target: weekdays at 5 a.m., with a Monday–Sunday view on Mondays. Google
-        Calendar, email delivery and automatic scheduling are not connected yet.
+        Calendar and email delivery are not connected yet. Local weekday
+        scheduling runs while the laptop server is awake.
       </p>
       <p>
         Real tasks are stored privately on the laptop and shared with trusted
@@ -60,6 +63,16 @@ export default function DailyBrief({ disabled }: { disabled: boolean }) {
         <fieldset disabled={busy}>
           <legend>Brief preferences and tasks</legend>
           <label>
+            <input
+              type="checkbox"
+              checked={settings.enabled}
+              onChange={(e) =>
+                setSettings({ ...settings, enabled: e.target.checked })
+              }
+            />
+            Enable local weekday 5 a.m. briefs and automatic morning display
+          </label>
+          <label>
             Company{" "}
             <input
               value={settings.company}
@@ -68,6 +81,24 @@ export default function DailyBrief({ disabled }: { disabled: boolean }) {
                 setSettings({ ...settings, company: e.target.value })
               }
             />
+          </label>
+          <label>
+            Industry{" "}
+            <select
+              value={settings.industry}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  industry: e.target.value as BriefSettings["industry"],
+                })
+              }
+            >
+              {["Co-hosting", "Aviation", "Security Operations", "General"].map(
+                (i) => (
+                  <option key={i}>{i}</option>
+                ),
+              )}
+            </select>
           </label>
           <label>
             Timezone{" "}

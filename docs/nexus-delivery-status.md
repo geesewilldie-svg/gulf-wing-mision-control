@@ -8,13 +8,13 @@ Holographic Mission Control and venture desks; local device pairing and synchron
 
 ## Current implementation increment
 
-The Daily brief tab provides laptop-persisted real tasks, due dates, priorities, completion, timezone and deep-work preferences, plus a manual task-only preview. Server checks controller access, validates inputs, detects stale revisions and saves atomically. DEMO missions are excluded. This increment does not yet aggregate saved business jobs into the preview.
+The Daily brief tab provides laptop-persisted real tasks, due dates, priorities, completion, timezone and deep-work preferences, plus a manual task-only preview. Local opt-in scheduling now saves a weekday morning snapshot from real tasks and dated industry records, displays it on opening Nexus, and speaks it when an enabled morning conversation starts. See [morning brief behavior](morning-brief.md). Server checks controller access, validates inputs, detects stale revisions and saves atomically. DEMO missions are excluded. The manual task preview is separate from the saved morning snapshot.
 
 Confirmed defaults: Gulf Wing Co-hosting; America/New_York (Cape Coral, daylight-saving aware); weekday 5 a.m. target; protected 8–11 a.m.; Monday–Sunday weekly view; eventual email to the verified connected Google account and Nexus. Deep work includes scoped owner proposals and profitability/capacity reviews; routine inbox, receipts and nonurgent scheduling are admin. No calendar changes execute automatically.
 
 ## Next delivery gates
 
-1. Google OAuth read-only calendar access and self-email delivery, securely stored tokens, calendar selection, actual business/job priority aggregation, durable scheduler and brief history. Test late startup, duplicates, revoked access, partial calendars and delivery failure. Not connected or scheduled yet. Laptop sleep prevents local execution.
+1. Google OAuth read-only calendar access and self-email delivery, securely stored tokens, calendar selection, actual business/job priority aggregation, email-delivery scheduler and extended brief history. Test late startup, duplicates, revoked access, partial calendars and delivery failure. Not connected or scheduled yet. Laptop sleep prevents local execution.
 2. Named roles and server-enforced company/customer/assignment isolation before external users.
 3. Customer and workforce app workflow, private photo evidence, review/rework and acceptance.
 4. Approved service pricing/cost inputs, payment-provider sandbox collection/reconciliation and contractor payables. No live money movement without configured accounts and release policies.
@@ -27,4 +27,4 @@ Google, email, banking, advertisements and scheduling platforms require actual s
 
 ## Morning engagement requirement
 
-The operator additionally requires automatic morning engagement on opening Nexus, or when an enabled voice session first becomes active that morning. Implement these as delivery triggers for the same persisted local-day brief, not competing generators. Persist per-user/device acknowledgement and spoken-delivery state, prevent repeated greetings on reload/reconnect, and provide replay/mute controls. Show stale, partial, late or unavailable source data explicitly. Browser speech requires permission and may require a user gesture; no promise of detecting voice while the browser is closed. The current manual task preview does not yet implement these automatic triggers.
+The operator additionally requires automatic morning engagement on opening Nexus, or when an enabled voice session first becomes active that morning. Implement these as delivery triggers for the same persisted local-day brief, not competing generators. Persist per-user/device acknowledgement and spoken-delivery state, prevent repeated greetings on reload/reconnect, and provide replay/mute controls. Show stale, partial, late or unavailable source data explicitly. Browser speech requires permission and may require a user gesture; no promise of detecting voice while the browser is closed. Local opening and morning conversation-start triggers now exist; Google calendar and email delivery remain outstanding.

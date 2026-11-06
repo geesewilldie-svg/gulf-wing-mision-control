@@ -567,6 +567,45 @@ export default function NexusConversation({
     setHeard("");
     const history: ConversationTurn[] = [];
     try {
+      // Use the conversation player before opening the microphone, never a
+      // second competing speech channel. Calendar absence remains explicit.
+      try {
+        const response = await fetch("/api/sync/brief/morning", {
+          method: "POST",
+          signal: controller.signal,
+        });
+        if (response.ok) {
+          const { brief } = await response.json();
+          if (brief && typeof brief.text === "string") {
+            const parts = new Intl.DateTimeFormat("en-CA", {
+              timeZone: brief.timezone,
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              hourCycle: "h23",
+            }).formatToParts(new Date());
+            const values = Object.fromEntries(
+              parts.map((p) => [p.type, p.value]),
+            );
+            const today = `${values.year}-${values.month}-${values.day}`;
+            const key =
+              "nexus.morning.spoken." + brief.timezone + "." + brief.date;
+            if (
+              today === brief.date &&
+              Number(values.hour) < 12 &&
+              localStorage.getItem(key) !== "yes"
+            ) {
+              setPhase("Morning brief · microphone off");
+              await speak(brief.text, controller.signal);
+              if (!controller.signal.aborted) localStorage.setItem(key, "yes");
+            }
+          }
+        }
+      } catch (error) {
+        if (controller.signal.aborted)
+          throw error; /* Brief failure must not disable conversation. */
+      }
       while (!controller.signal.aborted) {
         setPhase("Opening microphone");
         const audio = await capture(controller.signal);

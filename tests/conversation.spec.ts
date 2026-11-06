@@ -588,3 +588,50 @@ test("display-only access never auto-captures even with a saved listening prefer
   expect(await page.evaluate(() => (window as any).mics.length)).toBe(0);
   await dock.getByRole("button", { name: "Mute Nexus" }).click();
 });
+
+test("morning voice brief uses the conversation player before capture and speaks once per device day", async ({
+  page,
+}) => {
+  await syntheticAudio(page);
+  await page.clock.setFixedTime(new Date("2026-11-09T12:00:00Z"));
+  await page.route("**/api/sync/brief/morning", (route) =>
+    route.fulfill({
+      json: {
+        brief: {
+          version: 1,
+          date: "2026-11-09",
+          timezone: "America/New_York",
+          generatedAt: "2026-11-09T10:00:00Z",
+          late: false,
+          text: "Synthetic morning priorities. Calendar unavailable.",
+          sources: [],
+        },
+      },
+    }),
+  );
+  await page.goto("/nexus");
+  await page.getByText("Nexus voice · Push to talk", { exact: true }).click();
+  await page
+    .getByRole("button", { name: "Start conversation", exact: true })
+    .click();
+  await expect(page.locator(".conversation-phase")).toContainText(
+    "Morning brief",
+  );
+  expect(await page.evaluate(() => (window as any).mics.length)).toBe(0);
+  await expect
+    .poll(() => page.evaluate(() => (window as any).players.length))
+    .toBe(1);
+  await page.evaluate(() => (window as any).players[0].onended());
+  await expect(page.locator(".conversation-phase")).toContainText("Listening");
+  await page
+    .getByRole("button", { name: "Stop conversation / Mute", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Start conversation", exact: true })
+    .click();
+  await expect(page.locator(".conversation-phase")).toContainText("Listening");
+  expect(await page.evaluate(() => (window as any).players.length)).toBe(1);
+  await page
+    .getByRole("button", { name: "Stop conversation / Mute", exact: true })
+    .click();
+});
