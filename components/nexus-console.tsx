@@ -9,6 +9,7 @@ import NexusVoice from "./nexus-voice";
 import type { ConversationTurn } from "@/lib/conversation";
 import NexusBusiness from "./nexus-business";
 import KnowledgeImport from "./knowledge-import";
+import LaptopMaintenance from "./laptop-maintenance";
 import MorningBriefNotice from "./morning-brief";
 import DailyBrief from "./daily-brief";
 import TeamAccess from "./team-access";
@@ -338,6 +339,7 @@ export default function NexusConsole() {
       {tab === "Connections" && (
         <section className="nexus-card">
           <h2>Connections and agents</h2>
+          <LaptopMaintenance disabled={disabled} />
           <p>
             Local-first routing is available. OpenAI, Claude and Gemini adapters
             require explicit server configuration and per-question sharing

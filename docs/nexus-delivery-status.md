@@ -12,6 +12,10 @@ The Daily brief tab provides laptop-persisted real tasks, due dates, priorities,
 
 Confirmed defaults: Gulf Wing Co-hosting; America/New_York (Cape Coral, daylight-saving aware); weekday 5 a.m. target; protected 8–11 a.m.; Monday–Sunday weekly view; eventual email to the verified connected Google account and Nexus. Deep work includes scoped owner proposals and profitability/capacity reviews; routine inbox, receipts and nonurgent scheduling are admin. No calendar changes execute automatically.
 
+## Local maintenance increment
+
+Opt-in Windows maintenance controls provide fixed connection checks and starting missing installed services. They require local enablement and existing controller authentication. No arbitrary PowerShell, model-invoked execution, remote Codex access, SSH or Tailscale installation is provided. See [setup and limits](laptop-maintenance.md). Actual Windows enablement/startup needs laptop acceptance.
+
 ## Next delivery gates
 
 1. Google OAuth read-only calendar access and self-email delivery, securely stored tokens, calendar selection, actual business/job priority aggregation, email-delivery scheduler and extended brief history. Test late startup, duplicates, revoked access, partial calendars and delivery failure. Not connected or scheduled yet. Laptop sleep prevents local execution.

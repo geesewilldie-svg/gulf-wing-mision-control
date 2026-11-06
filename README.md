@@ -394,3 +394,7 @@ The [Nexus operating blueprint](docs/nexus-service-business-blueprint.md) record
 ### Daily brief preparation and product delivery status
 
 The **Daily brief** Nexus tab saves real tasks and protected-time preferences on the laptop and provides a manual task-only preview. It excludes DEMO missions. Opt-in local weekday scheduling, automatic display and morning conversation speech are available; see [morning brief setup and limits](docs/morning-brief.md). Google Calendar and scheduled email are not connected. See [delivery status and next gates](docs/nexus-delivery-status.md) and [customer/workforce app requirements](docs/nexus-client-contractor-apps.md).
+
+### Laptop maintenance controls
+
+After installing the reviewed update on Windows, double-click **Enable-Nexus-Maintenance.cmd** once. Nexus → Connections then offers connection checks and starting missing installed services. There is no arbitrary PowerShell execution, remote Codex connection or software download. Use **Disable-Nexus-Maintenance.cmd** to revoke future operations. See [setup and access boundaries](docs/laptop-maintenance.md).
