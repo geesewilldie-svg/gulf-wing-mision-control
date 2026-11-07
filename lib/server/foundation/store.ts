@@ -26,7 +26,7 @@ export function withStore<T>(fn: (db: DatabaseSync) => T): T {
     const version = Number(
       (db.prepare("PRAGMA user_version").get() as any).user_version,
     );
-    if (version > 1)
+    if (version > 2)
       throw new SyncError(
         503,
         "Foundation database is newer than this application. No downgrade was attempted.",
@@ -41,6 +41,22 @@ export function withStore<T>(fn: (db: DatabaseSync) => T): T {
  CREATE TABLE events(id INTEGER PRIMARY KEY AUTOINCREMENT,task_id TEXT,type TEXT NOT NULL,at TEXT NOT NULL,detail TEXT NOT NULL);
  CREATE TABLE skills(id TEXT PRIMARY KEY,task_id TEXT NOT NULL,description TEXT NOT NULL,status TEXT NOT NULL CHECK(status='draft'));
  PRAGMA user_version=1;COMMIT;`);
+    if (version < 2) {
+      if (version === 1) {
+        const dir = path.join(root, "foundation-backups");
+        mkdirSync(dir, { recursive: true, mode: 0o700 });
+        const backup = path.join(
+          dir,
+          "before-schema-2-" + Date.now() + "-" + randomUUID() + ".sqlite",
+        );
+        db.prepare("VACUUM INTO ?").run(backup);
+        if (process.platform !== "win32") chmodSync(backup, 0o600);
+      }
+      db.exec(`BEGIN IMMEDIATE;
+      CREATE TABLE worker_grants(task_id TEXT PRIMARY KEY,task_revision INTEGER NOT NULL,expires INTEGER NOT NULL,consumed INTEGER NOT NULL);
+      CREATE TABLE worker_runs(id TEXT PRIMARY KEY,task_id TEXT NOT NULL,task_revision INTEGER NOT NULL,state TEXT NOT NULL,progress INTEGER NOT NULL,started_at TEXT NOT NULL,updated_at TEXT NOT NULL,detail TEXT NOT NULL,pid INTEGER);
+      PRAGMA user_version=2;COMMIT;`);
+    }
     return fn(db);
   } finally {
     db.close();
@@ -86,6 +102,11 @@ const task = (r: any): NexusTask => ({
 export function snapshot(): FoundationSnapshot {
   return withStore((db) => ({
     schemaVersion: 1,
+    workerRuns: db
+      .prepare(
+        "SELECT id,task_id AS taskId,task_revision AS taskRevision,state,progress,started_at AS startedAt,updated_at AS updatedAt,detail,pid FROM worker_runs ORDER BY started_at DESC LIMIT 50",
+      )
+      .all() as any,
     tasks: db
       .prepare("SELECT * FROM tasks ORDER BY created_at DESC LIMIT 200")
       .all()
@@ -186,6 +207,30 @@ export function changeTask(input: any) {
             );
           if (!policy(db).planningEnabled)
             throw new SyncError(403, "Owner policy has paused task dispatch.");
+          if (
+            input.allowWorker !== undefined &&
+            typeof input.allowWorker !== "boolean"
+          )
+            throw new SyncError(400, "Worker consent must be explicit.");
+          db.prepare("DELETE FROM worker_grants WHERE task_id=?").run(t.id);
+          if (input.allowWorker === true) {
+            if (t.mode !== "development")
+              throw new SyncError(
+                400,
+                "Cloud worker consent applies only to development tasks.",
+              );
+            db.prepare("INSERT INTO worker_grants VALUES(?,?,?,0)").run(
+              t.id,
+              t.revision + 1,
+              Date.now() + 10 * 60 * 1000,
+            );
+            event(
+              db,
+              t.id,
+              "worker.authorized",
+              "Owner permitted sending this objective to the signed-in Codex worker for one attempt within ten minutes; no owner memory or credentials included.",
+            );
+          }
           state = "queued";
           reason = "Waiting for the local coordinator";
           break;
@@ -384,6 +429,9 @@ export function claimNext() {
       db.prepare(
         "UPDATE tasks SET state='running',reason='Preparing bounded local work',revision=revision+1,policy_revision=?,updated_at=? WHERE id=?",
       ).run(p.revision, new Date().toISOString(), t.id);
+      db.prepare(
+        "UPDATE worker_grants SET task_revision=? WHERE task_id=? AND task_revision=?",
+      ).run(t.revision + 1, t.id, t.revision);
       event(db, t.id, "task.running", "Local coordinator claimed work.");
       return task(db.prepare("SELECT * FROM tasks WHERE id=?").get(t.id));
     }),
@@ -404,7 +452,12 @@ export function stillCurrent(t: NexusTask) {
     );
   });
 }
-export function finishTask(t: NexusTask, output: string, waiting = false) {
+export function finishTask(
+  t: NexusTask,
+  output: string,
+  waiting = false,
+  candidateReady = false,
+) {
   return withStore((db) =>
     transaction(db, () => {
       const r = current(db, t.id, t.revision),
@@ -431,7 +484,9 @@ export function finishTask(t: NexusTask, output: string, waiting = false) {
       ).run(
         waiting ? "waiting" : "completed",
         waiting
-          ? "Development handoff ready; authenticated coding worker is not connected"
+          ? candidateReady
+            ? "Codex candidate ready; independent tests and promotion are not performed"
+            : "Development handoff ready; live worker was not authorized for this attempt"
           : "Planning artifact saved and read back; no external task was executed",
         output,
         new Date().toISOString(),
@@ -456,7 +511,9 @@ export function finishTask(t: NexusTask, output: string, waiting = false) {
         t.id,
         waiting ? "task.waiting" : "task.completed",
         waiting
-          ? "Handoff and unvalidated skill draft saved."
+          ? candidateReady
+            ? "Structurally checked code candidate and unvalidated draft saved. Tests/code execution were not performed."
+            : "Handoff and unvalidated skill draft saved."
           : "Plan artifact verified in local storage, not real-world effects.",
       );
     }),
@@ -493,6 +550,9 @@ export function recoverTasks() {
           "Interrupted work paused for owner review.",
         );
       }
+      db.prepare(
+        "UPDATE worker_runs SET state='interrupted',detail='Coordinator restarted. Child process termination is unverified; owner must confirm it stopped before another cloud run.',updated_at=? WHERE state IN ('starting','running','validating')",
+      ).run(new Date().toISOString());
       return rows.length;
     }),
   );
@@ -514,6 +574,18 @@ export function deleteTask(input: any) {
           409,
           "Pause or cancel active work before deleting it.",
         );
+      const uncertain = db
+        .prepare(
+          "SELECT id FROM worker_runs WHERE task_id=? AND state IN ('starting','running','validating','interrupted')",
+        )
+        .get(t.id);
+      if (uncertain)
+        throw new SyncError(
+          409,
+          "Resolve or stop the associated worker before deleting its evidence.",
+        );
+      db.prepare("DELETE FROM worker_grants WHERE task_id=?").run(t.id);
+      db.prepare("DELETE FROM worker_runs WHERE task_id=?").run(t.id);
       db.prepare("DELETE FROM skills WHERE task_id=?").run(t.id);
       db.prepare("DELETE FROM events WHERE task_id=?").run(t.id);
       db.prepare("DELETE FROM tasks WHERE id=?").run(t.id);
@@ -547,4 +619,159 @@ export function backupFoundation() {
     );
     return filename;
   });
+}
+
+export function hasWorkerConsent(t: NexusTask) {
+  return withStore(
+    (db) =>
+      !!db
+        .prepare(
+          "SELECT task_id FROM worker_grants WHERE task_id=? AND task_revision=? AND expires>? AND consumed=0",
+        )
+        .get(t.id, t.revision, Date.now()),
+  );
+}
+export function beginWorkerRun(t: NexusTask) {
+  return withStore((db) =>
+    transaction(db, () => {
+      const p = policy(db);
+      const currentTask = current(db, t.id, t.revision);
+      if (
+        currentTask.state !== "running" ||
+        p.revision !== t.policyRevision ||
+        !p.planningEnabled
+      )
+        throw new SyncError(409, "Task authorization changed.");
+      if (
+        db
+          .prepare(
+            "SELECT id FROM worker_runs WHERE state IN ('starting','running','validating','interrupted')",
+          )
+          .get()
+      )
+        throw new SyncError(
+          409,
+          "A worker is active or has an unresolved interruption.",
+        );
+      const grant = db
+        .prepare(
+          "SELECT * FROM worker_grants WHERE task_id=? AND task_revision=? AND expires>? AND consumed=0",
+        )
+        .get(t.id, t.revision, Date.now());
+      if (!grant)
+        throw new SyncError(403, "No current one-use worker consent.");
+      db.prepare("UPDATE worker_grants SET consumed=1 WHERE task_id=?").run(
+        t.id,
+      );
+      const id = randomUUID(),
+        now = new Date().toISOString();
+      db.prepare(
+        "INSERT INTO worker_runs(id,task_id,task_revision,state,progress,started_at,updated_at,detail) VALUES(?,?,?,'starting',0,?,?,?)",
+      ).run(
+        id,
+        t.id,
+        t.revision,
+        now,
+        now,
+        "Starting a bounded Codex candidate-authoring attempt.",
+      );
+      event(
+        db,
+        t.id,
+        "worker.starting",
+        "One-use consent consumed; no API-key fallback.",
+      );
+      return id;
+    }),
+  );
+}
+export function updateWorkerRun(
+  id: string,
+  state: string,
+  detail: string,
+  progress = false,
+) {
+  withStore((db) => {
+    if (
+      ![
+        "running",
+        "validating",
+        "candidate-ready",
+        "failed",
+        "cancelled",
+        "interrupted",
+      ].includes(state)
+    )
+      throw new SyncError(400, "Invalid worker state.");
+    db.prepare(
+      "UPDATE worker_runs SET state=?,detail=?,progress=progress+?,updated_at=? WHERE id=?",
+    ).run(state, detail, progress ? 1 : 0, new Date().toISOString(), id);
+  });
+}
+export function acknowledgeWorker(input: any) {
+  withStore((db) =>
+    transaction(db, () => {
+      if (input.confirmStopped !== true)
+        throw new SyncError(
+          400,
+          "Confirm the interrupted worker process has stopped first.",
+        );
+      const id = text(input.id, 80);
+      const r = db
+        .prepare(
+          "SELECT task_id FROM worker_runs WHERE id=? AND state='interrupted'",
+        )
+        .get(id) as any;
+      if (!r)
+        throw new SyncError(
+          409,
+          "This run is not awaiting interruption review.",
+        );
+      db.prepare(
+        "UPDATE worker_runs SET state='owner-acknowledged',detail='Owner confirmed the previous process stopped; this is not automatic process verification.',updated_at=? WHERE id=?",
+      ).run(new Date().toISOString(), id);
+      event(
+        db,
+        r.task_id,
+        "worker.interruption-acknowledged",
+        "Owner confirmed stopped process; no stale command replayed.",
+      );
+    }),
+  );
+}
+
+export function workerProcessId(id: string, pid: number) {
+  if (!Number.isSafeInteger(pid) || pid <= 0)
+    throw new SyncError(400, "Invalid worker process identity.");
+  withStore((db) => {
+    db.prepare("UPDATE worker_runs SET pid=? WHERE id=?").run(pid, id);
+  });
+}
+
+export function workerActivity() {
+  return withStore((db) =>
+    (
+      db
+        .prepare(
+          "SELECT id,state,started_at,updated_at FROM worker_runs ORDER BY started_at DESC LIMIT 40",
+        )
+        .all() as any[]
+    )
+      .filter((r) => Date.parse(r.updated_at) > Date.now() - 15 * 60 * 1000)
+      .map((r) => ({
+        id: "worker-" + r.id,
+        agent: "codex-worker",
+        started: Date.parse(r.started_at),
+        finished: ["starting", "running", "validating"].includes(r.state)
+          ? undefined
+          : Date.parse(r.updated_at),
+        state: ["starting", "running", "validating"].includes(r.state)
+          ? ("working" as const)
+          : r.state === "candidate-ready"
+            ? ("complete" as const)
+            : r.state === "cancelled"
+              ? ("cancelled" as const)
+              : ("failed" as const),
+      })),
+  );
 }

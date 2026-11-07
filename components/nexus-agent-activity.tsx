@@ -6,6 +6,7 @@ export default function NexusAgentActivity({ enabled }: { enabled: boolean }) {
       providers: ProviderStatus[];
       events: AgentEvent[];
       obsidian?: boolean;
+      workers?: { id: string; name: string; configured: boolean }[];
     } | null>(null),
     [message, setMessage] = useState("");
   useEffect(() => {
@@ -61,6 +62,7 @@ export default function NexusAgentActivity({ enabled }: { enabled: boolean }) {
       name: p.id === "local" ? "Ollama" : p.name,
       configured: p.configured,
     })),
+    ...(state?.workers ?? []),
   ];
   return (
     <section
@@ -72,7 +74,8 @@ export default function NexusAgentActivity({ enabled }: { enabled: boolean }) {
       <p>
         Connections pulse for recorded requests, not simulated work. Configured
         providers are not guaranteed reachable. Public research and external
-        sharing are opt-in.
+        sharing are opt-in. Codex signals indicate candidate authoring, not
+        tested or deployed code.
       </p>
       {!enabled ? (
         <p>Pair as a Controller to view private request status.</p>
@@ -166,7 +169,7 @@ export default function NexusAgentActivity({ enabled }: { enabled: boolean }) {
           </svg>
           <p className="nexus-router-note">
             {message ||
-              "Short requests may finish between refreshes; their completed paths remain highlighted briefly. Events expire after 15 minutes or server restart."}
+              "Short requests may finish between refreshes; their completed paths remain highlighted briefly. Signals are shown for 15 minutes; durable coding-worker history remains in Foundation."}
           </p>
           <details>
             <summary>Recent request outcomes</summary>

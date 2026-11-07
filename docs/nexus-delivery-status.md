@@ -20,6 +20,10 @@ Opt-in Windows maintenance controls provide fixed connection checks and starting
 
 A SQLite-backed Foundation workspace now provides real tasks, local-only owner memory, background local planning, policy pauses, restart recovery, evidence-labeled artifacts, backup snapshots and unvalidated development handoffs. This is the first implementation increment of the general assistant architecture, not completed broad computer automation. See [delivery details and acceptance](architecture/nexus-foundation.md).
 
+## Optional coding worker
+
+The Codex candidate-authoring adapter now supports local dedicated sign-in, per-attempt objective sharing, private workspaces, progress, cancellation, candidate validation and interruption fencing. It stays disabled until actual laptop setup. Code/tests are not executed or promoted automatically; customer subscription embedding remains unverified. See [setup and acceptance](architecture/nexus-codex-worker.md).
+
 ## Next delivery gates
 
 1. Read-only Google Calendar OAuth is implemented with local token storage, primary-calendar reads and brief aggregation; actual laptop client setup/account authorization is still required. See [Google setup](google-calendar.md). Self-email delivery, a multi-calendar picker and extended brief history remain unfinished. Laptop sleep prevents local execution.

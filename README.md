@@ -406,3 +406,7 @@ Nexus now includes an official Google OAuth connection for calendar events used 
 ### Durable Nexus foundation (Node 24+)
 
 The **Foundation** Nexus tab adds SQLite-backed tasks, explicit local-only owner memory, dispatch policy, recovery, planning artifacts and development handoffs. Local planning runs through the configured Ollama model; no new paid provider is activated. Development handoffs remain waiting until an authenticated coding worker is implemented. Existing business JSON stores are preserved. Read [what works, privacy, backup and remaining stages](docs/architecture/nexus-foundation.md) before using it with sensitive information. This is a trusted-controller prototype, not tenant-isolated production software.
+
+### Optional Codex candidate worker
+
+The Foundation can send an explicitly authorized development objective to an official Codex CLI installed privately with **Setup-Nexus-Codex.cmd**. It requires local ChatGPT sign-in and task-specific consent. Candidates are structurally validated but never automatically executed or applied; account quota/terms apply and API-key fallback is disabled. **Disable-Nexus-Codex.cmd** revokes future dispatch. See [setup, migration, interruption handling and limits](docs/architecture/nexus-codex-worker.md).

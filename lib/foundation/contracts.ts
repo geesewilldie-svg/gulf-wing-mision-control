@@ -50,6 +50,17 @@ export type FoundationEvent = {
 export type FoundationSnapshot = {
   schemaVersion: 1;
   capabilities?: typeof foundationCapabilities;
+  workerRuns?: {
+    id: string;
+    taskId: string;
+    taskRevision: number;
+    state: string;
+    progress: number;
+    startedAt: string;
+    updatedAt: string;
+    detail: string;
+    pid?: number | null;
+  }[];
   tasks: NexusTask[];
   memory: MemoryRecord[];
   policy: { revision: number; planningEnabled: boolean };
@@ -132,6 +143,43 @@ export const foundationCapabilities = [
     limitations: [
       "No authenticated coding worker",
       "No skill activation or code execution",
+    ],
+  },
+  {
+    id: "nexus.codex.candidate",
+    version: 1,
+    mode: "development",
+    health: "installed",
+    prerequisites: [
+      "Locally enabled pinned Codex CLI",
+      "Dedicated ChatGPT sign-in",
+      "Explicit one-use task-objective sharing consent",
+      "Current task/policy revision",
+    ],
+    inputSchema: {
+      type: "object",
+      required: ["request", "scope"],
+      properties: {
+        request: { type: "string", maxLength: 2000 },
+        scope: { enum: scopes },
+      },
+    },
+    outputSchema: {
+      type: "object",
+      required: ["summary", "files", "testNotes"],
+    },
+    effects: [
+      "Task objective sent to Codex using account quota",
+      "Private candidate artifact and progress metadata",
+    ],
+    cost: "ChatGPT account limits apply; no API-key fallback",
+    cancellation:
+      "Owned process tree termination with unknown-outcome handling",
+    verification:
+      "Candidate schema and path checks only; tests/code execution not run",
+    limitations: [
+      "No live code application, test execution, promotion, merge or deployment",
+      "Not approved for customer subscription embedding",
     ],
   },
 ] as const;

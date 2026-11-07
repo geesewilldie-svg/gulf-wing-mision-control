@@ -18,7 +18,7 @@ Broad authorized computer access remains a target. Current restrictions are hone
 - Foundation tab for scoped task objectives, planning/development modes, queue/pause/cancel/correct/delete, saved artifacts, explicit owner memory and dispatch policy.
 - Background single-host coordinator checks queued work every five seconds; one local inference slot is shared with ordinary local answers. Plans use only the configured local model and bounded imported evidence; no cloud fallback.
 - Completion means a planning artifact was saved and read back. It never establishes that an arbitrary requested real-world action happened. Process/model output is not provider confirmation.
-- Development requests save structured handoffs linked to their parent task and create unvalidated draft skill records. No Codex/Claude execution, automatic skill activation or core self-update is claimed.
+- Development requests save structured handoffs linked to their parent task and create unvalidated draft skill records. This original handoff-only increment is now extended by an optional [Codex candidate-authoring adapter](nexus-codex-worker.md). It still does not provide candidate code execution, Claude execution, automatic skill activation or core self-update.
 - Active tasks are paused after coordinator restart. Resume is explicit; external operations are not replayed. Corrections, policy pauses and memory changes invalidate stale workers. Cancellation preserves already saved artifacts.
 - Personal memory applies across workspace scopes; other scopes are selected explicitly. Records are owner-entered, versioned and local-only. Correction history is retained until the record is deleted. No automatic preference inference or casual chat-to-memory writes.
 - Local owner context is added only to local inference. External provider requests do not receive foundation memory; recent conversation history is withheld from external requests to avoid indirectly forwarding local-only memory from prior answers. A user's explicitly submitted query remains governed by that request's existing sharing controls.
@@ -43,7 +43,7 @@ UI reads show the latest 200 tasks, 500 memory records and 100 event/skill recor
 2. Pair as Controller and open Nexus → Foundation. Save owner facts/instructions and a task. Queue a planning task only when the existing local model is ready. Closing the browser does not stop the coordinator while the Node server remains running.
 3. Planning output is limited by the existing local model's small context/output budget. Model failures remain visible and resumable. A busy inference slot can require retry; paid fallback is not used.
 4. Test objective steering, policy pause and process restart on the laptop. Sleep/sign-out/power-off stop local execution; the coordinator is not an installed Windows service.
-5. Use Development handoff to save a work order for later authenticated worker integration. It remains waiting; downloading a handoff is not a worker connection.
+5. Use Development handoff to save a work order for later authenticated worker integration. It remains waiting without explicit worker consent/setup; downloading a handoff is not a worker connection. The optional candidate adapter also stays waiting for independent review and testing.
 
 ## Dependency-aware work remaining
 

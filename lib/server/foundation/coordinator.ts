@@ -6,7 +6,9 @@ import {
   failTask,
   memoryContext,
   recoverTasks,
+  hasWorkerConsent,
 } from "./store";
+import { runCodexWorker } from "./codex-worker";
 import { askProvider } from "../agent-router";
 import { readKnowledge } from "../nexus-store";
 import { searchDocuments } from "../../nexus";
@@ -42,7 +44,7 @@ export async function coordinatorTick(
   try {
     task = claimNext();
     if (!task) return;
-    if (task.mode === "development") {
+    if (task.mode === "development" && !hasWorkerConsent(task)) {
       const handoff = {
         schemaVersion: 1,
         parentTaskId: task.id,
@@ -50,8 +52,8 @@ export async function coordinatorTick(
         objective: task.request,
         scope: task.scope,
         policyRevision: task.policyRevision,
-        worker: "not-connected",
-        status: "awaiting-authenticated-worker",
+        worker: "not-requested",
+        status: "awaiting-explicit-worker-consent-or-local-setup",
         permissions: [],
         externalSpendLimit: 0,
         requirements: [
@@ -68,7 +70,10 @@ export async function coordinatorTick(
       return;
     }
     const abort = new AbortController();
-    const deadline = setTimeout(() => abort.abort(), 120000);
+    const deadline = setTimeout(
+      () => abort.abort(),
+      task.mode === "development" ? 300000 : 120000,
+    );
     const check = setInterval(() => {
       try {
         if (!stillCurrent(task!)) abort.abort();
@@ -77,15 +82,24 @@ export async function coordinatorTick(
       }
     }, 500);
     try {
-      const output = await worker(task, abort.signal);
+      const output =
+        task.mode === "development"
+          ? await runCodexWorker(task, abort.signal)
+          : await worker(task, abort.signal);
       if (abort.signal.aborted) {
         failTask(
           task,
-          "Local planning timed out; no external action was performed.",
+          task.mode === "development"
+            ? "Coding worker interrupted; account quota/credits may have been used. No candidate was applied."
+            : "Local planning timed out; no external action was performed.",
         );
         return;
       }
       if (!stillCurrent(task)) return;
+      if (task.mode === "development") {
+        finishTask(task, output, true, true);
+        return;
+      }
       finishTask(
         task,
         "PLANNING ARTIFACT — no external actions performed. Model claims require independent evidence.\n\n" +
@@ -101,7 +115,9 @@ export async function coordinatorTick(
     if (task)
       failTask(
         task,
-        "Local planning unavailable or interrupted. No cloud fallback or external execution was used. Review and queue again.",
+        task.mode === "development"
+          ? "Coding worker unavailable or interrupted. Check worker readiness and consent; no code was applied and no API fallback was used."
+          : "Local planning unavailable or interrupted. No cloud fallback or external execution was used. Review and queue again.",
       );
   } finally {
     state.nexusFoundationBusy = false;

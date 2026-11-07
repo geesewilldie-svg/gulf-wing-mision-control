@@ -1,4 +1,5 @@
 "use client";
+import CodexWorkerStatus from "./codex-worker-status";
 import { useEffect, useState } from "react";
 import {
   scopes,
@@ -10,6 +11,10 @@ export default function NexusFoundation({ disabled }: { disabled: boolean }) {
   const [data, setData] = useState<FoundationSnapshot | null>(null),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
+  const [workerConsent, setWorkerConsent] = useState<Record<string, number>>(
+    {},
+  );
+  const [stopped, setStopped] = useState<Record<string, boolean>>({});
   const [request, setRequest] = useState(""),
     [workspace, setWorkspace] = useState<Scope>("Personal"),
     [mode, setMode] = useState("plan");
@@ -92,6 +97,7 @@ export default function NexusFoundation({ disabled }: { disabled: boolean }) {
         path. This is one trusted-controller installation; workspace scopes are
         not separate company accounts.
       </p>
+      <CodexWorkerStatus disabled={disabled} />
       <p role="status">{message}</p>
       {!data ? (
         <p>Loading private foundation…</p>
@@ -175,7 +181,7 @@ export default function NexusFoundation({ disabled }: { disabled: boolean }) {
                     Prepare a local plan — no external execution
                   </option>
                   <option value="development">
-                    Prepare a development handoff — worker not connected
+                    Development handoff / optional Codex candidate
                   </option>
                 </select>
               </label>
@@ -199,20 +205,45 @@ export default function NexusFoundation({ disabled }: { disabled: boolean }) {
                   {t.scope} · <strong>{t.state}</strong> · revision {t.revision}
                 </p>
                 <p>{t.reason}</p>
+                {t.mode === "development" &&
+                  ["accepted", "paused", "failed", "waiting"].includes(
+                    t.state,
+                  ) && (
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={workerConsent[t.id] === t.revision}
+                        onChange={(e) =>
+                          setWorkerConsent({
+                            ...workerConsent,
+                            [t.id]: e.target.checked ? t.revision : -1,
+                          })
+                        }
+                      />
+                      Allow this objective to be sent to the locally signed-in
+                      Codex worker for one attempt (account quota/credits
+                      apply). No owner memory is sent.
+                    </label>
+                  )}
                 <div className="foundation-actions">
                   {["accepted", "paused", "failed", "waiting"].includes(
                     t.state,
                   ) && (
                     <button
                       disabled={busy || !data.policy.planningEnabled}
-                      onClick={() =>
-                        mutate({
+                      onClick={async () => {
+                        await mutate({
                           op: "task.change",
                           id: t.id,
                           revision: t.revision,
                           action: "queue",
-                        })
-                      }
+                          allowWorker: workerConsent[t.id] === t.revision,
+                        });
+                        setWorkerConsent((current) => ({
+                          ...current,
+                          [t.id]: -1,
+                        }));
+                      }}
                     >
                       Queue work
                     </button>
@@ -467,6 +498,44 @@ export default function NexusFoundation({ disabled }: { disabled: boolean }) {
             ))}
           </section>
           <section className="nexus-card">
+            <h3>Worker runs</h3>
+            {(data.workerRuns || []).map((r) => (
+              <article key={r.id} className="foundation-task">
+                <p>
+                  {r.state} · {r.progress} progress events
+                  {r.pid ? " · owned launcher PID " + r.pid : ""}
+                </p>
+                <p>{r.detail}</p>
+                {r.state === "interrupted" && (
+                  <>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={!!stopped[r.id]}
+                        onChange={(e) =>
+                          setStopped({ ...stopped, [r.id]: e.target.checked })
+                        }
+                      />
+                      I checked that this previous worker process stopped. A
+                      reused PID must not be killed without verifying its
+                      identity.
+                    </label>
+                    <button
+                      disabled={busy || !stopped[r.id]}
+                      onClick={() =>
+                        mutate({
+                          op: "worker.acknowledge",
+                          id: r.id,
+                          confirmStopped: true,
+                        })
+                      }
+                    >
+                      Acknowledge stopped worker
+                    </button>
+                  </>
+                )}
+              </article>
+            ))}
             <h3>Capabilities and learning</h3>
             <details>
               <summary>Registered capability contracts</summary>

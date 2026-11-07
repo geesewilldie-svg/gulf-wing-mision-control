@@ -7,6 +7,7 @@ import {
   SyncError,
 } from "@/lib/server/sync-store";
 import {
+  acknowledgeWorker,
   deleteTask,
   backupFoundation,
   snapshot,
@@ -41,6 +42,9 @@ export async function POST(request: Request) {
       throw new SyncError(400, "Choose a supported foundation operation.");
     try {
       switch (body.op) {
+        case "worker.acknowledge":
+          acknowledgeWorker(body);
+          break;
         case "task.create":
           createTask(body);
           break;
