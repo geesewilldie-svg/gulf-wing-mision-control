@@ -1,3 +1,4 @@
+import { fixtureRole, fixtureCookieHeader } from "./helpers/access";
 import { test, expect } from "@playwright/test";
 import { mkdtemp, writeFile, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -165,16 +166,13 @@ test("calendar parser excludes cancelled/declined events and respects exclusive 
   ).toBeNull();
 });
 test("Google endpoints require controller, reject cross-origin setup and callbacks never reflect authorization codes", async ({
-  request,
+  context,
 }) => {
+  const request = context.request;
   expect((await request.get("/api/sync/google")).status()).toBe(401);
-  await request.post("/api/sync/session", {
-    data: { code: process.env.GW_SYNC_TEST_CODE, role: "display" },
-  });
+  await fixtureRole(context, "display");
   expect((await request.get("/api/sync/google")).status()).toBe(403);
-  await request.post("/api/sync/session", {
-    data: { code: process.env.GW_SYNC_TEST_CODE, role: "controller" },
-  });
+  await fixtureRole(context, "controller");
   expect(
     (
       await request.post("/api/sync/google", {
@@ -201,9 +199,7 @@ test("connection UI explains local setup and does not imply account authorizatio
   page,
   context,
 }) => {
-  await context.request.post("/api/sync/session", {
-    data: { code: process.env.GW_SYNC_TEST_CODE, role: "controller" },
-  });
+  await fixtureRole(context, "controller");
   await page.goto("/nexus");
   await page.getByRole("button", { name: "Connections", exact: true }).click();
   const panel = page.getByRole("region", {

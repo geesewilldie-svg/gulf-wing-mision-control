@@ -1,3 +1,4 @@
+import { fixtureRole, fixtureCookieHeader } from "./helpers/access";
 import { test, expect } from "@playwright/test";
 import {
   defaultBriefSettings,
@@ -84,13 +85,12 @@ test("malformed tasks are rejected and local scheduling can be enabled", () => {
   ).toThrow();
 });
 test("private tasks persist, stale saves fail and display access is denied", async ({
-  request,
+  context,
   playwright,
 }) => {
+  const request = context.request;
   expect((await request.get("/api/sync/brief")).status()).toBe(401);
-  await request.post("/api/sync/session", {
-    data: { code: process.env.GW_SYNC_TEST_CODE, role: "controller" },
-  });
+  await fixtureRole(context, "controller");
   const settings = await (await request.get("/api/sync/brief")).json();
   const next = {
     ...settings,
@@ -115,10 +115,9 @@ test("private tasks persist, stale saves fail and display access is denied", asy
   ).toBe("Prepare real proposal");
   const display = await playwright.request.newContext({
     baseURL: "http://127.0.0.1:3000",
+    extraHTTPHeaders: { Cookie: fixtureCookieHeader("display") },
   });
-  await display.post("/api/sync/session", {
-    data: { code: process.env.GW_SYNC_TEST_CODE, role: "display" },
-  });
+
   expect((await display.get("/api/sync/brief")).status()).toBe(403);
   await display.dispose();
 });
@@ -127,9 +126,7 @@ test("daily brief task controls work on the Nexus page", async ({
   page,
   context,
 }) => {
-  await context.request.post("/api/sync/session", {
-    data: { code: process.env.GW_SYNC_TEST_CODE, role: "controller" },
-  });
+  await fixtureRole(context, "controller");
   await page.goto("/nexus");
   await page.getByRole("button", { name: "Daily brief", exact: true }).click();
   await page.getByLabel("New real task").fill("Synthetic mobile task");

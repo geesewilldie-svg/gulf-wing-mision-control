@@ -9,6 +9,8 @@ import NexusVoice from "./nexus-voice";
 import type { ConversationTurn } from "@/lib/conversation";
 import NexusBusiness from "./nexus-business";
 import KnowledgeImport from "./knowledge-import";
+import NexusFoundation from "./nexus-foundation";
+import { scopes, type Scope } from "@/lib/foundation/contracts";
 import GoogleCalendar from "./google-calendar";
 import LaptopMaintenance from "./laptop-maintenance";
 import MorningBriefNotice from "./morning-brief";
@@ -33,6 +35,7 @@ export default function NexusConsole() {
     )
       setTab("Co-hosting");
   }, []);
+  const [workspaceScope, setWorkspaceScope] = useState<Scope>("Personal");
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState("auto");
   const [allowExternal, setAllowExternal] = useState(false);
@@ -81,6 +84,7 @@ export default function NexusConsole() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: text,
+          workspaceScope,
           mode,
           history,
           allowExternal,
@@ -117,6 +121,17 @@ export default function NexusConsole() {
         </p>
       </header>
       <SyncControls />
+      <label className="nexus-scope">
+        Owner memory workspace{" "}
+        <select
+          value={workspaceScope}
+          onChange={(e) => setWorkspaceScope(e.target.value as Scope)}
+        >
+          {scopes.map((s) => (
+            <option key={s}>{s}</option>
+          ))}
+        </select>
+      </label>
       <MorningBriefNotice
         disabled={disabled}
         voiceActive={conversationActive}
@@ -133,6 +148,7 @@ export default function NexusConsole() {
         {[
           "Ask Nexus",
           "Daily brief",
+          "Foundation",
           "Co-hosting",
           "Marketing",
           "Connections",
@@ -334,6 +350,7 @@ export default function NexusConsole() {
           onConversationActive={setConversationActive}
         />
       </section>
+      {tab === "Foundation" && <NexusFoundation disabled={disabled} />}
       {tab === "Daily brief" && <DailyBrief disabled={disabled} />}
       {tab === "Co-hosting" && <NexusBusiness disabled={disabled} />}
       {tab === "Marketing" && <NexusBusiness marketing disabled={disabled} />}

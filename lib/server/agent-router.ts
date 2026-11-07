@@ -152,7 +152,7 @@ export async function boundedJSON(r: Response, limit = 500000): Promise<any> {
   }
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
 }
-export async function askProvider(
+async function callProvider(
   id: ProviderId,
   query: string,
   system: string,
@@ -246,4 +246,29 @@ export async function askProvider(
   if (typeof answer !== "string" || !answer.trim())
     throw Error("Provider returned no text.");
   return answer.slice(0, 12000);
+}
+
+// All local reasoning paths share one process-local inference slot on the 8 GB host.
+const localInference = globalThis as typeof globalThis & {
+  nexusLocalInferenceBusy?: boolean;
+};
+export async function askProvider(
+  id: ProviderId,
+  query: string,
+  system: string,
+  history: ConversationTurn[],
+  signal: AbortSignal,
+): Promise<string> {
+  if (id !== "local") return callProvider(id, query, system, history, signal);
+  if (localInference.nexusLocalInferenceBusy)
+    throw new SyncError(
+      429,
+      "Local inference is busy. No cloud fallback was used.",
+    );
+  localInference.nexusLocalInferenceBusy = true;
+  try {
+    return await callProvider(id, query, system, history, signal);
+  } finally {
+    localInference.nexusLocalInferenceBusy = false;
+  }
 }

@@ -1,6 +1,6 @@
 # Nexus delivery status and retained requirements
 
-Updated November 6, 2026. Repository status is distinct from installation on the operator's laptop.
+Updated November 7, 2026. Repository status is distinct from installation on the operator's laptop.
 
 ## Working prototype
 
@@ -15,6 +15,10 @@ Confirmed defaults: Gulf Wing Co-hosting; America/New_York (Cape Coral, daylight
 ## Local maintenance increment
 
 Opt-in Windows maintenance controls provide fixed connection checks and starting missing installed services. They require local enablement and existing controller authentication. No arbitrary PowerShell, model-invoked execution, remote Codex access, SSH or Tailscale installation is provided. See [setup and limits](laptop-maintenance.md). Actual Windows enablement/startup needs laptop acceptance.
+
+## Durable assistant foundation
+
+A SQLite-backed Foundation workspace now provides real tasks, local-only owner memory, background local planning, policy pauses, restart recovery, evidence-labeled artifacts, backup snapshots and unvalidated development handoffs. This is the first implementation increment of the general assistant architecture, not completed broad computer automation. See [delivery details and acceptance](architecture/nexus-foundation.md).
 
 ## Next delivery gates
 

@@ -1,3 +1,4 @@
+import { fixtureRole, fixtureCookieHeader } from "./helpers/access";
 import { test, expect } from "@playwright/test";
 import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -48,16 +49,13 @@ test("weekday scheduler catches up once and preserves a dated snapshot from real
   }
 });
 test("morning API requires controller and same-origin writes", async ({
-  request,
+  context,
 }) => {
+  const request = context.request;
   expect((await request.post("/api/sync/brief/morning")).status()).toBe(401);
-  await request.post("/api/sync/session", {
-    data: { code: process.env.GW_SYNC_TEST_CODE, role: "display" },
-  });
+  await fixtureRole(context, "display");
   expect((await request.get("/api/sync/brief/morning")).status()).toBe(403);
-  await request.post("/api/sync/session", {
-    data: { code: process.env.GW_SYNC_TEST_CODE, role: "controller" },
-  });
+  await fixtureRole(context, "controller");
   expect(
     (
       await request.post("/api/sync/brief/morning", {
@@ -71,9 +69,7 @@ test("opening Nexus shows a saved brief and dismissal survives reload on this de
   page,
   context,
 }) => {
-  await context.request.post("/api/sync/session", {
-    data: { code: process.env.GW_SYNC_TEST_CODE, role: "controller" },
-  });
+  await fixtureRole(context, "controller");
   await page.route("**/api/sync/brief/morning", (route) =>
     route.fulfill({
       json: {

@@ -1,3 +1,4 @@
+import { fixtureRole, fixtureCookieHeader } from "./helpers/access";
 import { test, expect } from "@playwright/test";
 import {
   maintenancePlan,
@@ -24,8 +25,9 @@ test("maintenance accepts only exact operation names without shell arguments", (
   expect(() => maintenancePlan("arbitrary" as any)).toThrow();
 });
 test("unauthenticated, display and cross-origin callers cannot execute maintenance", async ({
-  request,
+  context,
 }) => {
+  const request = context.request;
   expect((await request.get("/api/sync/maintenance")).status()).toBe(401);
   expect(
     (
@@ -34,9 +36,7 @@ test("unauthenticated, display and cross-origin callers cannot execute maintenan
       })
     ).status(),
   ).toBe(401);
-  await request.post("/api/sync/session", {
-    data: { code: process.env.GW_SYNC_TEST_CODE, role: "display" },
-  });
+  await fixtureRole(context, "display");
   expect(
     (
       await request.post("/api/sync/maintenance", {
@@ -44,9 +44,7 @@ test("unauthenticated, display and cross-origin callers cannot execute maintenan
       })
     ).status(),
   ).toBe(403);
-  await request.post("/api/sync/session", {
-    data: { code: process.env.GW_SYNC_TEST_CODE, role: "controller" },
-  });
+  await fixtureRole(context, "controller");
   expect(
     (
       await request.post("/api/sync/maintenance", {
@@ -76,9 +74,7 @@ test("maintenance UI is disabled until enabled locally on a supported host", asy
   page,
   context,
 }) => {
-  await context.request.post("/api/sync/session", {
-    data: { code: process.env.GW_SYNC_TEST_CODE, role: "controller" },
-  });
+  await fixtureRole(context, "controller");
   await page.goto("/nexus");
   await page.getByRole("button", { name: "Connections", exact: true }).click();
   const panel = page.getByRole("region", { name: "Laptop maintenance" });
@@ -92,9 +88,7 @@ test("enabled panel submits only the selected operation and displays its result"
   page,
   context,
 }) => {
-  await context.request.post("/api/sync/session", {
-    data: { code: process.env.GW_SYNC_TEST_CODE, role: "controller" },
-  });
+  await fixtureRole(context, "controller");
   const actions: unknown[] = [];
   await page.route("**/api/sync/maintenance", (route) => {
     if (route.request().method() === "GET")

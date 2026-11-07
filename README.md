@@ -402,3 +402,7 @@ After installing the reviewed update on Windows, double-click **Enable-Nexus-Mai
 ### Google Calendar (read-only)
 
 Nexus now includes an official Google OAuth connection for calendar events used in the morning brief. No account is connected automatically. Create a Google web-client configuration, import it locally with **Setup-Google-Calendar.cmd**, then connect from Nexus → Connections on localhost. See [step-by-step account setup, privacy and limitations](docs/google-calendar.md). No Gmail permissions, email delivery, calendar edits or paid services are enabled.
+
+### Durable Nexus foundation (Node 24+)
+
+The **Foundation** Nexus tab adds SQLite-backed tasks, explicit local-only owner memory, dispatch policy, recovery, planning artifacts and development handoffs. Local planning runs through the configured Ollama model; no new paid provider is activated. Development handoffs remain waiting until an authenticated coding worker is implemented. Existing business JSON stores are preserved. Read [what works, privacy, backup and remaining stages](docs/architecture/nexus-foundation.md) before using it with sensitive information. This is a trusted-controller prototype, not tenant-isolated production software.

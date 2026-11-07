@@ -3193,3 +3193,16 @@ body {
 .nexus-live-network{margin:22px 0;min-width:0}.nexus-live-network svg{display:block;width:100%;max-height:320px;background:radial-gradient(ellipse,#0a304755,transparent 70%);border:1px solid #294a5b;border-radius:12px}.nexus-live-network .is-working .request-path{stroke:#8af0ff;stroke-dasharray:8 12;animation:nexus-request-flow 1s linear infinite}.nexus-live-network .is-complete .request-path{stroke:#66debb;stroke-dasharray:8 12;animation:nexus-request-flow 1.5s linear infinite}.nexus-live-network .is-failed .request-path{stroke:#efaa72}.nexus-router-note{font-size:12px;color:#93b1bf;line-height:1.6}.nexus-sharing{display:flex!important;flex-direction:row!important;align-items:flex-start;gap:10px;line-height:1.6}.nexus-sharing input{width:18px!important;min-width:18px;height:18px;accent-color:#55d2ee}.nexus-live-network details{margin-top:12px;color:#9abfce}.nexus-live-network li{margin:8px 0}.nexus-live-network h2{margin:10px 0}
 @keyframes nexus-request-flow{to{stroke-dashoffset:-40}}
 @media(prefers-reduced-motion:reduce){.nexus-live-network .request-path{animation:none!important}}
+
+/* Durable Nexus work uses the existing glass/cyan visual language. */
+.nexus-foundation { display: grid; gap: 1rem; min-width: 0; }
+.nexus-foundation form { display: grid; gap: .75rem; margin-block: 1rem; }
+.nexus-foundation label { display: grid; gap: .35rem; }
+.nexus-foundation textarea { min-height: 6rem; resize: vertical; }
+.nexus-foundation input, .nexus-foundation textarea, .nexus-foundation select, .nexus-scope select { width: 100%; max-width: 100%; border: 1px solid #23536b; border-radius: .5rem; background: #081929; color: #e0f7ff; padding: .65rem; }
+.nexus-foundation pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .85rem; }
+.foundation-task, .foundation-memory { border-top: 1px solid #23536b; padding-block: 1rem; overflow-wrap: anywhere; }
+.foundation-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-block: .5rem; }
+.nexus-foundation button { min-height: 44px; }
+.nexus-foundation :focus-visible, .nexus-scope select:focus-visible { outline: 2px solid #48dfff; outline-offset: 3px; }
+.nexus-scope { display: grid; gap: .35rem; max-width: 24rem; margin-block: 1rem; }
