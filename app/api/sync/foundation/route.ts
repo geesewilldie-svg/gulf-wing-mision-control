@@ -1,4 +1,10 @@
 import {
+  previewUtilityActivation,
+  activateUtility,
+  changeUtilityBinding,
+  runUsdUtility,
+} from "@/lib/server/foundation/utility-activation";
+import {
   verifyReviewedCandidate,
   previewCandidatePackage,
   stageCandidatePackage,
@@ -53,6 +59,16 @@ export async function POST(request: Request) {
       throw new SyncError(400, "Choose a supported foundation operation.");
     try {
       switch (body.op) {
+        case "utility.preview":
+          return response(previewUtilityActivation(body));
+        case "utility.activate":
+          activateUtility(body);
+          break;
+        case "utility.change":
+          changeUtilityBinding(body);
+          break;
+        case "utility.run":
+          return response(await runUsdUtility(body, request.signal));
         case "candidate.verify":
           await verifyReviewedCandidate(body, request.signal);
           break;

@@ -1,4 +1,5 @@
 "use client";
+import UtilityWorkspace from "./utility-workspace";
 import CandidateReview from "./candidate-review";
 import CodexWorkerStatus from "./codex-worker-status";
 import { useEffect, useState } from "react";
@@ -8,6 +9,24 @@ import {
   type MemoryRecord,
   type FoundationSnapshot,
 } from "@/lib/foundation/contracts";
+function displayTaskReason(
+  task: FoundationSnapshot["tasks"][number],
+  data: FoundationSnapshot,
+) {
+  const packages = (data.candidatePackages || []).filter(
+    (p) => p.taskId === task.id && p.taskRevision === task.revision,
+  );
+  if (!packages.length) return task.reason;
+  if (
+    packages.some((p) =>
+      (data.utilityBindings || []).some((b) => b.packageId === p.id),
+    )
+  )
+    return "Verified package selected for isolated utility use. Original task source is unchanged.";
+  if (packages.some((p) => p.state === "inactive"))
+    return "Verified package archived. Use the utility controls below to activate it.";
+  return "Package archive revoked. No isolated activation is available for this version.";
+}
 export default function NexusFoundation({ disabled }: { disabled: boolean }) {
   const [data, setData] = useState<FoundationSnapshot | null>(null),
     [message, setMessage] = useState(""),
@@ -63,9 +82,15 @@ export default function NexusFoundation({ disabled }: { disabled: boolean }) {
       setMessage(
         d.filename
           ? "Foundation backup saved privately: " + d.filename
-          : d.manifestHash
-            ? "Preview ready. Review before staging."
-            : "Saved locally.",
+          : d.proposal
+            ? "Review the activation preview."
+            : d.text && d.state === "passed"
+              ? "USD result ready."
+              : d.error
+                ? d.error
+                : d.manifestHash
+                  ? "Preview ready. Review before staging."
+                  : "Saved locally.",
       );
       return d;
     } catch (e) {
@@ -207,7 +232,7 @@ export default function NexusFoundation({ disabled }: { disabled: boolean }) {
                 <p>
                   {t.scope} · <strong>{t.state}</strong> · revision {t.revision}
                 </p>
-                <p>{t.reason}</p>
+                <p>{displayTaskReason(t, data)}</p>
                 {t.mode === "development" &&
                   ["accepted", "paused", "failed", "waiting"].includes(
                     t.state,
@@ -360,41 +385,11 @@ export default function NexusFoundation({ disabled }: { disabled: boolean }) {
               </article>
             ))}
           </section>
-          <section className="nexus-card" aria-label="Inactive packages">
-            <h3>Inactive utility packages</h3>
-            <p>
-              Private versioned packages only. None are active in the live app.
-              Revocation remains available when a parent task is paused or
-              cancelled.
-            </p>
-            {(data.candidatePackages || []).length === 0 && (
-              <p>No packages staged.</p>
-            )}
-            {(data.candidatePackages || []).map((p) => (
-              <article key={p.id} aria-label={"Package: " + p.id}>
-                <p>
-                  Package: {p.state} · {p.profileId} · revision {p.revision}
-                </p>
-                <p style={{ overflowWrap: "anywhere" }}>
-                  Candidate SHA-256: {p.candidateHash} · package SHA-256:{" "}
-                  {p.manifestHash}
-                </p>
-                <button
-                  disabled={busy || disabled || p.state !== "inactive"}
-                  onClick={() =>
-                    mutate({
-                      op: "candidate.package.revoke",
-                      packageId: p.id,
-                      packageRevision: p.revision,
-                      confirmRevoke: true,
-                    })
-                  }
-                >
-                  Revoke inactive package
-                </button>
-              </article>
-            ))}
-          </section>
+          <UtilityWorkspace
+            data={data}
+            disabled={busy || disabled}
+            mutate={mutate}
+          />
           <section className="nexus-card">
             <h3>Owner memory and instructions</h3>
             <p>

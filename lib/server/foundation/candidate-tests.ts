@@ -201,6 +201,8 @@ export async function runReviewedCandidateTests(
         .get()
     )
       throw new SyncError(409, "Independent verification is already running.");
+    if (db.prepare("SELECT id FROM utility_runs WHERE state='running'").get())
+      throw new SyncError(409, "An isolated utility call is already running.");
     const id = randomUUID(),
       now = new Date().toISOString();
     db.prepare(

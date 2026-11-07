@@ -268,7 +268,7 @@ test("schema-4 migration preserves accepted records, restart interrupts, task de
     });
     withStore((db) =>
       db.exec(
-        "DROP TABLE candidate_packages;DROP TABLE candidate_verifications;PRAGMA user_version=4;",
+        "DROP TABLE utility_bindings; DROP TABLE utility_binding_history; DROP TABLE utility_runs; DROP TABLE candidate_packages;DROP TABLE candidate_verifications;PRAGMA user_version=4;",
       ),
     );
     expect(snapshot().candidateReviews![0].state).toBe("accepted-for-tests");

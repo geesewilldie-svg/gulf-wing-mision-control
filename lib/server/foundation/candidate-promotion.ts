@@ -107,6 +107,8 @@ export async function verifyReviewedCandidate(
     throw new SyncError(400, "Confirm one independent USD contract run.");
   const ticket = transaction((db) => {
     const evidence = currentEvidence(db, input);
+    if (db.prepare("SELECT id FROM utility_runs WHERE state='running'").get())
+      throw new SyncError(409, "An isolated utility call is already running.");
     if (
       db
         .prepare("SELECT id FROM candidate_verifications WHERE state='running'")
@@ -333,6 +335,30 @@ export function revokeCandidatePackage(input: any) {
     db.prepare(
       "UPDATE candidate_packages SET state='revoked',revision=revision+1,updated_at=? WHERE id=?",
     ).run(new Date().toISOString(), p.id);
+    const bindings = db
+      .prepare(
+        "SELECT * FROM utility_bindings WHERE package_id=? OR previous_package_id=?",
+      )
+      .all(p.id, p.id) as any[];
+    for (const b of bindings) {
+      const target = b.package_id === p.id ? null : b.package_id;
+      const now = new Date().toISOString();
+      db.prepare(
+        "UPDATE utility_bindings SET revision=revision+1,package_id=?,previous_package_id=NULL,updated_at=? WHERE scope=? AND profile_id=?",
+      ).run(target, now, b.scope, b.profile_id);
+      db.prepare(
+        "INSERT INTO utility_binding_history VALUES(?,?,?,?,?,?,?,?)",
+      ).run(
+        randomUUID(),
+        b.scope,
+        b.profile_id,
+        b.revision + 1,
+        b.package_id,
+        target,
+        "package-revoked",
+        now,
+      );
+    }
     event(
       db,
       p.task_id,

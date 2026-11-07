@@ -414,3 +414,5 @@ The Foundation can send an explicitly authorized development objective to an off
 Foundation includes [candidate validation and review](docs/architecture/nexus-candidate-review.md): local integrity/type checks and revision-bound owner decisions. Static validation does not execute code. Accepted candidates can run separately confirmed [limited utility tests in WebAssembly](docs/architecture/nexus-isolated-tests.md); no code is installed or promoted.
 
 Reviewed USD candidates can now pass [independent contract checks and preview-bound inactive package staging](docs/architecture/nexus-independent-verification.md). Staged packages are private archives, not live application changes.
+
+Foundation now supports [controlled activation and rollback of the isolated USD utility](docs/architecture/nexus-utility-activation.md). Selection is per workspace and affects only the manual currency tool; generated code never becomes a host Node module.

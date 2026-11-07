@@ -26,7 +26,7 @@ export function withStore<T>(fn: (db: DatabaseSync) => T): T {
     const version = Number(
       (db.prepare("PRAGMA user_version").get() as any).user_version,
     );
-    if (version > 5)
+    if (version > 6)
       throw new SyncError(
         503,
         "Foundation database is newer than this application. No downgrade was attempted.",
@@ -103,6 +103,23 @@ export function withStore<T>(fn: (db: DatabaseSync) => T): T {
       CREATE TABLE candidate_packages(id TEXT PRIMARY KEY,task_id TEXT NOT NULL,task_revision INTEGER NOT NULL,verification_id TEXT NOT NULL,candidate_hash TEXT NOT NULL,profile_id TEXT NOT NULL,profile_version INTEGER NOT NULL,revision INTEGER NOT NULL,state TEXT NOT NULL,manifest TEXT NOT NULL,manifest_hash TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,UNIQUE(task_id,candidate_hash,profile_id,profile_version));
       PRAGMA user_version=5;COMMIT;`);
     }
+    if (version < 6) {
+      if (version === 5) {
+        const dir = path.join(root, "foundation-backups");
+        mkdirSync(dir, { recursive: true, mode: 0o700 });
+        const backup = path.join(
+          dir,
+          "before-schema-6-" + Date.now() + "-" + randomUUID() + ".sqlite",
+        );
+        db.prepare("VACUUM INTO ?").run(backup);
+        if (process.platform !== "win32") chmodSync(backup, 0o600);
+      }
+      db.exec(`BEGIN IMMEDIATE;
+      CREATE TABLE utility_bindings(scope TEXT NOT NULL,profile_id TEXT NOT NULL,revision INTEGER NOT NULL,package_id TEXT,previous_package_id TEXT,updated_at TEXT NOT NULL,PRIMARY KEY(scope,profile_id));
+      CREATE TABLE utility_binding_history(id TEXT PRIMARY KEY,scope TEXT NOT NULL,profile_id TEXT NOT NULL,binding_revision INTEGER NOT NULL,from_package_id TEXT,to_package_id TEXT,kind TEXT NOT NULL,at TEXT NOT NULL);
+      CREATE TABLE utility_runs(id TEXT PRIMARY KEY,scope TEXT NOT NULL,profile_id TEXT NOT NULL,binding_revision INTEGER NOT NULL,package_id TEXT,state TEXT NOT NULL,report TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL);
+      PRAGMA user_version=6;COMMIT;`);
+    }
     return fn(db);
   } finally {
     db.close();
@@ -148,6 +165,22 @@ const task = (r: any): NexusTask => ({
 export function snapshot(): FoundationSnapshot {
   return withStore((db) => ({
     schemaVersion: 1,
+    utilityBindings: db
+      .prepare(
+        "SELECT scope,profile_id AS profileId,revision,package_id AS packageId,previous_package_id AS previousPackageId,updated_at AS updatedAt FROM utility_bindings ORDER BY scope,profile_id",
+      )
+      .all() as any,
+    utilityHistory: db
+      .prepare(
+        "SELECT id,scope,profile_id AS profileId,binding_revision AS bindingRevision,from_package_id AS fromPackageId,to_package_id AS toPackageId,kind,at FROM utility_binding_history ORDER BY at DESC,rowid DESC LIMIT 100",
+      )
+      .all() as any,
+    utilityRuns: db
+      .prepare(
+        "SELECT id,scope,profile_id AS profileId,binding_revision AS bindingRevision,package_id AS packageId,state,report,created_at AS createdAt,updated_at AS updatedAt FROM utility_runs ORDER BY created_at DESC,rowid DESC LIMIT 100",
+      )
+      .all()
+      .map((r: any) => ({ ...r, report: JSON.parse(r.report) })),
     candidateVerifications: db
       .prepare(
         "SELECT id,task_id AS taskId,task_revision AS taskRevision,review_id AS reviewId,review_revision AS reviewRevision,candidate_hash AS candidateHash,test_run_id AS testRunId,profile_id AS profileId,profile_version AS profileVersion,state,report,created_at AS createdAt,updated_at AS updatedAt FROM candidate_verifications ORDER BY created_at DESC,rowid DESC LIMIT 200",
@@ -631,6 +664,9 @@ export function recoverTasks() {
       db.prepare(
         "UPDATE candidate_verifications SET state='interrupted',updated_at=? WHERE state='running'",
       ).run(new Date().toISOString());
+      db.prepare(
+        "UPDATE utility_runs SET state='interrupted',updated_at=? WHERE state='running'",
+      ).run(new Date().toISOString());
       return rows.length;
     }),
   );
@@ -685,6 +721,31 @@ export function deleteTask(input: any) {
           409,
           "Wait for independent verification before deleting this task.",
         );
+      if (
+        db
+          .prepare(
+            "SELECT scope FROM utility_bindings WHERE package_id IN(SELECT id FROM candidate_packages WHERE task_id=?) OR previous_package_id IN(SELECT id FROM candidate_packages WHERE task_id=?)",
+          )
+          .get(t.id, t.id)
+      )
+        throw new SyncError(
+          409,
+          "Disable the utility binding or revoke its rollback package before deleting this task.",
+        );
+      if (
+        db
+          .prepare(
+            "SELECT id FROM utility_runs WHERE state='running' AND package_id IN(SELECT id FROM candidate_packages WHERE task_id=?)",
+          )
+          .get(t.id)
+      )
+        throw new SyncError(
+          409,
+          "Wait for the isolated utility call before deleting this task.",
+        );
+      db.prepare(
+        "DELETE FROM utility_runs WHERE package_id IN(SELECT id FROM candidate_packages WHERE task_id=?)",
+      ).run(t.id);
       db.prepare("DELETE FROM candidate_packages WHERE task_id=?").run(t.id);
       db.prepare("DELETE FROM candidate_verifications WHERE task_id=?").run(
         t.id,

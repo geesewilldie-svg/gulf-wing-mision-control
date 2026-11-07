@@ -174,7 +174,7 @@ test("restart interrupts test evidence, and schema-3 migration backs up accepted
     const review = snapshot().candidateReviews![0];
     withStore((db) =>
       db.exec(
-        "DROP TABLE candidate_packages; DROP TABLE candidate_verifications; DROP TABLE candidate_test_runs; PRAGMA user_version=3;",
+        "DROP TABLE utility_bindings; DROP TABLE utility_binding_history; DROP TABLE utility_runs; DROP TABLE candidate_packages; DROP TABLE candidate_verifications; DROP TABLE candidate_test_runs; PRAGMA user_version=3;",
       ),
     );
     expect(snapshot().candidateReviews![0].id).toBe(review.id);

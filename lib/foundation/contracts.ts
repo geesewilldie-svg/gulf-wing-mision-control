@@ -50,6 +50,35 @@ export type FoundationEvent = {
 export type FoundationSnapshot = {
   schemaVersion: 1;
   capabilities?: typeof foundationCapabilities;
+  utilityBindings?: {
+    scope: Scope;
+    profileId: string;
+    revision: number;
+    packageId: string | null;
+    previousPackageId: string | null;
+    updatedAt: string;
+  }[];
+  utilityHistory?: {
+    id: string;
+    scope: Scope;
+    profileId: string;
+    bindingRevision: number;
+    fromPackageId: string | null;
+    toPackageId: string | null;
+    kind: string;
+    at: string;
+  }[];
+  utilityRuns?: {
+    id: string;
+    scope: Scope;
+    profileId: string;
+    bindingRevision: number;
+    packageId: string | null;
+    state: string;
+    report: { source?: string; manifestHash?: string | null };
+    createdAt: string;
+    updatedAt: string;
+  }[];
   candidateVerifications?: {
     id: string;
     taskId: string;

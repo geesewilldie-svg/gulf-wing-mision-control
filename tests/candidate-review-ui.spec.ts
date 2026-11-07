@@ -166,6 +166,10 @@ test("candidate operations reject display-only and cross-origin requests", async
     "candidate.package.preview",
     "candidate.package.stage",
     "candidate.package.revoke",
+    "utility.preview",
+    "utility.activate",
+    "utility.change",
+    "utility.run",
   ]) {
     expect(
       (
@@ -257,6 +261,74 @@ test("independent verification previews and stages only an inactive package, wit
   expect(state.skills.find((s: any) => s.taskId === task.id).status).toBe(
     "draft",
   );
+  const pkgForActivation = state.candidatePackages.find(
+    (p: any) => p.taskId === task.id,
+  );
+  const packageCard = inventory.getByRole("article", {
+    name: "Package: " + pkgForActivation.id,
+    exact: true,
+  });
+  await packageCard
+    .getByRole("button", { name: "Preview isolated activation", exact: true })
+    .click();
+  const activate = inventory.getByRole("button", {
+    name: "Activate isolated USD utility",
+    exact: true,
+  });
+  await expect(activate).toBeDisabled();
+  await inventory
+    .getByLabel("I approve this exact isolated activation.")
+    .check();
+  await activate.click();
+  await expect(
+    inventory.getByText(/USD tool: isolated package active/),
+  ).toBeVisible();
+  await expect(
+    card.getByText(
+      "Verified package selected for isolated utility use. Original task source is unchanged.",
+      { exact: true },
+    ),
+  ).toBeVisible();
+  await inventory.getByLabel("USD amount", { exact: true }).fill("1234.50");
+  await inventory
+    .getByRole("button", { name: "Format USD", exact: true })
+    .click();
+  await expect(
+    inventory.getByText("Formatted USD: $1,234.50 · isolated package", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await page.reload();
+  await page.getByRole("button", { name: "Foundation", exact: true }).click();
+  await expect(
+    inventory.getByText(/USD tool: isolated package active/),
+  ).toBeVisible();
+  await inventory
+    .getByRole("button", {
+      name: "Roll back to built-in formatter",
+      exact: true,
+    })
+    .click();
+  await expect(
+    inventory.getByText(/USD tool: built-in formatter/),
+  ).toBeVisible();
+  await inventory
+    .getByRole("button", { name: "Format USD", exact: true })
+    .click();
+  await expect(
+    inventory.getByText("Formatted USD: $12.50 · built-in formatter", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await packageCard
+    .getByRole("button", { name: "Preview isolated activation", exact: true })
+    .click();
+  await inventory
+    .getByLabel("I approve this exact isolated activation.")
+    .check();
+  await inventory
+    .getByRole("button", { name: "Activate isolated USD utility", exact: true })
+    .click();
   expect(
     (
       await context.request.post("/api/sync/foundation", {
@@ -280,4 +352,7 @@ test("independent verification previews and stages only an inactive package, wit
     .getByRole("button", { name: "Revoke inactive package", exact: true })
     .click();
   await expect(stored.getByText(/Package: revoked/)).toBeVisible();
+  await expect(
+    inventory.getByText(/USD tool: built-in formatter/),
+  ).toBeVisible();
 });
