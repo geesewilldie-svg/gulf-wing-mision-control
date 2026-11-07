@@ -23,6 +23,10 @@ import {
   scope,
   text,
 } from "@/lib/foundation/contracts";
+import {
+  validateTaskCandidate,
+  decideCandidate,
+} from "@/lib/server/foundation/candidate-review";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
@@ -42,6 +46,12 @@ export async function POST(request: Request) {
       throw new SyncError(400, "Choose a supported foundation operation.");
     try {
       switch (body.op) {
+        case "candidate.validate":
+          await validateTaskCandidate(body, request.signal);
+          break;
+        case "candidate.decide":
+          decideCandidate(body);
+          break;
         case "worker.acknowledge":
           acknowledgeWorker(body);
           break;

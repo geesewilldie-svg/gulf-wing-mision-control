@@ -1,4 +1,5 @@
 "use client";
+import CandidateReview from "./candidate-review";
 import CodexWorkerStatus from "./codex-worker-status";
 import { useEffect, useState } from "react";
 import {
@@ -346,6 +347,12 @@ export default function NexusFoundation({ disabled }: { disabled: boolean }) {
                     </button>
                   </details>
                 )}
+                <CandidateReview
+                  task={t}
+                  reviews={data.candidateReviews || []}
+                  disabled={busy || disabled}
+                  mutate={mutate}
+                />
               </article>
             ))}
           </section>

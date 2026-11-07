@@ -26,7 +26,7 @@ export function withStore<T>(fn: (db: DatabaseSync) => T): T {
     const version = Number(
       (db.prepare("PRAGMA user_version").get() as any).user_version,
     );
-    if (version > 2)
+    if (version > 3)
       throw new SyncError(
         503,
         "Foundation database is newer than this application. No downgrade was attempted.",
@@ -56,6 +56,21 @@ export function withStore<T>(fn: (db: DatabaseSync) => T): T {
       CREATE TABLE worker_grants(task_id TEXT PRIMARY KEY,task_revision INTEGER NOT NULL,expires INTEGER NOT NULL,consumed INTEGER NOT NULL);
       CREATE TABLE worker_runs(id TEXT PRIMARY KEY,task_id TEXT NOT NULL,task_revision INTEGER NOT NULL,state TEXT NOT NULL,progress INTEGER NOT NULL,started_at TEXT NOT NULL,updated_at TEXT NOT NULL,detail TEXT NOT NULL,pid INTEGER);
       PRAGMA user_version=2;COMMIT;`);
+    }
+    if (version < 3) {
+      if (version === 2) {
+        const dir = path.join(root, "foundation-backups");
+        mkdirSync(dir, { recursive: true, mode: 0o700 });
+        const backup = path.join(
+          dir,
+          "before-schema-3-" + Date.now() + "-" + randomUUID() + ".sqlite",
+        );
+        db.prepare("VACUUM INTO ?").run(backup);
+        if (process.platform !== "win32") chmodSync(backup, 0o600);
+      }
+      db.exec(`BEGIN IMMEDIATE;
+      CREATE TABLE candidate_reviews(id TEXT PRIMARY KEY,task_id TEXT NOT NULL,task_revision INTEGER NOT NULL,candidate_hash TEXT NOT NULL,revision INTEGER NOT NULL,state TEXT NOT NULL,report TEXT NOT NULL,note TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL);
+      PRAGMA user_version=3;COMMIT;`);
     }
     return fn(db);
   } finally {
@@ -102,6 +117,12 @@ const task = (r: any): NexusTask => ({
 export function snapshot(): FoundationSnapshot {
   return withStore((db) => ({
     schemaVersion: 1,
+    candidateReviews: db
+      .prepare(
+        "SELECT id,task_id AS taskId,task_revision AS taskRevision,candidate_hash AS candidateHash,revision,state,report,note,created_at AS createdAt,updated_at AS updatedAt FROM candidate_reviews ORDER BY created_at DESC,rowid DESC LIMIT 200",
+      )
+      .all()
+      .map((r: any) => ({ ...r, report: JSON.parse(r.report) })),
     workerRuns: db
       .prepare(
         "SELECT id,task_id AS taskId,task_revision AS taskRevision,state,progress,started_at AS startedAt,updated_at AS updatedAt,detail,pid FROM worker_runs ORDER BY started_at DESC LIMIT 50",
@@ -553,6 +574,9 @@ export function recoverTasks() {
       db.prepare(
         "UPDATE worker_runs SET state='interrupted',detail='Coordinator restarted. Child process termination is unverified; owner must confirm it stopped before another cloud run.',updated_at=? WHERE state IN ('starting','running','validating')",
       ).run(new Date().toISOString());
+      db.prepare(
+        "UPDATE candidate_reviews SET state='interrupted',revision=revision+1,updated_at=? WHERE state='checking'",
+      ).run(new Date().toISOString());
       return rows.length;
     }),
   );
@@ -574,6 +598,18 @@ export function deleteTask(input: any) {
           409,
           "Pause or cancel active work before deleting it.",
         );
+      if (
+        db
+          .prepare(
+            "SELECT id FROM candidate_reviews WHERE task_id=? AND state='checking'",
+          )
+          .get(t.id)
+      )
+        throw new SyncError(
+          409,
+          "Wait for candidate validation to finish before deleting this task.",
+        );
+      db.prepare("DELETE FROM candidate_reviews WHERE task_id=?").run(t.id);
       const uncertain = db
         .prepare(
           "SELECT id FROM worker_runs WHERE task_id=? AND state IN ('starting','running','validating','interrupted')",

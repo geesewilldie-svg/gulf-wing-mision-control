@@ -8,6 +8,7 @@ import {
   recoverTasks,
   hasWorkerConsent,
 } from "./store";
+import { validateTaskCandidate } from "./candidate-review";
 import { runCodexWorker } from "./codex-worker";
 import { askProvider } from "../agent-router";
 import { readKnowledge } from "../nexus-store";
@@ -98,6 +99,14 @@ export async function coordinatorTick(
       if (!stillCurrent(task)) return;
       if (task.mode === "development") {
         finishTask(task, output, true, true);
+        // Local static validation uses no provider quota and never executes the
+        // candidate. A stale result cannot approve a changed task revision.
+        try {
+          await validateTaskCandidate(
+            { id: task.id, revision: task.revision + 1 },
+            abort.signal,
+          );
+        } catch {}
         return;
       }
       finishTask(
