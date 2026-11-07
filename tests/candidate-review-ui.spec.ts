@@ -6,7 +6,7 @@ import {
   snapshot,
 } from "../lib/server/foundation/store";
 import { fixtureRole } from "./helpers/access";
-function seed() {
+function seed(usd = false) {
   const old = process.env.GW_SYNC_DATA_DIR;
   process.env.GW_SYNC_DATA_DIR = process.env.GW_SYNC_TEST_ROOT!;
   try {
@@ -25,8 +25,23 @@ function seed() {
       ],
       testNotes: "Not run",
     };
+    if (usd)
+      candidate.files = [
+        {
+          path: "src/format-currency.ts",
+          content:
+            'const usd=new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"});export function formatCurrency(n:number){if(!Number.isFinite(n))throw new RangeError("finite");return usd.format(n)}',
+        },
+        {
+          path: "tests/usd.test.ts",
+          content:
+            'import test from "node:test";import assert from "node:assert/strict";import {formatCurrency} from "../src/format-currency.js";test("USD",()=>assert.equal(formatCurrency(12),"$12.00"));',
+        },
+      ];
     const id = createTask({
-      request: "Review fixture " + test.info().project.name,
+      request:
+        (usd ? "USD verification fixture " : "Review fixture ") +
+        test.info().project.name,
       scope: "Personal",
       mode: "development",
     });
@@ -146,6 +161,18 @@ test("candidate operations reject display-only and cross-origin requests", async
       })
     ).status(),
   ).toBe(403);
+  for (const op of [
+    "candidate.verify",
+    "candidate.package.preview",
+    "candidate.package.stage",
+    "candidate.package.revoke",
+  ]) {
+    expect(
+      (
+        await context.request.post("/api/sync/foundation", { data: { op } })
+      ).status(),
+    ).toBe(403);
+  }
   await fixtureRole(context, "controller");
   expect(
     (
@@ -155,4 +182,102 @@ test("candidate operations reject display-only and cross-origin requests", async
       })
     ).status(),
   ).toBe(403);
+});
+
+test("independent verification previews and stages only an inactive package, with revocation after task pause", async ({
+  page,
+  context,
+}) => {
+  const task = seed(true);
+  await fixtureRole(context);
+  await page.goto("/nexus");
+  await page.getByRole("button", { name: "Foundation", exact: true }).click();
+  const card = page.getByRole("article", { name: "Task: " + task.request });
+  await card
+    .getByRole("button", { name: "Validate saved candidate", exact: true })
+    .click();
+  await expect(card.getByText(/checks-passed · task revision/)).toBeVisible();
+  await card
+    .getByLabel("I reviewed this exact saved artifact and report.")
+    .check();
+  await card
+    .getByRole("button", { name: "Accept for isolated testing", exact: true })
+    .click();
+  await expect(
+    card.getByText(/accepted-for-tests · task revision/),
+  ).toBeVisible();
+  await card
+    .getByLabel("I approve one isolated test run of this exact candidate.")
+    .check();
+  await card
+    .getByRole("button", { name: "Run isolated tests", exact: true })
+    .click();
+  await expect(
+    card.getByText("Isolated tests: passed · 1 passed · 0 failed", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  const verify = card.getByRole("button", {
+    name: "Run independent verification",
+    exact: true,
+  });
+  await expect(verify).toBeDisabled();
+  await card
+    .getByLabel(
+      "I approve one independent USD contract check of this exact candidate.",
+    )
+    .check();
+  await verify.click();
+  await expect(
+    card.getByText("Independent verification: passed · 15 passed · 0 failed", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await card
+    .getByRole("button", { name: "Preview inactive package", exact: true })
+    .click();
+  const stage = card.getByRole("button", {
+    name: "Stage inactive package",
+    exact: true,
+  });
+  await expect(stage).toBeDisabled();
+  await card
+    .getByLabel("I approve storing this exact package as inactive.")
+    .check();
+  await stage.click();
+  const inventory = page.getByRole("region", {
+    name: "Inactive packages",
+    exact: true,
+  });
+  await expect(inventory.getByText(/Package: inactive/)).toBeVisible();
+  const state = await (
+    await context.request.get("/api/sync/foundation")
+  ).json();
+  expect(state.tasks.find((t: any) => t.id === task.id).state).toBe("waiting");
+  expect(state.skills.find((s: any) => s.taskId === task.id).status).toBe(
+    "draft",
+  );
+  expect(
+    (
+      await context.request.post("/api/sync/foundation", {
+        data: {
+          op: "task.change",
+          id: task.id,
+          revision: task.revision,
+          action: "pause",
+        },
+      })
+    ).ok(),
+  ).toBe(true);
+  await page.reload();
+  await page.getByRole("button", { name: "Foundation", exact: true }).click();
+  const pkg = state.candidatePackages.find((p: any) => p.taskId === task.id);
+  const stored = inventory.getByRole("article", {
+    name: "Package: " + pkg.id,
+    exact: true,
+  });
+  await stored
+    .getByRole("button", { name: "Revoke inactive package", exact: true })
+    .click();
+  await expect(stored.getByText(/Package: revoked/)).toBeVisible();
 });

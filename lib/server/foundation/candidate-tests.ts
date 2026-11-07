@@ -1,6 +1,7 @@
+import contract from "../../foundation/usd-contract.json";
 import { Worker } from "node:worker_threads";
 import path from "node:path";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { withStore } from "./store";
 import { savedCandidate } from "./candidate-validation";
 import { SyncError } from "../sync-store";
@@ -20,16 +21,25 @@ export type CandidateTestReport = {
   network: "unavailable";
   filesystem: "unavailable";
   error?: string;
+  profileId?: string;
+  profileVersion?: number;
+  profileHash?: string;
 };
-export async function executeCandidateTests(
+async function executeIsolatedWorker(
   candidate: CodeCandidate,
   signal?: AbortSignal,
+  independent = false,
 ): Promise<CandidateTestReport> {
   validateCandidate(candidate);
   signal?.throwIfAborted();
   return new Promise((resolve, reject) => {
     const worker = new Worker(
-      path.join(process.cwd(), "scripts/test-nexus-candidate.mjs"),
+      path.join(
+        process.cwd(),
+        independent
+          ? "scripts/verify-nexus-candidate.mjs"
+          : "scripts/test-nexus-candidate.mjs",
+      ),
       {
         workerData: { candidate },
         resourceLimits: {
@@ -67,6 +77,15 @@ export async function executeCandidateTests(
         r.tests.length < 1 ||
         r.tests.length > 50 ||
         r.installation !== "not-performed" ||
+        (independent &&
+          (r.profileId !== contract.id ||
+            r.profileVersion !== contract.version ||
+            r.profileHash !==
+              createHash("sha256")
+                .update(JSON.stringify(contract))
+                .digest("hex") ||
+            r.tests.length !== contract.cases.length ||
+            r.scope !== "independent host-side USD contract checks")) ||
         r.passed + r.failed !== r.tests.length ||
         r.tests.some(
           (t: any) =>
@@ -89,6 +108,14 @@ export async function executeCandidateTests(
     if (signal?.aborted) abort();
   });
 }
+export const executeCandidateTests = (
+  candidate: CodeCandidate,
+  signal?: AbortSignal,
+) => executeIsolatedWorker(candidate, signal);
+export const executeIndependentVerification = (
+  candidate: CodeCandidate,
+  signal?: AbortSignal,
+) => executeIsolatedWorker(candidate, signal, true);
 function transaction<T>(fn: Parameters<typeof withStore<T>>[0]) {
   return withStore((db) => {
     db.exec("BEGIN IMMEDIATE");
@@ -165,6 +192,12 @@ export async function runReviewedCandidateTests(
         .get()
     )
       throw new SyncError(409, "An isolated test is already running.");
+    if (
+      db
+        .prepare("SELECT id FROM candidate_verifications WHERE state='running'")
+        .get()
+    )
+      throw new SyncError(409, "Independent verification is already running.");
     const id = randomUUID(),
       now = new Date().toISOString();
     db.prepare(

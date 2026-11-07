@@ -1,16 +1,19 @@
 "use client";
+import CandidateVerification from "./candidate-verification";
 import { useState } from "react";
 import type { FoundationSnapshot, NexusTask } from "@/lib/foundation/contracts";
 export default function CandidateReview({
   task,
   reviews,
   testRuns,
+  verifications,
   disabled,
   mutate,
 }: {
   task: NexusTask;
   reviews: NonNullable<FoundationSnapshot["candidateReviews"]>;
   testRuns: NonNullable<FoundationSnapshot["candidateTestRuns"]>;
+  verifications: NonNullable<FoundationSnapshot["candidateVerifications"]>;
   disabled: boolean;
   mutate: (body: unknown) => Promise<unknown>;
 }) {
@@ -171,6 +174,19 @@ export default function CandidateReview({
               </button>
             </>
           )}
+          <CandidateVerification
+            task={task}
+            review={review}
+            sourcePaths={
+              Array.isArray(artifact.candidate.files)
+                ? artifact.candidate.files.map((f: { path: string }) => f.path)
+                : []
+            }
+            supplied={testRuns}
+            verifications={verifications}
+            disabled={disabled}
+            mutate={mutate}
+          />
           {testRuns
             .filter(
               (r) =>

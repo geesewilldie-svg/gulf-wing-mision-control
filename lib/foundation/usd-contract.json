@@ -1,0 +1,39 @@
+{
+  "id": "usd-format-v1",
+  "version": 1,
+  "sourcePath": "src/format-currency.ts",
+  "exportName": "formatCurrency",
+  "cases": [
+    { "name": "zero", "input": 0, "expected": "$0.00" },
+    { "name": "whole dollars", "input": 12, "expected": "$12.00" },
+    { "name": "fractional dollars", "input": 12.5, "expected": "$12.50" },
+    {
+      "name": "million grouping",
+      "input": 1234567.89,
+      "expected": "$1,234,567.89"
+    },
+    { "name": "negative amount", "input": -1234.5, "expected": "-$1,234.50" },
+    { "name": "round down", "input": 12.344, "expected": "$12.34" },
+    { "name": "round up", "input": 12.346, "expected": "$12.35" },
+    { "name": "positive half cent", "input": 0.005, "expected": "$0.01" },
+    { "name": "negative half cent", "input": -0.005, "expected": "-$0.01" },
+    {
+      "name": "negative zero preserved",
+      "input": "negative-zero",
+      "expected": "-$0.00"
+    },
+    { "name": "tiny positive", "input": 0.00000001, "expected": "$0.00" },
+    { "name": "tiny negative", "input": -0.00000001, "expected": "-$0.00" },
+    { "name": "reject NaN", "input": "nan", "errorName": "RangeError" },
+    {
+      "name": "reject positive infinity",
+      "input": "infinity",
+      "errorName": "RangeError"
+    },
+    {
+      "name": "reject negative infinity",
+      "input": "negative-infinity",
+      "errorName": "RangeError"
+    }
+  ]
+}

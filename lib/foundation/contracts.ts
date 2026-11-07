@@ -50,6 +50,41 @@ export type FoundationEvent = {
 export type FoundationSnapshot = {
   schemaVersion: 1;
   capabilities?: typeof foundationCapabilities;
+  candidateVerifications?: {
+    id: string;
+    taskId: string;
+    taskRevision: number;
+    reviewId: string;
+    reviewRevision: number;
+    candidateHash: string;
+    testRunId: string;
+    profileId: string;
+    profileVersion: number;
+    state: string;
+    createdAt: string;
+    updatedAt: string;
+    report: {
+      passed?: number;
+      failed?: number;
+      tests?: { name: string; status: string; detail: string }[];
+      error?: string;
+      scope?: string;
+    };
+  }[];
+  candidatePackages?: {
+    id: string;
+    taskId: string;
+    taskRevision: number;
+    verificationId: string;
+    candidateHash: string;
+    profileId: string;
+    profileVersion: number;
+    revision: number;
+    state: string;
+    manifestHash: string;
+    createdAt: string;
+    updatedAt: string;
+  }[];
   candidateTestRuns?: {
     id: string;
     taskId: string;

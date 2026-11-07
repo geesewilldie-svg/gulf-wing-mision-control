@@ -1,3 +1,9 @@
+import {
+  verifyReviewedCandidate,
+  previewCandidatePackage,
+  stageCandidatePackage,
+  revokeCandidatePackage,
+} from "@/lib/server/foundation/candidate-promotion";
 import { runReviewedCandidateTests } from "@/lib/server/foundation/candidate-tests";
 import {
   authorized,
@@ -47,6 +53,17 @@ export async function POST(request: Request) {
       throw new SyncError(400, "Choose a supported foundation operation.");
     try {
       switch (body.op) {
+        case "candidate.verify":
+          await verifyReviewedCandidate(body, request.signal);
+          break;
+        case "candidate.package.preview":
+          return response(previewCandidatePackage(body));
+        case "candidate.package.stage":
+          stageCandidatePackage(body);
+          break;
+        case "candidate.package.revoke":
+          revokeCandidatePackage(body);
+          break;
         case "candidate.test":
           await runReviewedCandidateTests(body, request.signal);
           break;

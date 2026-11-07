@@ -30,6 +30,10 @@ Foundation checks candidate integrity and TypeScript without executing generated
 
 See [isolated tests and compatibility limits](architecture/nexus-isolated-tests.md). Passing candidate-supplied tests is not independent QA or commercial multi-tenant isolation.
 
+## Independent verification and inactive packages
+
+The USD formatter profile adds 15 separately authored host-side checks, exact contract fingerprints and revision/hash-bound evidence. After preview and owner approval, a verified version can be archived as an inactive package and later revoked. This does not install a live skill, modify project files, merge or deploy code. Other candidates need their own reviewed verification profiles. See [independent verification and staging](architecture/nexus-independent-verification.md).
+
 ## Next delivery gates
 
 1. Read-only Google Calendar OAuth is implemented with local token storage, primary-calendar reads and brief aggregation; actual laptop client setup/account authorization is still required. See [Google setup](google-calendar.md). Self-email delivery, a multi-calendar picker and extended brief history remain unfinished. Laptop sleep prevents local execution.

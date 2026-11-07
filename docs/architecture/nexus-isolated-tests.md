@@ -6,6 +6,8 @@ Foundation can run an accepted candidate's synchronous utility tests in QuickJS 
 
 Validate the saved candidate, inspect its source and diagnostics, then accept that exact revision/hash for tests. Check **I approve one isolated test run of this exact candidate** and press **Run isolated tests**. Acceptance alone never queues a run. Existing accepted schema-3 reviews remain usable after migration. Results persist across reloads and show supplied test names, pass/fail counts, errors, engine and scope.
 
+A separate [independent USD profile and inactive package ledger](nexus-independent-verification.md) now provides additional checks and a preview-bound archive step.
+
 Passing means the candidate's supplied tests passed in this limited engine. It is not independent QA, full Node compatibility, a security certification, or permission to install/activate a skill. No automatic promotion, commits, merge or deployment occurs. The parent task stays waiting and the skill stays draft. Static validation reports remain historical records with tests not run at that stage; actual execution has a separate test-run record.
 
 ## Execution boundary and supported subset

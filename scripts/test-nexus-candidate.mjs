@@ -1,33 +1,6 @@
-// Trusted host worker: candidate JS runs only inside QuickJS WebAssembly.
-// No host objects, filesystem, network, process, timers or module loader escape.
+// Candidate tests execute only inside a disposable WebAssembly guest.
 import { parentPort, workerData } from "node:worker_threads";
-import path from "node:path";
-import ts from "typescript";
-import { getQuickJS } from "quickjs-emscripten";
-const files = new Map();
-for (const f of workerData.candidate.files) {
-  if (!f.path.endsWith(".ts") || f.path.endsWith(".d.ts")) continue;
-  const emitted = ts.transpileModule(f.content, {
-    compilerOptions: {
-      target: ts.ScriptTarget.ES2022,
-      module: ts.ModuleKind.ESNext,
-    },
-    fileName: f.path,
-  });
-  files.set("/candidate/" + f.path.replace(/\.ts$/, ".js"), emitted.outputText);
-}
-const testFiles = [...files.keys()].filter(
-  (p) => p.startsWith("/candidate/tests/") && /\.(test|spec)\.js$/.test(p),
-);
-if (!testFiles.length)
-  throw Error("No supported tests/*.test.ts or *.spec.ts files found.");
-const QuickJS = await getQuickJS();
-const runtime = QuickJS.newRuntime();
-runtime.setMemoryLimit(32 * 1024 * 1024);
-runtime.setMaxStackSize(512 * 1024);
-const deadline = Date.now() + 2000;
-runtime.setInterruptHandler(() => Date.now() > deadline);
-const vm = runtime.newContext();
+import { createGuest } from "./nexus-wasm-runtime.mjs";
 const builtins = {
   "nexus:test": `
 const create=Object.create;const results=create(null);let count=0; const stringify=JSON.stringify; const text=String;const slice=Function.prototype.call.bind(String.prototype.slice);
@@ -57,65 +30,26 @@ strict.strict=strict; export {strict,equal,equal as strictEqual,ok,throws,fail};
 };
 // Candidates may access only the public test/assert API, not the report export.
 builtins["nexus:test-public"] = 'export {test, default} from "nexus:test";';
-runtime.setModuleLoader(
-  (name) => {
-    if (files.has(name)) return files.get(name);
-    if (Object.hasOwn(builtins, name)) return builtins[name];
-    throw Error("Module is unavailable in the isolated runner");
-  },
-  (base, name) => {
+
+const guest = await createGuest(workerData.candidate, {
+  builtins,
+  normalizeBuiltin(base, name) {
     if (base === "/trusted-entry.js" && name === "nexus:private") return name;
     if (base === "nexus:private" && name === "node:test") return "nexus:test";
     if (base === "nexus:test-public" && name === "nexus:test") return name;
     if (name === "node:test") return "nexus:test-public";
     if (name === "node:assert" || name === "node:assert/strict")
       return "nexus:assert";
-    if (!name.startsWith("./") && !name.startsWith("../"))
-      throw Error(
-        "Only candidate-relative imports and supported test/assert modules are allowed",
-      );
-    const resolved = path.posix.normalize(
-      path.posix.join(path.posix.dirname(base), name),
-    );
-    if (!resolved.startsWith("/candidate/") || !files.has(resolved))
-      throw Error("Import is outside the candidate or unsupported");
-    return resolved;
   },
+});
+const { files, vm, evaluate } = guest;
+const testFiles = [...files.keys()].filter(
+  (p) => p.startsWith("/candidate/tests/") && /\.(test|spec)\.js$/.test(p),
 );
-function evaluate(source, filename, options) {
-  const result = vm.evalCode(source, filename, options);
-  if (result.error) {
-    const detail = vm.dump(result.error);
-    result.error.dispose();
-    throw Error(
-      String(detail?.message || "Isolated runtime error").slice(0, 500),
-    );
-  }
-  return result.value;
-}
 let report;
 try {
-  const format = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  const bridge = vm.newFunction("formatUSD", (amount) => {
-    if (vm.typeof(amount) !== "number")
-      throw Error("USD formatter requires a number");
-    return vm.newString(format.format(vm.getNumber(amount)));
-  });
-  vm.setProp(vm.global, "__nexus_format_usd", bridge);
-  bridge.dispose();
-  evaluate(
-    `{const format=__nexus_format_usd;delete globalThis.__nexus_format_usd;
- globalThis.Intl=Object.freeze({NumberFormat:class NumberFormat {
- constructor(locale,options){if(locale!=="en-US" || options?.style!=="currency" || options?.currency!=="USD" || Object.keys(options).some(k=>!["style","currency","minimumFractionDigits","maximumFractionDigits"].includes(k)) || (options.minimumFractionDigits!==undefined && options.minimumFractionDigits!==2) || (options.maximumFractionDigits!==undefined && options.maximumFractionDigits!==2))throw Error("Only en-US USD formatting with two decimal places is supported");}
- format(value){return format(value);}
- }});}`,
-    "/trusted-setup.js",
-  ).dispose();
+  if (!testFiles.length)
+    throw Error("No supported tests/*.test.ts or *.spec.ts files found.");
   // Load the harness before candidate code can change built-in globals.
   evaluate('import test from "node:test";', "/trusted-init.js", {
     type: "module",
@@ -169,8 +103,6 @@ try {
     filesystem: "unavailable",
   };
 } finally {
-  vm.dispose();
-  runtime.dispose();
+  guest.dispose();
 }
-
 parentPort.postMessage(report);

@@ -63,7 +63,9 @@ export default function NexusFoundation({ disabled }: { disabled: boolean }) {
       setMessage(
         d.filename
           ? "Foundation backup saved privately: " + d.filename
-          : "Saved locally.",
+          : d.manifestHash
+            ? "Preview ready. Review before staging."
+            : "Saved locally.",
       );
       return d;
     } catch (e) {
@@ -351,9 +353,45 @@ export default function NexusFoundation({ disabled }: { disabled: boolean }) {
                   task={t}
                   reviews={data.candidateReviews || []}
                   testRuns={data.candidateTestRuns || []}
+                  verifications={data.candidateVerifications || []}
                   disabled={busy || disabled}
                   mutate={mutate}
                 />
+              </article>
+            ))}
+          </section>
+          <section className="nexus-card" aria-label="Inactive packages">
+            <h3>Inactive utility packages</h3>
+            <p>
+              Private versioned packages only. None are active in the live app.
+              Revocation remains available when a parent task is paused or
+              cancelled.
+            </p>
+            {(data.candidatePackages || []).length === 0 && (
+              <p>No packages staged.</p>
+            )}
+            {(data.candidatePackages || []).map((p) => (
+              <article key={p.id} aria-label={"Package: " + p.id}>
+                <p>
+                  Package: {p.state} · {p.profileId} · revision {p.revision}
+                </p>
+                <p style={{ overflowWrap: "anywhere" }}>
+                  Candidate SHA-256: {p.candidateHash} · package SHA-256:{" "}
+                  {p.manifestHash}
+                </p>
+                <button
+                  disabled={busy || disabled || p.state !== "inactive"}
+                  onClick={() =>
+                    mutate({
+                      op: "candidate.package.revoke",
+                      packageId: p.id,
+                      packageRevision: p.revision,
+                      confirmRevoke: true,
+                    })
+                  }
+                >
+                  Revoke inactive package
+                </button>
               </article>
             ))}
           </section>
