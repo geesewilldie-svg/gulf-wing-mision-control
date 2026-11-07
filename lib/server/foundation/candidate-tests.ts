@@ -33,22 +33,25 @@ async function executeIsolatedWorker(
   validateCandidate(candidate);
   signal?.throwIfAborted();
   return new Promise((resolve, reject) => {
-    const worker = new Worker(
-      path.join(
-        process.cwd(),
-        independent
-          ? "scripts/verify-nexus-candidate.mjs"
-          : "scripts/test-nexus-candidate.mjs",
-      ),
-      {
-        workerData: { candidate },
-        resourceLimits: {
-          maxOldGenerationSizeMb: 128,
-          maxYoungGenerationSizeMb: 16,
-          stackSizeMb: 4,
-        },
+    const options = {
+      workerData: { candidate },
+      resourceLimits: {
+        maxOldGenerationSizeMb: 128,
+        maxYoungGenerationSizeMb: 16,
+        stackSizeMb: 4,
       },
-    );
+    };
+    // Each constructor needs a literal worker path for Turbopack's module
+    // analysis. Select the constructor, not a dynamic path expression.
+    const worker = independent
+      ? new Worker(
+          path.join(process.cwd(), "scripts/verify-nexus-candidate.mjs"),
+          options,
+        )
+      : new Worker(
+          path.join(process.cwd(), "scripts/test-nexus-candidate.mjs"),
+          options,
+        );
     let settled = false;
     const finish = (error?: Error, report?: CandidateTestReport) => {
       if (settled) return;
