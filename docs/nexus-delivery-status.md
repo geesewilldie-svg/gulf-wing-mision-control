@@ -24,6 +24,10 @@ A SQLite-backed Foundation workspace now provides real tasks, local-only owner m
 
 The Codex candidate-authoring adapter now supports local dedicated sign-in, per-attempt objective sharing, private workspaces, progress, cancellation, candidate validation and interruption fencing. It stays disabled until actual laptop setup. Code/tests are not executed or promoted automatically; customer subscription embedding remains unverified. See [setup and acceptance](architecture/nexus-codex-worker.md).
 
+## Candidate review increment
+
+Foundation checks candidate integrity and TypeScript without executing generated code. Saved reports and owner decisions bind exact task revisions and hashes; restart interrupts unfinished checks. Existing candidates can be rechecked without another provider request. Acceptance is for a future isolated test stage, not installation or promotion. See [candidate review](architecture/nexus-candidate-review.md).
+
 ## Next delivery gates
 
 1. Read-only Google Calendar OAuth is implemented with local token storage, primary-calendar reads and brief aggregation; actual laptop client setup/account authorization is still required. See [Google setup](google-calendar.md). Self-email delivery, a multi-calendar picker and extended brief history remain unfinished. Laptop sleep prevents local execution.
