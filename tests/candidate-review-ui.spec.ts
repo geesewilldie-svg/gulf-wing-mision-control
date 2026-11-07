@@ -17,6 +17,11 @@ function seed() {
           path: "src/ui-value.ts",
           content: "export const value: number = 42;",
         },
+        {
+          path: "tests/ui.test.ts",
+          content:
+            'import test from "node:test";import assert from "node:assert/strict";import {value} from "../src/ui-value.js";test("value",()=>assert.equal(value,42));',
+        },
       ],
       testNotes: "Not run",
     };
@@ -86,7 +91,7 @@ test("controller reviews a saved candidate without another provider attempt", as
   await expect(accept).toBeDisabled();
   await expect(
     card.getByText(
-      "Type check: passed. Tests: not run. Code execution: not run.",
+      "Static validation: type check passed. Tests were not run during this check.",
       { exact: true },
     ),
   ).toBeVisible();
@@ -97,10 +102,30 @@ test("controller reviews a saved candidate without another provider attempt", as
   expect(saved.skills.find((s: any) => s.taskId === task.id).status).toBe(
     "draft",
   );
+  const run = card.getByRole("button", {
+    name: "Run isolated tests",
+    exact: true,
+  });
+  await expect(run).toBeDisabled();
+  await card
+    .getByLabel("I approve one isolated test run of this exact candidate.")
+    .check();
+  await run.click();
+  await expect(
+    card.getByText("Isolated tests: passed · 1 passed · 0 failed", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(run).toBeDisabled();
   await page.reload();
   await page.getByRole("button", { name: "Foundation", exact: true }).click();
   await expect(
     card.getByText(/accepted-for-tests · task revision/),
+  ).toBeVisible();
+  await expect(
+    card.getByText("Isolated tests: passed · 1 passed · 0 failed", {
+      exact: true,
+    }),
   ).toBeVisible();
 });
 test("candidate operations reject display-only and cross-origin requests", async ({
@@ -111,6 +136,13 @@ test("candidate operations reject display-only and cross-origin requests", async
     (
       await context.request.post("/api/sync/foundation", {
         data: { op: "candidate.validate", id: "unused", revision: 3 },
+      })
+    ).status(),
+  ).toBe(403);
+  expect(
+    (
+      await context.request.post("/api/sync/foundation", {
+        data: { op: "candidate.test", reviewId: "unused" },
       })
     ).status(),
   ).toBe(403);

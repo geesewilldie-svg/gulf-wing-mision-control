@@ -350,6 +350,7 @@ export default function NexusFoundation({ disabled }: { disabled: boolean }) {
                 <CandidateReview
                   task={t}
                   reviews={data.candidateReviews || []}
+                  testRuns={data.candidateTestRuns || []}
                   disabled={busy || disabled}
                   mutate={mutate}
                 />

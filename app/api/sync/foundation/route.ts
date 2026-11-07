@@ -1,3 +1,4 @@
+import { runReviewedCandidateTests } from "@/lib/server/foundation/candidate-tests";
 import {
   authorized,
   sameOrigin,
@@ -46,6 +47,9 @@ export async function POST(request: Request) {
       throw new SyncError(400, "Choose a supported foundation operation.");
     try {
       switch (body.op) {
+        case "candidate.test":
+          await runReviewedCandidateTests(body, request.signal);
+          break;
         case "candidate.validate":
           await validateTaskCandidate(body, request.signal);
           break;

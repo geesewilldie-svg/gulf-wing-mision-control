@@ -226,7 +226,7 @@ test("v1 database is backed up and migrated without changing existing owner task
     });
     withStore((db) => {
       db.exec(
-        "DROP TABLE candidate_reviews; DROP TABLE worker_runs; DROP TABLE worker_grants; PRAGMA user_version=1;",
+        "DROP TABLE candidate_test_runs; DROP TABLE candidate_reviews; DROP TABLE worker_runs; DROP TABLE worker_grants; PRAGMA user_version=1;",
       );
     });
     expect(snapshot().tasks[0].request).toBe("Retained legacy objective");
@@ -239,7 +239,7 @@ test("v1 database is backed up and migrated without changing existing owner task
       withStore(
         (db) => (db.prepare("PRAGMA user_version").get() as any).user_version,
       ),
-    ).toBe(3);
+    ).toBe(4);
   }));
 test("worker status and interruption controls require controller identity and origin checks", async ({
   context,

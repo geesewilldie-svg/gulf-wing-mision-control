@@ -166,27 +166,27 @@ test("failed reports cannot be accepted and schema-2 migration preserves tasks",
   isolated(async () => {
     const task = seed();
     withStore((db) =>
-      db.exec("DROP TABLE candidate_reviews; PRAGMA user_version=2;"),
+      db.exec(
+        "DROP TABLE candidate_test_runs; DROP TABLE candidate_reviews; PRAGMA user_version=2;",
+      ),
     );
     expect(snapshot().tasks[0].id).toBe(task.id);
     expect(
       withStore(
         (db) => (db.prepare("PRAGMA user_version").get() as any).user_version,
       ),
-    ).toBe(3);
+    ).toBe(4);
     await validateTaskCandidate({ id: task.id, revision: task.revision });
     const review = snapshot().candidateReviews![0];
     withStore((db) =>
-      db
-        .prepare("UPDATE candidate_reviews SET report=? WHERE id=?")
-        .run(
-          JSON.stringify({
-            typecheck: "failed",
-            tests: "not-run",
-            codeExecution: "not-run",
-          }),
-          review.id,
-        ),
+      db.prepare("UPDATE candidate_reviews SET report=? WHERE id=?").run(
+        JSON.stringify({
+          typecheck: "failed",
+          tests: "not-run",
+          codeExecution: "not-run",
+        }),
+        review.id,
+      ),
     );
     expect(() =>
       decideCandidate({

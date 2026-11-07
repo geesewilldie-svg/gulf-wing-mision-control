@@ -4,13 +4,13 @@ Foundation now checks saved Codex candidates locally and records owner review ag
 
 The trusted compiler worker parses virtual files using the installed TypeScript compiler in strict, no-emit mode. Its compiler host exposes candidate files and installed TypeScript/Node declaration libraries only. External dependencies are not installed and project configuration/plugins are not loaded. The worker has a 15-second deadline and V8 memory limits. These are compiler resource controls, not a sandbox for executing generated programs. TypeScript and Node declaration development dependencies must remain installed.
 
-Reports identify diagnostics, likely test files, and a limited set of capability imports. Warnings are not exhaustive. A passing type check establishes neither correctness nor security. Tests and generated code are never executed; no files are installed or skills activated. JSON/Markdown-only candidates require manual review and cannot pass the TypeScript acceptance gate.
+Reports identify diagnostics, likely test files, and a limited set of capability imports. Warnings are not exhaustive. A passing type check establishes neither correctness nor security. Static validation executes no generated code or tests; no files are installed or skills activated. JSON/Markdown-only candidates require manual review and cannot pass the TypeScript acceptance gate.
 
-Read the saved artifact and report, confirm review, then choose **Accept for isolated testing** or **Reject candidate**. Acceptance records readiness for a future isolated test stage. That executor and promotion workflow are not implemented. Acceptance does not queue execution or authorize deployment. Existing independent/manual test evidence is not converted into a machine-verified report.
+Read the saved artifact and report, confirm review, then choose **Accept for isolated testing** or **Reject candidate**. Acceptance enables a separately confirmed [limited WebAssembly test run](nexus-isolated-tests.md). Promotion is not implemented. Acceptance alone does not queue execution or authorize deployment. Existing independent/manual test evidence is not converted into a machine-verified report.
 
 Only paired controllers can use these operations; same-origin checks apply. Review notes are owner data, not instructions or test evidence. Decisions require current review revision, current task revision, artifact hash, and the latest report. Changed tasks invalidate earlier review. Restart marks unfinished checks interrupted without replay.
 
-SQLite schema 3 adds private review reports and notes. Schema-2 databases receive a private pre-migration backup; schema-1 migration retains its earlier backup. Older application versions refuse a newer database. Task deletion removes its reviews once no check is active; private backups retain prior records. Other business/knowledge stores are unchanged.
+SQLite schema 3 added private review reports and notes; schema 4 now adds separate test-run evidence. Schema-2 databases receive a private pre-migration backup; schema-1 migration retains its earlier backup. Older application versions refuse a newer database. Task deletion removes its reviews once no check is active; private backups retain prior records. Other business/knowledge stores are unchanged.
 
 ## Validation of this change
 

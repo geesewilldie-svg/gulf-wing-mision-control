@@ -26,7 +26,7 @@ export function withStore<T>(fn: (db: DatabaseSync) => T): T {
     const version = Number(
       (db.prepare("PRAGMA user_version").get() as any).user_version,
     );
-    if (version > 3)
+    if (version > 4)
       throw new SyncError(
         503,
         "Foundation database is newer than this application. No downgrade was attempted.",
@@ -71,6 +71,21 @@ export function withStore<T>(fn: (db: DatabaseSync) => T): T {
       db.exec(`BEGIN IMMEDIATE;
       CREATE TABLE candidate_reviews(id TEXT PRIMARY KEY,task_id TEXT NOT NULL,task_revision INTEGER NOT NULL,candidate_hash TEXT NOT NULL,revision INTEGER NOT NULL,state TEXT NOT NULL,report TEXT NOT NULL,note TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL);
       PRAGMA user_version=3;COMMIT;`);
+    }
+    if (version < 4) {
+      if (version === 3) {
+        const dir = path.join(root, "foundation-backups");
+        mkdirSync(dir, { recursive: true, mode: 0o700 });
+        const backup = path.join(
+          dir,
+          "before-schema-4-" + Date.now() + "-" + randomUUID() + ".sqlite",
+        );
+        db.prepare("VACUUM INTO ?").run(backup);
+        if (process.platform !== "win32") chmodSync(backup, 0o600);
+      }
+      db.exec(`BEGIN IMMEDIATE;
+      CREATE TABLE candidate_test_runs(id TEXT PRIMARY KEY,task_id TEXT NOT NULL,task_revision INTEGER NOT NULL,review_id TEXT NOT NULL,candidate_hash TEXT NOT NULL,state TEXT NOT NULL,report TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL);
+      PRAGMA user_version=4;COMMIT;`);
     }
     return fn(db);
   } finally {
@@ -117,6 +132,12 @@ const task = (r: any): NexusTask => ({
 export function snapshot(): FoundationSnapshot {
   return withStore((db) => ({
     schemaVersion: 1,
+    candidateTestRuns: db
+      .prepare(
+        "SELECT id,task_id AS taskId,task_revision AS taskRevision,review_id AS reviewId,candidate_hash AS candidateHash,state,report,created_at AS createdAt,updated_at AS updatedAt FROM candidate_test_runs ORDER BY created_at DESC,rowid DESC LIMIT 200",
+      )
+      .all()
+      .map((r: any) => ({ ...r, report: JSON.parse(r.report) })),
     candidateReviews: db
       .prepare(
         "SELECT id,task_id AS taskId,task_revision AS taskRevision,candidate_hash AS candidateHash,revision,state,report,note,created_at AS createdAt,updated_at AS updatedAt FROM candidate_reviews ORDER BY created_at DESC,rowid DESC LIMIT 200",
@@ -577,6 +598,9 @@ export function recoverTasks() {
       db.prepare(
         "UPDATE candidate_reviews SET state='interrupted',revision=revision+1,updated_at=? WHERE state='checking'",
       ).run(new Date().toISOString());
+      db.prepare(
+        "UPDATE candidate_test_runs SET state='interrupted',updated_at=? WHERE state='running'",
+      ).run(new Date().toISOString());
       return rows.length;
     }),
   );
@@ -609,6 +633,18 @@ export function deleteTask(input: any) {
           409,
           "Wait for candidate validation to finish before deleting this task.",
         );
+      if (
+        db
+          .prepare(
+            "SELECT id FROM candidate_test_runs WHERE task_id=? AND state='running'",
+          )
+          .get(t.id)
+      )
+        throw new SyncError(
+          409,
+          "Wait for isolated tests to finish before deleting this task.",
+        );
+      db.prepare("DELETE FROM candidate_test_runs WHERE task_id=?").run(t.id);
       db.prepare("DELETE FROM candidate_reviews WHERE task_id=?").run(t.id);
       const uncertain = db
         .prepare(

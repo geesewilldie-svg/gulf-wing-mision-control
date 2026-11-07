@@ -26,7 +26,9 @@ The Codex candidate-authoring adapter now supports local dedicated sign-in, per-
 
 ## Candidate review increment
 
-Foundation checks candidate integrity and TypeScript without executing generated code. Saved reports and owner decisions bind exact task revisions and hashes; restart interrupts unfinished checks. Existing candidates can be rechecked without another provider request. Acceptance is for a future isolated test stage, not installation or promotion. See [candidate review](architecture/nexus-candidate-review.md).
+Foundation checks candidate integrity and TypeScript without executing generated code. Saved reports and owner decisions bind exact task revisions and hashes; restart interrupts unfinished checks. Existing candidates can be rechecked without another provider request. Accepted candidates can now run separately confirmed synchronous utility tests in a limited WebAssembly runtime, without installation or promotion. See [candidate review](architecture/nexus-candidate-review.md).
+
+See [isolated tests and compatibility limits](architecture/nexus-isolated-tests.md). Passing candidate-supplied tests is not independent QA or commercial multi-tenant isolation.
 
 ## Next delivery gates
 

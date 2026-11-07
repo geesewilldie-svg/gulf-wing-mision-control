@@ -4,16 +4,19 @@ import type { FoundationSnapshot, NexusTask } from "@/lib/foundation/contracts";
 export default function CandidateReview({
   task,
   reviews,
+  testRuns,
   disabled,
   mutate,
 }: {
   task: NexusTask;
   reviews: NonNullable<FoundationSnapshot["candidateReviews"]>;
+  testRuns: NonNullable<FoundationSnapshot["candidateTestRuns"]>;
   disabled: boolean;
   mutate: (body: unknown) => Promise<unknown>;
 }) {
   const [confirmed, setConfirmed] = useState("");
   const [note, setNote] = useState("");
+  const [runConsent, setRunConsent] = useState("");
   let artifact;
   try {
     artifact = JSON.parse(task.output);
@@ -48,9 +51,9 @@ export default function CandidateReview({
     <section aria-label="Candidate review">
       <h4>Candidate review</h4>
       <p>
-        Static checks only. Generated code and tests are not executed.
-        Acceptance records readiness for a future isolated test stage; it does
-        not install or activate a skill.
+        Validate and review the saved code first. Accepted candidates can run
+        limited synchronous utility tests in an isolated WebAssembly engine. No
+        candidate runs in Node or installs or activates a skill.
       </p>
       <button
         disabled={disabled || review?.state === "checking"}
@@ -74,8 +77,8 @@ export default function CandidateReview({
             SHA-256: {review.candidateHash}
           </p>
           <p>
-            Type check: {review.report.typecheck || "pending"}. Tests: not run.
-            Code execution: not run.
+            Static validation: type check {review.report.typecheck || "pending"}
+            . Tests were not run during this check.
           </p>
           {review.report.failure && <p>{review.report.failure}</p>}
           {review.report.diagnostics?.map((d, i) => (
@@ -127,6 +130,74 @@ export default function CandidateReview({
             Reject candidate
           </button>
           {review.note && <p>Saved owner note: {review.note}</p>}
+          {review.state === "accepted-for-tests" && (
+            <>
+              <p>
+                The runner supports synchronous node:test and a small assert
+                API, candidate-relative imports, and en-US USD formatting. No
+                network, files, processes, timers, external packages or
+                asynchronous tests. Results cover candidate-supplied tests, not
+                independent verification.
+              </p>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={runConsent === identity}
+                  onChange={(e) =>
+                    setRunConsent(e.target.checked ? identity : "")
+                  }
+                />
+                I approve one isolated test run of this exact candidate.
+              </label>
+              <button
+                disabled={
+                  disabled ||
+                  runConsent !== identity ||
+                  testRuns.some((r) => r.state === "running")
+                }
+                onClick={() => {
+                  setRunConsent("");
+                  void mutate({
+                    op: "candidate.test",
+                    reviewId: review.id,
+                    reviewRevision: review.revision,
+                    taskRevision: task.revision,
+                    candidateHash: artifact.sha256,
+                    confirmIsolatedRun: true,
+                  });
+                }}
+              >
+                Run isolated tests
+              </button>
+            </>
+          )}
+          {testRuns
+            .filter(
+              (r) =>
+                r.taskId === task.id &&
+                r.candidateHash === artifact.sha256 &&
+                r.taskRevision === task.revision,
+            )
+            .slice(0, 3)
+            .map((run) => (
+              <section aria-label="Isolated test result" key={run.id}>
+                <p role="status">
+                  Isolated tests: {run.state} · {run.report.passed || 0} passed
+                  · {run.report.failed || 0} failed
+                </p>
+                <p>
+                  {run.report.engine || "QuickJS WebAssembly"} ·
+                  candidate-supplied tests only · not installed or promoted
+                </p>
+                {run.report.error && <p>{run.report.error}</p>}
+                {run.report.tests?.map((t, i) => (
+                  <p key={i}>
+                    {t.name}: {t.status}
+                    {t.detail ? " — " + t.detail : ""}
+                  </p>
+                ))}
+              </section>
+            ))}
         </>
       )}
     </section>
