@@ -18,6 +18,7 @@ import {
   trackAgent,
 } from "@/lib/server/agent-router";
 import { obsidianDocuments } from "@/lib/server/obsidian";
+import { connectedFileDocuments } from "@/lib/server/local-files";
 import {
   publicResearch,
   researchProviderName,
@@ -124,6 +125,18 @@ export async function POST(request: Request) {
           warning: undefined,
         };
     if (vault.warning) warnings.push(vault.warning);
+    let connected: Awaited<ReturnType<typeof connectedFileDocuments>> = {
+      documents: [],
+      warning: undefined,
+    };
+    try {
+      connected = await connectedFileDocuments();
+    } catch {
+      warnings.push(
+        "Connected file index unavailable. Refresh it in Connections; other knowledge remains available.",
+      );
+    }
+    if (connected.warning) warnings.push(connected.warning);
     const documents = await trackAgent(
       "knowledge",
       async () => [
@@ -131,6 +144,7 @@ export async function POST(request: Request) {
         ...(await businessKnowledge()),
         ...(await ventureKnowledge()),
         ...vault.documents,
+        ...connected.documents,
       ],
       request.signal,
     );

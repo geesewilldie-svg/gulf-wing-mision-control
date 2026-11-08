@@ -4,7 +4,7 @@ Operator request, November 7, 2026. Keep these requirements while finishing the 
 
 ## Next delivery priority
 
-1. Make Obsidian and approved laptop folders available through one local search with source links, freshness and partial-index status.
+1. Accept the selected-folder/Obsidian local-search pilot on the Windows laptop, then add a relationship graph based on real indexed sources. See [local file search](local-file-search.md).
 2. Complete Gemini account setup using the existing adapter, private configuration, explicit external sharing and request allowance.
 3. Evaluate supported GitHub Copilot coding integration; evaluate Microsoft 365 Copilot/Graph separately for authorized work-account data. Existing chat subscriptions do not establish API entitlement or an installed adapter.
 4. Verify DeepAI's official supported API, current costs, data handling and commercial/subscription terms before implementation or enablement.
@@ -12,7 +12,7 @@ Operator request, November 7, 2026. Keep these requirements while finishing the 
 
 ## Current code
 
-Gemini has an external-model adapter gated by `GW_NEXUS_ALLOW_EXTERNAL`, configured key/model, positive daily allowance and per-question sharing. Actual laptop configuration has not been verified here. A read-only Obsidian Markdown scanner supports a locally configured vault, currently capped at 100 notes, 2 MB, depth eight and 2,000 entries. Imported PDF/XLSX/Markdown/text snapshots already support document search. The Google Calendar read-only adapter exists; account authorization must be checked on the laptop. Copilot and DeepAI are not connected. General laptop folder indexing is not implemented.
+Gemini has an external-model adapter gated by `GW_NEXUS_ALLOW_EXTERNAL`, configured key/model, positive daily allowance and per-question sharing. Actual laptop configuration has not been verified here. A read-only Obsidian Markdown scanner supports a locally configured vault, currently capped at 100 notes, 2 MB, depth eight and 2,000 entries. Imported PDF/XLSX/Markdown/text snapshots already support document search. The Google Calendar read-only adapter exists; account authorization must be checked on the laptop. Copilot and DeepAI are not connected. Selected-folder indexing is implemented for Markdown/text/PDF/XLSX (Obsidian: Markdown only), with local Windows folder selection, refresh/removal, controller-only source previews, content-change withholding, and visible coverage limits. Native Windows acceptance is pending; whole-laptop indexing and the relationship graph are not implemented.
 
 ## Google connector catalog requested
 

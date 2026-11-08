@@ -418,3 +418,5 @@ Reviewed USD candidates can now pass [independent contract checks and preview-bo
 Foundation now supports [controlled activation and rollback of the isolated USD utility](docs/architecture/nexus-utility-activation.md). Selection is per workspace and affects only the manual currency tool; generated code never becomes a host Node module.
 
 Co-hosting includes a [one-customer test workflow](docs/cohosting-workflow-pilot.md) with exact-version recorded acceptance, rework and human completion review. Provider/Google and broader laptop-file requirements are retained in [the connections roadmap](docs/nexus-connections-roadmap.md).
+
+Selected laptop folders and Obsidian: [read-only setup, refresh, search and source preview](docs/local-file-search.md). Run `Setup-Nexus-Folders.cmd` on the Windows laptop to select a folder, then refresh its index in Nexus Connections. No new Google account is connected by this update.
