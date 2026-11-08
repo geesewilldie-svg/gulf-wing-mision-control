@@ -30,7 +30,7 @@ Removing a root deletes the connected-file snapshot and removes that root from t
 
 ## Remaining connections
 
-Google Drive, Docs and Sheets are next; Gmail, Tasks and other Google services remain in the [connection roadmap](nexus-connections-roadmap.md). The existing Calendar OAuth adapter is separate. This delivery does not claim any new Google account authorization, Copilot/DeepAI integration, or commercial provider entitlement.
+Selected read-only Google Drive, Docs and Sheets snapshots and multiple Calendar accounts are now implemented in the [Google Workspace increment](google-workspace.md); native authorization/acceptance is still required. Gmail, Tasks and other Google services remain in the [connection roadmap](nexus-connections-roadmap.md). Local folder setup does not itself authorize any Google account, Copilot/DeepAI integration or commercial provider entitlement.
 
 ## Validation
 

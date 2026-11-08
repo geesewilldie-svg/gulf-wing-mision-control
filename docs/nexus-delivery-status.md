@@ -66,3 +66,7 @@ The operator additionally requires automatic morning engagement on opening Nexus
 ## Selected-folder search pilot
 
 Read-only Obsidian and selected business folders can be configured through a local Windows picker and searched in Connections or Ask Nexus. Refresh/removal, source previews, content-hash freshness checks, excluded paths and partial-index status are implemented. Shared controllers have access; display-only devices do not. This does not add whole-laptop access, a relationship graph, or Google Drive/Docs/Sheets authorization. See [setup and limits](local-file-search.md). Native Windows acceptance is the next delivery gate.
+
+## Multiple Google accounts and selected Google documents
+
+Up to four Google identities preserve the verified Calendar connection, combine calendar retrieval with partial-account warnings and deduplicate shared invitations. Separate Drive read authorization supports user-selected Google Docs/text, multi-sheet XLSX exports, PDFs and notes as searchable local snapshots. Add/remove/refresh and controller-only access are implemented. Gmail inbox/send and other Google products remain unconnected. Synthetic tests do not establish live account authorization, and commercial OAuth/tenant isolation remain delivery gates. See [setup, permission breadth and limits](google-workspace.md).

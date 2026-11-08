@@ -4,6 +4,7 @@ import {
   response,
   failure,
   SyncError,
+  readBody,
 } from "@/lib/server/sync-store";
 import {
   googleStatus,
@@ -39,7 +40,27 @@ export async function POST(request: Request) {
         403,
         "Open Google sign-in directly at " + expected.origin + "/nexus.",
       );
-    const start = await beginGoogle();
+    const body =
+      request.body && request.headers.get("content-length") !== "0"
+        ? ((await readBody(request, 2000)) as {
+            features?: unknown;
+            accountId?: unknown;
+          })
+        : {};
+    if (
+      !body ||
+      typeof body !== "object" ||
+      (body.features !== undefined &&
+        !["calendar", "drive", "both"].includes(body.features as string)) ||
+      (body.accountId !== undefined &&
+        (typeof body.accountId !== "string" ||
+          !/^[a-f0-9]{24}$/.test(body.accountId)))
+    )
+      throw new SyncError(400, "Choose a supported Google account connection.");
+    const start = await beginGoogle(
+      body.features as "calendar" | "drive" | "both" | undefined,
+      body.accountId as string | undefined,
+    );
     return response({ url: start.url }, 200, {
       "Set-Cookie":
         "gw_google_state=" +
@@ -54,7 +75,19 @@ export async function DELETE(request: Request) {
   try {
     sameOrigin(request);
     await authorized(request, true);
-    await disconnectGoogle();
+    const body =
+      request.body && request.headers.get("content-length") !== "0"
+        ? ((await readBody(request, 2000)) as { accountId?: unknown })
+        : {};
+    if (
+      !body ||
+      typeof body !== "object" ||
+      (body.accountId !== undefined &&
+        (typeof body.accountId !== "string" ||
+          !/^[a-f0-9]{24}$/.test(body.accountId)))
+    )
+      throw new SyncError(400, "Choose a connected Google account.");
+    await disconnectGoogle(body.accountId as string | undefined);
     return response({ disconnected: true });
   } catch (e) {
     return failure(e);

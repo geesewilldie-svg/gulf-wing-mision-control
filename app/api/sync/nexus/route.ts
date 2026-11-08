@@ -19,6 +19,7 @@ import {
 } from "@/lib/server/agent-router";
 import { obsidianDocuments } from "@/lib/server/obsidian";
 import { connectedFileDocuments } from "@/lib/server/local-files";
+import { driveDocuments } from "@/lib/server/google-drive";
 import {
   publicResearch,
   researchProviderName,
@@ -137,6 +138,18 @@ export async function POST(request: Request) {
       );
     }
     if (connected.warning) warnings.push(connected.warning);
+    let drive: Awaited<ReturnType<typeof driveDocuments>> = {
+      documents: [],
+      warning: undefined,
+    };
+    try {
+      drive = await driveDocuments();
+    } catch {
+      warnings.push(
+        "Google Drive snapshot unavailable. Other knowledge remains available.",
+      );
+    }
+    if (drive.warning) warnings.push(drive.warning);
     const documents = await trackAgent(
       "knowledge",
       async () => [
@@ -145,6 +158,7 @@ export async function POST(request: Request) {
         ...(await ventureKnowledge()),
         ...vault.documents,
         ...connected.documents,
+        ...drive.documents,
       ],
       request.signal,
     );

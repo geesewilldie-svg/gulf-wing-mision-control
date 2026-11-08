@@ -12,6 +12,7 @@ import KnowledgeImport from "./knowledge-import";
 import NexusFoundation from "./nexus-foundation";
 import { scopes, type Scope } from "@/lib/foundation/contracts";
 import GoogleCalendar from "./google-calendar";
+import GoogleDrive from "./google-drive";
 import LocalFileSearch from "./local-file-search";
 import LaptopMaintenance from "./laptop-maintenance";
 import MorningBriefNotice from "./morning-brief";
@@ -360,6 +361,7 @@ export default function NexusConsole() {
           <h2>Connections and agents</h2>
           <LocalFileSearch disabled={disabled} />
           <GoogleCalendar disabled={disabled} />
+          <GoogleDrive disabled={disabled} />
           <LaptopMaintenance disabled={disabled} />
           <p>
             Local-first routing is available. OpenAI, Claude and Gemini adapters

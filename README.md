@@ -420,3 +420,5 @@ Foundation now supports [controlled activation and rollback of the isolated USD 
 Co-hosting includes a [one-customer test workflow](docs/cohosting-workflow-pilot.md) with exact-version recorded acceptance, rework and human completion review. Provider/Google and broader laptop-file requirements are retained in [the connections roadmap](docs/nexus-connections-roadmap.md).
 
 Selected laptop folders and Obsidian: [read-only setup, refresh, search and source preview](docs/local-file-search.md). Run `Setup-Nexus-Folders.cmd` on the Windows laptop to select a folder, then refresh its index in Nexus Connections. No new Google account is connected by this update.
+
+Google accounts, Drive, Docs and Sheets: [multi-account read-only setup and selected snapshots](docs/google-workspace.md). Existing Calendar credentials are retained; authorize additional scopes/accounts locally.

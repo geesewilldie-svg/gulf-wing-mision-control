@@ -1,6 +1,6 @@
 # Connect Google Calendar to the local Nexus app
 
-This integration is read-only. It reads event details for the next seven days from the configured calendars (primary by default) to populate the local morning snapshot. It does not edit calendars, read Gmail, send email, connect banking or activate a paid AI provider. Your Google account is not connected merely by downloading or building the code.
+This integration is read-only. It reads event details for the next seven days from the configured calendars (primary by default) on each Calendar-authorized connected account to populate the local morning snapshot. It does not edit calendars, read Gmail, send email, connect banking or activate a paid AI provider. The [Google Workspace increment](google-workspace.md) adds multiple accounts and separately authorized selected Drive/Docs/Sheets snapshots. Your Google account is not connected merely by downloading or building the code.
 
 ## One-time Google setup on the laptop
 
@@ -35,7 +35,7 @@ Client credentials are stored locally, outside Git. Access/refresh tokens are AE
 
 OAuth uses PKCE, random single-use state, a ten-minute HttpOnly SameSite=Lax callback cookie and fixed Google endpoints. Callback codes/tokens/provider error bodies are not reflected into the browser response. Controller-only API responses use no-store caching. No browser token storage or model access to OAuth secrets is provided.
 
-**Disconnect Google Calendar** removes the local tokens, pending state and cached morning brief. It does not revoke the grant at Google: also remove Nexus in [Google account connections](https://myaccount.google.com/connections) when you want revocation. Client configuration remains for later reconnecting. Already-downloaded exports/backups are not erased. Existing trusted paired controllers share this single local account connection; do not grant that role to customers or contractors.
+**Disconnect account** removes that identity locally while preserving others; **Disconnect all Google accounts** removes every local identity. Both clear pending state, Drive snapshots and the cached morning brief. It does not revoke the grant at Google: also remove Nexus in [Google account connections](https://myaccount.google.com/connections) when you want revocation. Client configuration remains for later reconnecting. Already-downloaded exports/backups are not erased. Existing trusted paired controllers share these local account connections; do not grant that role to customers or contractors.
 
 Tests use synthetic OAuth/token/event responses. A real Google sign-in, the Windows file picker and Google account permissions still need laptop acceptance. Email delivery is a separate unfinished integration.
 
