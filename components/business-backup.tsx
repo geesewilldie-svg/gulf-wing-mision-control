@@ -7,7 +7,10 @@ export default function BusinessBackup({
   disabled,
 }: {
   state: BusinessState;
-  save: (state: BusinessState) => Promise<boolean>;
+  save: (
+    state: BusinessState,
+    options?: { restore?: boolean },
+  ) => Promise<boolean>;
   disabled: boolean;
 }) {
   const [message, setMessage] = useState("");
@@ -21,7 +24,8 @@ export default function BusinessBackup({
         Export records, contacts, checklists, services and estimates before
         major edits. Store the file privately. It excludes pairing codes, voice
         models and the separate knowledge index. Restore replaces the current
-        business records and proposed marketing allocation.
+        business records and proposed marketing allocation. Restored acceptances
+        and completions remain historical and unverified until reviewed again.
       </p>
       <button
         disabled={disabled}
@@ -98,11 +102,14 @@ export default function BusinessBackup({
                 )
               ) {
                 if (
-                  await save({
-                    ...pending,
-                    revision: state.revision,
-                    audit: state.audit,
-                  })
+                  await save(
+                    {
+                      ...pending,
+                      revision: state.revision,
+                      audit: state.audit,
+                    },
+                    { restore: true },
+                  )
                 ) {
                   setPending(null);
                   setMessage("Business backup restored.");

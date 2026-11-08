@@ -61,18 +61,36 @@ export default function NexusBusiness({
       controller.abort();
     };
   }, [state, dirty]);
-  const save = async (next: BusinessState) => {
+  const save = async (next: BusinessState, options?: { restore?: boolean }) => {
     if (working.current || disabled) return false;
     working.current = true;
     const previous = state;
-    setState(next);
+    const evidenceChange =
+      options?.restore ||
+      next.records.some(
+        (r) =>
+          r.review?.phase !==
+          state?.records.find((old) => old.id === r.id)?.review?.phase,
+      ) ||
+      next.quotes.some((q) => {
+        const old = state?.quotes.find((item) => item.id === q.id);
+        return (
+          q.status !== old?.status ||
+          q.jobId !== old?.jobId ||
+          JSON.stringify(q.acceptance) !== JSON.stringify(old?.acceptance)
+        );
+      });
+    if (!evidenceChange) setState(next);
     setBusy(true);
     setMessage("");
     try {
       const r = await fetch("/api/sync/business", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(next),
+        body: JSON.stringify({
+          ...next,
+          ...(options?.restore ? { restoreUnverified: true } : {}),
+        }),
       });
       const data = await r.json();
       if (!r.ok) {

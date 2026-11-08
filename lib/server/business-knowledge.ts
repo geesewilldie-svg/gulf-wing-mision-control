@@ -1,7 +1,15 @@
 import { loadBusiness } from "./business-store";
 import { type KnowledgeDocument, estimateService } from "@/lib/nexus";
 export async function businessKnowledge(): Promise<KnowledgeDocument[]> {
-  const state = await loadBusiness();
+  const loaded = await loadBusiness();
+  const state = {
+    ...loaded,
+    records: loaded.records.filter((r) => !r.isTest),
+    quotes: loaded.quotes.filter(
+      (q) =>
+        !q.isTest && !loaded.records.find((r) => r.id === q.recordId)?.isTest,
+    ),
+  };
   const source = "Saved Co-hosting operations";
   const today = new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/New_York",
@@ -36,8 +44,10 @@ export async function businessKnowledge(): Promise<KnowledgeDocument[]> {
         state.records.filter((r) => r.kind === "Job" && r.status !== "Complete")
           .length +
         " open jobs/tasks; " +
-        state.quotes.filter((q) => q.status === "Accepted").length +
-        " accepted estimates. " +
+        state.quotes.filter(
+          (q) => q.status === "Accepted" && q.acceptance?.origin === "operator",
+        ).length +
+        " operator-recorded accepted estimates. Test walkthroughs are excluded. " +
         scheduleSummary +
         "Customer acceptance and status are manually recorded by controllers.",
     },
@@ -66,6 +76,12 @@ export async function businessKnowledge(): Promise<KnowledgeDocument[]> {
         r.contact ? "Contact " + r.contact : "",
         r.address ? "Address " + r.address : "",
         r.notes,
+        r.kind === "Job"
+          ? "Completion review: " +
+            r.review?.phase +
+            " · " +
+            (r.review?.note || "No recorded decision")
+          : "",
         state.services.find((s) => s.id === r.serviceId)?.name,
         r.checklist
           ?.map((c) => (c.done ? "Done: " : "Pending: ") + c.label)

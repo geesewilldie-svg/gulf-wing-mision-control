@@ -38,6 +38,14 @@ The USD formatter profile adds 15 separately authored host-side checks, exact co
 
 Verified USD archives can now be selected for a manual currency tool through a preview-bound owner approval. Per-workspace bindings, on-demand WebAssembly execution, per-input output checks, revocation and rollback are implemented. Existing estimates and other business behavior are unchanged. No generic live plugin, arbitrary host code or self-updating deployment is enabled. See [activation, rollback and limits](architecture/nexus-utility-activation.md).
 
+## Co-hosting workflow pilot
+
+A marked test lead can now move through intake, versioned estimate acceptance, one scheduled job, submission, rework and a recorded human completion decision. Accepted prices/scope and job provenance are protected server-side; legacy/restored evidence is labeled unverified. Test work is excluded from live summaries. No external outreach, photos, customer/contractor accounts, invoicing or payments are enabled by this increment. See [the operator rehearsal](cohosting-workflow-pilot.md).
+
+## Retained connection priorities
+
+The operator requests Gemini, Copilot, DeepAI, Obsidian, broader laptop-file search/relationship graph and relevant Google Workspace/marketing connectors. This does not cancel the Co-hosting phase. Actual code/configuration status and next setup order are retained in [the connection roadmap](nexus-connections-roadmap.md); unimplemented adapters are not represented as connected.
+
 ## Next delivery gates
 
 1. Read-only Google Calendar OAuth is implemented with local token storage, primary-calendar reads and brief aggregation; actual laptop client setup/account authorization is still required. See [Google setup](google-calendar.md). Self-email delivery, a multi-calendar picker and extended brief history remain unfinished. Laptop sleep prevents local execution.

@@ -1,6 +1,4 @@
-import { promises as fs } from "node:fs";
-import path from "node:path";
-import { randomBytes } from "node:crypto";
+import { applyBusinessWorkflow } from "@/lib/business-workflow";
 import { validBusiness } from "@/lib/business";
 import {
   authorized,
@@ -12,16 +10,11 @@ import {
 } from "@/lib/server/sync-store";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-import { loadBusiness } from "@/lib/server/business-store";
-const file = () =>
-  path.resolve(
-    process.env.GW_SYNC_DATA_DIR || path.join(process.cwd(), ".gulf-wing"),
-    "business.json",
-  );
+import { loadBusiness, persistBusiness } from "@/lib/server/business-store";
 let queue: Promise<unknown> = Promise.resolve();
 export async function GET(request: Request) {
   try {
-    await authorized(request);
+    await authorized(request, true);
     return response(await loadBusiness());
   } catch (error) {
     return failure(error);
@@ -32,8 +25,11 @@ export async function PUT(request: Request) {
     sameOrigin(request);
     await authorized(request, true);
     let incoming;
+    let restoring = false;
     try {
-      incoming = validBusiness(await readBody(request));
+      const raw = (await readBody(request)) as any;
+      restoring = raw?.restoreUnverified === true;
+      incoming = validBusiness(raw);
     } catch (error) {
       if (error instanceof SyncError) throw error;
       throw new SyncError(400, (error as Error).message);
@@ -50,26 +46,26 @@ export async function PUT(request: Request) {
             },
             409,
           );
+        let clean;
+        try {
+          clean = applyBusinessWorkflow(
+            current,
+            incoming,
+            new Date().toISOString(),
+            restoring,
+          );
+        } catch (e) {
+          throw new SyncError(400, (e as Error).message);
+        }
         const next = {
-          ...incoming,
+          ...clean,
           revision: current.revision + 1,
           audit: [
-            `${new Date().toISOString()} · Controller saved operating records / draft estimates / proposed marketing allocations. No external action.`,
+            `${new Date().toISOString()} · ${restoring ? "Controller restored business data as unverified history" : "Controller saved operating records, exact-version acceptances or human review decisions"}. No messages, invoices or payments executed.`,
             ...current.audit,
           ].slice(0, 100),
         };
-        const target = file(),
-          tmp = `${target}.${randomBytes(8).toString("hex")}.tmp`;
-        await fs.mkdir(path.dirname(target), { recursive: true, mode: 0o700 });
-        try {
-          await fs.writeFile(tmp, JSON.stringify(next), {
-            mode: 0o600,
-            flag: "wx",
-          });
-          await fs.rename(tmp, target);
-        } finally {
-          await fs.rm(tmp, { force: true });
-        }
+        await persistBusiness(next, restoring);
         return response(next);
       });
     queue = update.catch(() => {});

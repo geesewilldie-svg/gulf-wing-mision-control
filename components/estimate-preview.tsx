@@ -21,15 +21,18 @@ export default function EstimatePreview({ id }: { id: string }) {
   }, []);
   const quote = state?.quotes.find((q) => q.id === id);
   const record = state?.records.find((r) => r.id === quote?.recordId);
-  const total = quote
-    ? estimateService(
-        quote.hours,
-        quote.wage,
-        quote.burden,
-        quote.materials,
-        quote.margin,
-      ).price
-    : 0;
+  const total =
+    quote?.acceptance?.priceCents !== undefined
+      ? quote.acceptance.priceCents / 100
+      : quote
+        ? estimateService(
+            quote.hours,
+            quote.wage,
+            quote.burden,
+            quote.materials,
+            quote.margin,
+          ).price
+        : 0;
   return (
     <main className="nexus-console estimate-print">
       <div className="no-print nexus-buttons">
@@ -39,6 +42,9 @@ export default function EstimatePreview({ id }: { id: string }) {
         </button>
       </div>
       <h1>Gulf Wing Co-hosting</h1>
+      {(record?.isTest || quote?.isTest) && (
+        <p>TEST ESTIMATE · internal rehearsal only</p>
+      )}
       <p>Service estimate · {(quote?.status || "Draft").toUpperCase()}</p>
       {message && <p role="status">{message}</p>}
       {state && !quote && (
@@ -49,8 +55,13 @@ export default function EstimatePreview({ id }: { id: string }) {
           <h2>{quote.name}</h2>
           <p>Estimate reference: {quote.id}</p>
           <h3>Prepared for</h3>
-          <p>{record?.contact || record?.name || "Customer to be confirmed"}</p>
-          <p>{record?.address}</p>
+          <p>
+            {quote.acceptance?.customerName ||
+              record?.contact ||
+              record?.name ||
+              "Customer to be confirmed"}
+          </p>
+          <p>{quote.acceptance?.address || record?.address}</p>
           <h3>Scope</h3>
           <p className="preserve-lines">
             {quote.scope ||
@@ -58,9 +69,22 @@ export default function EstimatePreview({ id }: { id: string }) {
           </p>
           <p>
             Service:{" "}
-            {state?.services.find((s) => s.id === quote.serviceId)?.name ||
+            {quote.acceptance?.serviceName ||
+              state?.services.find((s) => s.id === quote.serviceId)?.name ||
               "As described in scope"}
           </p>
+          <p>
+            Estimate version {quote.version || 1}
+            {quote.acceptance
+              ? " · acceptance recorded by " +
+                quote.acceptance.recordedBy +
+                " on " +
+                quote.acceptance.recordedAt
+              : ""}
+          </p>
+          {quote.acceptance?.origin === "restored-unverified" && (
+            <p>Restored acceptance is historical and unverified.</p>
+          )}
           <h3>Estimated service price before tax</h3>
           <p className="estimate-total">${total.toFixed(2)}</p>
           <p>

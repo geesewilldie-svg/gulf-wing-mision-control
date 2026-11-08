@@ -8,6 +8,9 @@ import {
   businessId,
 } from "@/lib/business";
 import { estimateService } from "@/lib/nexus";
+import JobCompletion from "./job-completion";
+import EstimateAcceptance from "./estimate-acceptance";
+import { acceptanceRecorded } from "@/lib/business-workflow";
 import ServiceCatalog from "./service-catalog";
 import BusinessBackup from "./business-backup";
 
@@ -57,6 +60,9 @@ export default function CohostingWorkspace({
   onDirty,
 }: Props) {
   const [record, setRecord] = useState(blankRecord);
+  const [jobDrafts, setJobDrafts] = useState<Record<string, boolean>>({});
+  const [accepting, setAccepting] = useState<Quote | null>(null);
+  const [acceptanceBaseline, setAcceptanceBaseline] = useState("");
   const [recordBaseline, setRecordBaseline] = useState("");
   const [quoteBaseline, setQuoteBaseline] = useState("");
   const [editing, setEditing] = useState(false);
@@ -70,6 +76,7 @@ export default function CohostingWorkspace({
   useEffect(() => {
     const recordDirty =
       editing ||
+      Boolean(record.leadSource) ||
       record.kind !== "Lead" ||
       record.status !== "Planned" ||
       Boolean(
@@ -92,8 +99,22 @@ export default function CohostingWorkspace({
       quote.burden !== 18.65 ||
       quote.materials !== 20 ||
       quote.margin !== 30;
-    onDirty(recordDirty || quoteDirty);
-  }, [record, quote, editing, editingQuote, state.revision, onDirty]);
+    onDirty(
+      recordDirty ||
+        quoteDirty ||
+        Boolean(accepting) ||
+        Object.values(jobDrafts).some(Boolean),
+    );
+  }, [
+    record,
+    quote,
+    editing,
+    editingQuote,
+    state.revision,
+    onDirty,
+    jobDrafts,
+    accepting,
+  ]);
   const changed = (next: BusinessRecord) => {
     setRecord(next);
     onDirty(true);
@@ -111,7 +132,7 @@ export default function CohostingWorkspace({
     quote.margin,
   );
   const jobs = state.records.filter(
-    (r) => r.kind === "Job" && r.status !== "Complete",
+    (r) => r.kind === "Job" && !r.isTest && r.status !== "Complete",
   );
   const activeServices = state.services.filter((s) => s.active);
   const serviceOptions = (
@@ -144,20 +165,21 @@ export default function CohostingWorkspace({
     setEditingQuote(false);
   };
   const convert = async (q: Quote) => {
-    if (q.jobId) return;
+    if (q.jobId || !acceptanceRecorded(q)) return;
     const parent = state.records.find((r) => r.id === q.recordId);
     const job: BusinessRecord = {
       id: businessId(),
       kind: "Job",
       name: q.name,
-      notes: q.scope || "",
+      notes: q.acceptance?.scope || q.scope || "",
       status: "Planned",
       parentId: parent && parent.kind !== "Job" ? parent.id : "",
       serviceId: q.serviceId,
-      contact: parent?.contact,
+      contact: q.acceptance?.customerName || parent?.contact,
       email: parent?.email,
       phone: parent?.phone,
-      address: parent?.address,
+      address: q.acceptance?.address || parent?.address,
+      isTest: parent?.isTest === true,
       assignee: jobOwner,
       dueDate: jobDate,
       checklist: jobChecklist(),
@@ -182,12 +204,60 @@ export default function CohostingWorkspace({
         tax, staffing, customer terms and final pricing need your review. No
         account sends messages or charges customers.
       </p>
+      <section className="nexus-card" aria-label="Co-hosting test walkthrough">
+        <h3>One-customer test walkthrough</h3>
+        <p>
+          Rehearse lead → property intake → estimate → recorded acceptance → job
+          → human completion review. Test records stay out of live operations
+          counts, Ask Nexus business search and the morning brief. No customer
+          is contacted and no money moves.
+        </p>
+        <button
+          disabled={disabled}
+          onClick={async () => {
+            const testLead: BusinessRecord = {
+              ...blankRecord(),
+              isTest: true,
+              leadSource: "Test walkthrough",
+              name:
+                "TEST · Turnover owner " +
+                (state.records.filter((r) => r.kind === "Lead" && r.isTest)
+                  .length +
+                  1),
+              contact: "Test owner",
+              email: "owner@example.invalid",
+              address: "TEST service location · Cape Coral",
+              serviceId: "turnover",
+              notes: "Synthetic turnover intake for internal rehearsal only.",
+            };
+            if (await save({ ...state, records: [...state.records, testLead] }))
+              setNotice(
+                "Test lead created. Prepare its property, then prepare an estimate from that property.",
+              );
+          }}
+        >
+          Create test lead
+        </button>
+        <p>
+          {state.records.filter((r) => r.isTest).length} marked test records ·{" "}
+          {
+            state.records.filter(
+              (r) =>
+                r.kind === "Job" &&
+                r.isTest &&
+                r.review?.phase === "Review required",
+            ).length
+          }{" "}
+          test jobs awaiting review
+        </p>
+      </section>
       <div className="business-metrics" aria-label="Operations summary">
         <div>
           <strong>
             {
               state.records.filter(
-                (r) => r.kind === "Lead" && r.status !== "Complete",
+                (r) =>
+                  r.kind === "Lead" && !r.isTest && r.status !== "Complete",
               ).length
             }
           </strong>
@@ -195,7 +265,10 @@ export default function CohostingWorkspace({
         </div>
         <div>
           <strong>
-            {state.records.filter((r) => r.kind === "Property").length}
+            {
+              state.records.filter((r) => r.kind === "Property" && !r.isTest)
+                .length
+            }
           </strong>
           <span>Properties</span>
         </div>
@@ -211,7 +284,13 @@ export default function CohostingWorkspace({
         </div>
         <div>
           <strong>
-            {state.quotes.filter((q) => q.status === "Accepted").length}
+            {
+              state.quotes.filter(
+                (q) =>
+                  acceptanceRecorded(q) &&
+                  !state.records.find((r) => r.id === q.recordId)?.isTest,
+              ).length
+            }
           </strong>
           <span>Accepted estimates</span>
         </div>
@@ -294,6 +373,17 @@ export default function CohostingWorkspace({
               />
             </label>
             <label>
+              Lead / intake source
+              <input
+                maxLength={200}
+                value={record.leadSource || ""}
+                onChange={(e) =>
+                  changed({ ...record, leadSource: e.target.value })
+                }
+                placeholder="Referral, inbound enquiry, or other documented source"
+              />
+            </label>
+            <label>
               Contact name
               <input
                 maxLength={160}
@@ -368,6 +458,7 @@ export default function CohostingWorkspace({
               Record status
               <select
                 aria-label="Record status"
+                disabled={record.kind === "Job"}
                 value={record.status}
                 onChange={(e) =>
                   changed({
@@ -377,7 +468,12 @@ export default function CohostingWorkspace({
                 }
               >
                 {["Planned", "Active", "Complete"].map((k) => (
-                  <option key={k}>{k}</option>
+                  <option
+                    key={k}
+                    disabled={record.kind === "Job" && k === "Complete"}
+                  >
+                    {k}
+                  </option>
                 ))}
               </select>
             </label>
@@ -472,6 +568,8 @@ export default function CohostingWorkspace({
               <strong>
                 {r.kind}: {r.name}
               </strong>
+              {r.isTest && <p>TEST RECORD · rehearsal only</p>}
+              {r.leadSource && <p>Lead source: {r.leadSource}</p>}
               <p>
                 {[r.contact, r.email, r.phone, r.address]
                   .filter(Boolean)
@@ -490,31 +588,39 @@ export default function CohostingWorkspace({
                 </p>
               )}
               <div className="nexus-buttons">
+                {r.kind !== "Job" && (
+                  <button
+                    disabled={disabled}
+                    onClick={() =>
+                      void save({
+                        ...state,
+                        records: state.records.map((item) =>
+                          item.id === r.id
+                            ? {
+                                ...item,
+                                status:
+                                  r.status === "Planned"
+                                    ? "Active"
+                                    : r.status === "Active"
+                                      ? "Complete"
+                                      : "Planned",
+                              }
+                            : item,
+                        ),
+                      })
+                    }
+                  >
+                    {r.status} · Advance
+                  </button>
+                )}
                 <button
-                  disabled={disabled}
-                  onClick={() =>
-                    void save({
-                      ...state,
-                      records: state.records.map((item) =>
-                        item.id === r.id
-                          ? {
-                              ...item,
-                              status:
-                                r.status === "Planned"
-                                  ? "Active"
-                                  : r.status === "Active"
-                                    ? "Complete"
-                                    : "Planned",
-                            }
-                          : item,
-                      ),
-                    })
+                  disabled={
+                    disabled ||
+                    (r.kind === "Job" &&
+                      ["Review required", "Accepted"].includes(
+                        r.review?.phase || "",
+                      ))
                   }
-                >
-                  {r.status} · Advance
-                </button>
-                <button
-                  disabled={disabled}
                   onClick={() => {
                     setRecord({ ...r });
                     setRecordBaseline(JSON.stringify(r));
@@ -544,8 +650,35 @@ export default function CohostingWorkspace({
                   </button>
                 )}
               </div>
+              {r.kind !== "Job" && (
+                <button
+                  disabled={disabled}
+                  onClick={() => {
+                    setQuote({
+                      ...blankQuote(),
+                      name: r.name + " · service estimate",
+                      recordId: r.id,
+                      serviceId: r.serviceId || "",
+                      scope: r.notes || "",
+                    });
+                    setEditingQuote(false);
+                    onDirty(true);
+                  }}
+                >
+                  Prepare estimate · {r.name}
+                </button>
+              )}
               {r.kind === "Job" && r.checklist?.length ? (
-                <fieldset disabled={disabled}>
+                <fieldset
+                  disabled={
+                    disabled ||
+                    [
+                      "Review required",
+                      "Accepted",
+                      "Legacy unreviewed",
+                    ].includes(r.review?.phase || "")
+                  }
+                >
                   <legend>Job checklist · {r.name}</legend>
                   {r.checklist.map((c, i) => (
                     <label className="business-check" key={i}>
@@ -576,6 +709,30 @@ export default function CohostingWorkspace({
                   ))}
                 </fieldset>
               ) : null}
+              {r.kind === "Job" && r.review && (
+                <JobCompletion
+                  key={
+                    r.id +
+                    ":" +
+                    r.review.phase +
+                    ":" +
+                    r.review.submissionVersion
+                  }
+                  record={r}
+                  disabled={disabled}
+                  onDirty={(dirty) =>
+                    setJobDrafts((current) => ({ ...current, [r.id]: dirty }))
+                  }
+                  save={(next) =>
+                    save({
+                      ...state,
+                      records: state.records.map((item) =>
+                        item.id === r.id ? next : item,
+                      ),
+                    })
+                  }
+                />
+              )}
             </li>
           ))}
       </ul>
@@ -684,6 +841,7 @@ export default function CohostingWorkspace({
           <label>
             Estimate scope and exclusions
             <textarea
+              aria-label="Estimate scope and exclusions"
               maxLength={2000}
               value={quote.scope || ""}
               onChange={(e) => changeQuote({ ...quote, scope: e.target.value })}
@@ -708,6 +866,10 @@ export default function CohostingWorkspace({
       <p>
         {activeServices.length} active services · {state.quotes.length} saved
         estimates
+      </p>
+      <p>
+        Set a date and assignee before creating work. An assignee label is an
+        internal schedule record, not contractor engagement or acceptance.
       </p>
       <div className="nexus-fields">
         <label>
@@ -735,34 +897,113 @@ export default function CohostingWorkspace({
             <span>
               {q.name} ·{" "}
               {money(
-                estimateService(
-                  q.hours,
-                  q.wage,
-                  q.burden,
-                  q.materials,
-                  q.margin,
-                ).price,
+                q.acceptance?.priceCents !== undefined
+                  ? q.acceptance.priceCents / 100
+                  : estimateService(
+                      q.hours,
+                      q.wage,
+                      q.burden,
+                      q.materials,
+                      q.margin,
+                    ).price,
               )}{" "}
               before tax · {(q.status || "Draft").toUpperCase()}
             </span>
             {q.scope && <p>{q.scope}</p>}
+            <p>
+              Estimate version {q.version || 1}
+              {q.isTest ? " · TEST ESTIMATE" : ""}
+            </p>
+            {q.acceptance && (
+              <p>
+                {q.acceptance.origin === "operator"
+                  ? "Operator-recorded acceptance"
+                  : "Restored acceptance · unverified"}
+                : {q.acceptance.acceptedBy} · {q.acceptance.method} ·{" "}
+                {q.acceptance.reference} · recorded by {q.acceptance.recordedBy}{" "}
+                at {q.acceptance.recordedAt}
+              </p>
+            )}
+            {q.status === "Accepted" && !acceptanceRecorded(q) && (
+              <p>
+                Historical accepted status has no current exact-version
+                acceptance. Record acceptance before creating new work.
+              </p>
+            )}
+            {!q.jobId && !acceptanceRecorded(q) && (
+              <button
+                disabled={disabled}
+                onClick={() => {
+                  setAccepting({ ...q });
+                  setAcceptanceBaseline(JSON.stringify(q));
+                  onDirty(true);
+                }}
+              >
+                Record acceptance · {q.name}
+              </button>
+            )}
+            {accepting?.id === q.id && (
+              <EstimateAcceptance
+                key={q.id}
+                quote={accepting}
+                isTest={
+                  state.records.find((r) => r.id === q.recordId)?.isTest ===
+                  true
+                }
+                disabled={disabled}
+                cancel={() => setAccepting(null)}
+                save={async (acceptance) => {
+                  if (
+                    JSON.stringify(
+                      state.quotes.find((item) => item.id === q.id),
+                    ) !== acceptanceBaseline
+                  ) {
+                    setNotice(
+                      "This estimate changed. Reopen the latest version before recording acceptance.",
+                    );
+                    return;
+                  }
+                  if (
+                    await save({
+                      ...state,
+                      quotes: state.quotes.map((item) =>
+                        item.id === q.id
+                          ? { ...item, status: "Accepted", acceptance }
+                          : item,
+                      ),
+                    })
+                  )
+                    setAccepting(null);
+                }}
+              />
+            )}
+
             <p>{state.records.find((r) => r.id === q.recordId)?.name}</p>
             <label>
               Estimate status · {q.name}
               <select
-                disabled={disabled || Boolean(q.jobId)}
+                disabled={disabled || Boolean(q.jobId) || acceptanceRecorded(q)}
                 aria-label={"Estimate status · " + q.name}
                 value={q.status || "Draft"}
-                onChange={(e) =>
-                  void save({
-                    ...state,
-                    quotes: state.quotes.map((item) =>
-                      item.id === q.id
-                        ? { ...item, status: e.target.value as Quote["status"] }
-                        : item,
-                    ),
-                  })
-                }
+                onChange={(e) => {
+                  if (e.target.value === "Accepted") {
+                    setAccepting({ ...q });
+                    setAcceptanceBaseline(JSON.stringify(q));
+                    onDirty(true);
+                  } else
+                    void save({
+                      ...state,
+                      quotes: state.quotes.map((item) =>
+                        item.id === q.id
+                          ? {
+                              ...item,
+                              status: e.target.value as Quote["status"],
+                              acceptance: undefined,
+                            }
+                          : item,
+                      ),
+                    });
+                }}
               >
                 {["Draft", "Sent", "Accepted", "Declined"].map((k) => (
                   <option key={k}>{k}</option>
@@ -771,7 +1012,7 @@ export default function CohostingWorkspace({
             </label>
             <div className="nexus-buttons">
               <button
-                disabled={disabled || Boolean(q.jobId)}
+                disabled={disabled || Boolean(q.jobId) || acceptanceRecorded(q)}
                 onClick={() => {
                   setQuote({ ...q });
                   setQuoteBaseline(JSON.stringify(q));
@@ -799,7 +1040,9 @@ export default function CohostingWorkspace({
                     (q.jobId ? "Job already created · " : "Create job · ") +
                     q.name
                   }
-                  disabled={disabled || Boolean(q.jobId)}
+                  disabled={
+                    disabled || Boolean(q.jobId) || !acceptanceRecorded(q)
+                  }
                   onClick={() => void convert(q)}
                 >
                   {q.jobId ? "Job already created" : "Create job · " + q.name}

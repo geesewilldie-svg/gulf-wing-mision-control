@@ -1,3 +1,44 @@
+export type Acceptance = {
+  confirmed?: boolean;
+  acceptedBy: string;
+  method: "Email" | "Phone" | "Signed document" | "In person" | "Test";
+  reference: string;
+  recordedBy: string;
+  recordedAt?: string;
+  quoteVersion?: number;
+  priceCents?: number;
+  customerName?: string;
+  address?: string;
+  serviceName?: string;
+  scope?: string;
+  origin?: "operator" | "restored-unverified";
+};
+export type JobPhase =
+  | "Scheduled"
+  | "In progress"
+  | "Review required"
+  | "Rework"
+  | "Accepted"
+  | "Legacy unreviewed";
+export type JobReview = {
+  confirmed?: boolean;
+  origin?: "operator" | "restored-unverified" | "legacy";
+  phase: JobPhase;
+  summary: string;
+  reviewer: string;
+  note: string;
+  submittedAt?: string;
+  reviewedAt?: string;
+  submissionVersion: number;
+  history: {
+    decision: "Accepted" | "Rework";
+    reviewer: string;
+    note: string;
+    at: string;
+    submissionVersion: number;
+    origin?: "operator" | "restored-unverified";
+  }[];
+};
 export type ChecklistItem = { label: string; done: boolean };
 export type BusinessRecord = {
   id: string;
@@ -14,6 +55,11 @@ export type BusinessRecord = {
   assignee?: string;
   dueDate?: string;
   checklist?: ChecklistItem[];
+  isTest?: boolean;
+  leadSource?: string;
+  sourceQuoteId?: string;
+  sourceQuoteVersion?: number;
+  review?: JobReview;
 };
 export type Service = {
   id: string;
@@ -22,6 +68,7 @@ export type Service = {
   active: boolean;
 };
 export type Quote = {
+  isTest?: boolean;
   id: string;
   name: string;
   hours: number;
@@ -34,9 +81,12 @@ export type Quote = {
   scope?: string;
   status?: "Draft" | "Sent" | "Accepted" | "Declined";
   jobId?: string;
+  version?: number;
+  acceptance?: Acceptance;
 };
 export type BusinessState = {
   revision: number;
+  workflowVersion?: 1;
   records: BusinessRecord[];
   quotes: Quote[];
   services: Service[];
@@ -78,10 +128,11 @@ export const jobChecklist = (): ChecklistItem[] =>
     "Document initial condition with permission",
     "Complete agreed service and restocking",
     "Check quality and report damage or follow-up needs",
-    "Confirm completion and owner acceptance",
+    "Submit completion summary for owner review",
   ].map((label) => ({ label, done: false }));
 export const emptyBusiness = (): BusinessState => ({
   revision: 0,
+  workflowVersion: 1,
   records: [],
   quotes: [],
   services: starterServices.map((s) => ({ ...s })),
@@ -102,6 +153,7 @@ export function validBusiness(value: unknown): Omit<BusinessState, "audit"> {
   const s = value as BusinessState;
   if (
     !s ||
+    (s.workflowVersion !== undefined && s.workflowVersion !== 1) ||
     !Number.isSafeInteger(s.revision) ||
     s.revision < 0 ||
     !Array.isArray(s.records) ||
@@ -160,6 +212,14 @@ export function validBusiness(value: unknown): Omit<BusinessState, "audit"> {
       parentId: optionalText(r.parentId, 80),
       serviceId: optionalText(r.serviceId, 80),
       checklist: checklist.map((c) => ({ label: c.label, done: c.done })),
+      isTest: r.isTest === true,
+      leadSource: optionalText(r.leadSource, 200),
+      sourceQuoteId: optionalText(r.sourceQuoteId, 80),
+      sourceQuoteVersion:
+        r.sourceQuoteVersion === undefined
+          ? undefined
+          : positiveVersion(r.sourceQuoteVersion),
+      review: r.kind === "Job" ? cleanReview(r.review, r.status) : undefined,
     };
   });
   const quotes = s.quotes.map((q) => {
@@ -191,6 +251,12 @@ export function validBusiness(value: unknown): Omit<BusinessState, "audit"> {
       serviceId: optionalText(q.serviceId, 80),
       scope: optionalText(q.scope, 2000),
       jobId: optionalText(q.jobId, 80),
+      isTest:
+        q.isTest === true ||
+        records.find((r) => r.id === q.recordId)?.isTest === true,
+      version: q.version === undefined ? 1 : positiveVersion(q.version),
+      acceptance:
+        q.acceptance === undefined ? undefined : cleanAcceptance(q.acceptance),
     };
   });
   const services = s.services ?? starterServices;
@@ -247,6 +313,7 @@ export function validBusiness(value: unknown): Omit<BusinessState, "audit"> {
     );
   return {
     revision: s.revision,
+    workflowVersion: 1,
     records,
     quotes,
     services: cleanServices,
@@ -259,4 +326,121 @@ export function businessId() {
     typeof crypto.randomUUID === "function"
     ? crypto.randomUUID()
     : Date.now().toString(36) + "-" + Math.random().toString(36).slice(2);
+}
+
+export function positiveVersion(v: unknown): number {
+  if (!Number.isSafeInteger(v) || (v as number) < 1 || (v as number) > 1000000)
+    throw Error("Invalid workflow version.");
+  return v as number;
+}
+const phases: JobPhase[] = [
+  "Scheduled",
+  "In progress",
+  "Review required",
+  "Rework",
+  "Accepted",
+  "Legacy unreviewed",
+];
+function cleanReview(
+  value: JobReview | undefined,
+  status: BusinessRecord["status"],
+): JobReview {
+  if (value === undefined)
+    return {
+      phase:
+        status === "Complete"
+          ? "Legacy unreviewed"
+          : status === "Active"
+            ? "In progress"
+            : "Scheduled",
+      summary: "",
+      reviewer: "",
+      note: "",
+      submittedAt: "",
+      reviewedAt: "",
+      confirmed: false,
+      origin: status === "Complete" ? "legacy" : "operator",
+      submissionVersion: 0,
+      history: [],
+    };
+  if (
+    !value ||
+    !phases.includes(value.phase) ||
+    !Number.isSafeInteger(value.submissionVersion) ||
+    value.submissionVersion < 0 ||
+    value.submissionVersion > 1000000 ||
+    !Array.isArray(value.history) ||
+    value.history.length > 20
+  )
+    throw Error("Invalid completion review.");
+  const history = value.history.map((h) => {
+    if (
+      !h ||
+      !["Accepted", "Rework"].includes(h.decision) ||
+      !requiredText(h.reviewer, 160) ||
+      !requiredText(h.note, 1000) ||
+      !requiredText(h.at, 40) ||
+      !Number.isSafeInteger(h.submissionVersion) ||
+      h.submissionVersion < 0
+    )
+      throw Error("Invalid completion history.");
+    return {
+      decision: h.decision,
+      reviewer: h.reviewer,
+      note: h.note,
+      at: h.at,
+      submissionVersion: h.submissionVersion,
+      origin:
+        h.origin === "restored-unverified"
+          ? ("restored-unverified" as const)
+          : ("operator" as const),
+    };
+  });
+  return {
+    phase: value.phase,
+    confirmed: value.confirmed === true,
+    origin:
+      value.origin === "restored-unverified"
+        ? "restored-unverified"
+        : value.phase === "Legacy unreviewed"
+          ? "legacy"
+          : "operator",
+    summary: optionalText(value.summary, 2000),
+    reviewer: optionalText(value.reviewer, 160),
+    note: optionalText(value.note, 1000),
+    submittedAt: optionalText(value.submittedAt, 40),
+    reviewedAt: optionalText(value.reviewedAt, 40),
+    submissionVersion: value.submissionVersion,
+    history,
+  };
+}
+function cleanAcceptance(a: Acceptance): Acceptance {
+  if (
+    !a ||
+    !["Email", "Phone", "Signed document", "In person", "Test"].includes(
+      a.method,
+    )
+  )
+    throw Error("Choose an acceptance method.");
+  const cents = a.priceCents;
+  if (cents !== undefined && (!Number.isSafeInteger(cents) || cents < 0))
+    throw Error("Invalid accepted estimate price.");
+  return {
+    confirmed: a.confirmed === true,
+    acceptedBy: optionalText(a.acceptedBy, 160),
+    method: a.method,
+    reference: optionalText(a.reference, 500),
+    recordedBy: optionalText(a.recordedBy, 160),
+    recordedAt: optionalText(a.recordedAt, 40),
+    quoteVersion:
+      a.quoteVersion === undefined
+        ? undefined
+        : positiveVersion(a.quoteVersion),
+    priceCents: cents,
+    customerName: optionalText(a.customerName, 160),
+    address: optionalText(a.address, 400),
+    serviceName: optionalText(a.serviceName, 160),
+    scope: optionalText(a.scope, 2000),
+    origin: a.origin === "operator" ? "operator" : "restored-unverified",
+  };
 }

@@ -77,7 +77,11 @@ export async function buildMorning(
       const sources = ["Saved real Nexus tasks"];
       try {
         if (s.industry === "Co-hosting") {
-          const b = await loadBusiness();
+          const saved = await loadBusiness();
+          const b = {
+            ...saved,
+            records: saved.records.filter((r) => !r.isTest),
+          };
           candidates.push(
             ...b.records
               .filter((r) => r.status !== "Complete" && r.dueDate)

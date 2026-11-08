@@ -107,11 +107,31 @@ test("intake, edit, estimate acceptance, one job, checklist and printable custom
   await page
     .getByLabel("Estimate scope and exclusions")
     .fill("Synthetic cleaning scope; tax not included.");
+  await page
+    .getByLabel("Estimate service", { exact: true })
+    .selectOption("turnover");
   await page.getByRole("button", { name: "Save draft estimate" }).click();
   const quoteName = "Synthetic turnover " + info.project.name;
   await page
     .getByLabel("Estimate status · " + quoteName, { exact: true })
     .selectOption("Accepted");
+  await page
+    .getByLabel("Accepted by", { exact: true })
+    .fill("Synthetic Client");
+  await page
+    .getByLabel("Acceptance reference", { exact: true })
+    .fill("Synthetic email response for this test");
+  await page
+    .getByLabel("Recorded by", { exact: true })
+    .fill("Synthetic operator");
+  await page
+    .getByLabel(
+      "I reviewed this estimate's scope and price and have an acceptance reference.",
+    )
+    .check();
+  await page
+    .getByRole("button", { name: "Record customer acceptance", exact: true })
+    .click();
   await page.getByLabel("New job date", { exact: true }).fill("2027-01-05");
   await page.getByLabel("New job assignee", { exact: true }).fill("Scheduling");
   await page
