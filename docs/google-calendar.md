@@ -38,3 +38,9 @@ OAuth uses PKCE, random single-use state, a ten-minute HttpOnly SameSite=Lax cal
 **Disconnect Google Calendar** removes the local tokens, pending state and cached morning brief. It does not revoke the grant at Google: also remove Nexus in [Google account connections](https://myaccount.google.com/connections) when you want revocation. Client configuration remains for later reconnecting. Already-downloaded exports/backups are not erased. Existing trusted paired controllers share this single local account connection; do not grant that role to customers or contractors.
 
 Tests use synthetic OAuth/token/event responses. A real Google sign-in, the Windows file picker and Google account permissions still need laptop acceptance. Email delivery is a separate unfinished integration.
+
+## Localhost sign-in with the Windows launcher
+
+The launcher binds Next to `0.0.0.0` so other paired devices can reach the app. Next may construct its internal request URL with that bind address even when the browser uses `localhost`. Sign-in-start validation therefore uses the incoming browser `Host`, matched exactly against the fixed `localhost:3000` callback host, plus controller and same-origin checks. Forwarded-host headers do not grant access. The callback URL, PKCE/state checks and cookie binding are unchanged. LAN addresses, `127.0.0.1`, lookalike hosts and other ports must start again from the exact localhost URL.
+
+Validation: reproduced the old HTTP 400 with a synthetic client on the production all-interface server; the fixed default Turbopack build passed. All 28 desktop/mobile calendar, daily-brief and morning-brief tests passed, including the real browser Connect-button path with an intercepted synthetic Google page (no Google account or token exchange). Real account consent and calendar read remain laptop acceptance steps.

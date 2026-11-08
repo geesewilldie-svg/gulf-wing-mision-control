@@ -1,4 +1,8 @@
-import { fixtureRole, fixtureCookieHeader } from "./helpers/access";
+import {
+  fixtureRole,
+  fixtureCookieHeader,
+  fixtureCookie,
+} from "./helpers/access";
 import { test, expect } from "@playwright/test";
 import { mkdtemp, writeFile, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -210,4 +214,115 @@ test("connection UI explains local setup and does not imply account authorizatio
     panel.getByRole("button", { name: "Connect Google Calendar", exact: true }),
   ).toBeDisabled();
   await expect(panel).toContainText("Read-only");
+});
+
+test("localhost sign-in start works behind the all-interface Next server and rejects other browser hosts", async ({
+  context,
+}) => {
+  const target = path.join(process.env.GW_SYNC_TEST_ROOT!, "google-oauth.json");
+  await writeFile(
+    target,
+    JSON.stringify({
+      clientId: "synthetic.apps.googleusercontent.com",
+      clientSecret: "synthetic-private-client",
+    }),
+  );
+  const headers = {
+    Cookie: fixtureCookieHeader("controller"),
+    Host: "localhost:3000",
+    Origin: "http://localhost:3000",
+  };
+  try {
+    const started = await context.request.post("/api/sync/google", { headers });
+    expect(started.status()).toBe(200);
+    const body = await started.json();
+    const url = new URL(body.url);
+    expect(url.origin).toBe("https://accounts.google.com");
+    expect(url.searchParams.get("redirect_uri")).toBe(GOOGLE_REDIRECT);
+    expect(JSON.stringify(body)).not.toContain("synthetic-private-client");
+    expect(started.headers()["set-cookie"]).toContain(
+      "HttpOnly; SameSite=Lax; Path=/api/sync/google/callback",
+    );
+    for (const host of [
+      "127.0.0.1:3000",
+      "0.0.0.0:3000",
+      "10.0.0.213:3000",
+      "localhost.evil.example:3000",
+      "localhost:3001",
+    ]) {
+      const rejected = await context.request.post("/api/sync/google", {
+        headers: {
+          Cookie: headers.Cookie,
+          Host: host,
+          Origin: "http://" + host,
+          "X-Forwarded-Host": "localhost:3000",
+        },
+      });
+      expect(rejected.status()).toBe(400);
+    }
+    expect(
+      (
+        await context.request.post("/api/sync/google", {
+          headers: { ...headers, Origin: "https://untrusted.example" },
+        })
+      ).status(),
+    ).toBe(403);
+  } finally {
+    await rm(target, { force: true });
+    await rm(path.join(process.env.GW_SYNC_TEST_ROOT!, "google-state.json"), {
+      force: true,
+    });
+  }
+});
+
+test("browser Connect button reaches synthetic Google sign-in from localhost with a bound callback cookie", async ({
+  page,
+  context,
+}) => {
+  const target = path.join(process.env.GW_SYNC_TEST_ROOT!, "google-oauth.json");
+  await writeFile(
+    target,
+    JSON.stringify({
+      clientId: "synthetic.apps.googleusercontent.com",
+      clientSecret: "synthetic-private-client",
+    }),
+  );
+  try {
+    await context.addCookies([
+      { ...fixtureCookie("controller"), domain: "localhost" },
+    ]);
+    let authUrl = "";
+    await page.route("https://accounts.google.com/**", async (route) => {
+      authUrl = route.request().url();
+      await route.fulfill({
+        contentType: "text/html",
+        body: "<h1>Synthetic sign-in destination</h1>",
+      });
+    });
+    await page.goto("http://localhost:3000/nexus");
+    await page
+      .getByRole("button", { name: "Connections", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Connect Google Calendar", exact: true })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Synthetic sign-in destination" }),
+    ).toBeVisible();
+    expect(new URL(authUrl).searchParams.get("redirect_uri")).toBe(
+      GOOGLE_REDIRECT,
+    );
+    const cookies = await context.cookies(
+      "http://localhost:3000/api/sync/google/callback",
+    );
+    const state = cookies.find((c) => c.name === "gw_google_state");
+    expect(state?.httpOnly).toBe(true);
+    expect(state?.sameSite).toBe("Lax");
+    expect(state?.value).toBe(new URL(authUrl).searchParams.get("state"));
+  } finally {
+    await rm(target, { force: true });
+    await rm(path.join(process.env.GW_SYNC_TEST_ROOT!, "google-state.json"), {
+      force: true,
+    });
+  }
 });

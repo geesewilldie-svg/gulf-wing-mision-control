@@ -9,6 +9,7 @@ import {
   googleStatus,
   beginGoogle,
   disconnectGoogle,
+  GOOGLE_REDIRECT,
 } from "@/lib/server/google-calendar";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,11 +25,19 @@ export async function POST(request: Request) {
   try {
     sameOrigin(request);
     await authorized(request, true);
-    const host = new URL(request.url).hostname;
-    if (host !== "localhost")
+    // Next constructs request.url from the server bind address (0.0.0.0).
+    // Validate the browser's actual Host instead, never a forwarded-host hint.
+    const expected = new URL(GOOGLE_REDIRECT);
+    if (request.headers.get("host")?.toLowerCase() !== expected.host)
       throw new SyncError(
         400,
         "Start Google sign-in on the laptop at http://localhost:3000/nexus.",
+      );
+    const origin = request.headers.get("origin");
+    if (origin && origin !== expected.origin)
+      throw new SyncError(
+        403,
+        "Open Google sign-in directly at " + expected.origin + "/nexus.",
       );
     const start = await beginGoogle();
     return response({ url: start.url }, 200, {
