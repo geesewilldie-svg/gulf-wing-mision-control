@@ -422,3 +422,5 @@ Co-hosting includes a [one-customer test workflow](docs/cohosting-workflow-pilot
 Selected laptop folders and Obsidian: [read-only setup, refresh, search and source preview](docs/local-file-search.md). Run `Setup-Nexus-Folders.cmd` on the Windows laptop to select a folder, then refresh its index in Nexus Connections. No new Google account is connected by this update.
 
 Google accounts, Drive, Docs and Sheets: [multi-account read-only setup and selected snapshots](docs/google-workspace.md). Existing Calendar credentials are retained; authorize additional scopes/accounts locally.
+
+Gemini free-tier setup: [Gemini Public, isolated from private business context](docs/gemini-public.md). Run `Setup-Nexus-Gemini.cmd` on Windows, enter the key privately, and use the dedicated Gemini Public tab. Billing stays unchanged.

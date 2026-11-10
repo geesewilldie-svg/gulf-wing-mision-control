@@ -70,3 +70,7 @@ Read-only Obsidian and selected business folders can be configured through a loc
 ## Multiple Google accounts and selected Google documents
 
 Up to four Google identities preserve the verified Calendar connection, combine calendar retrieval with partial-account warnings and deduplicate shared invitations. Separate Drive read authorization supports user-selected Google Docs/text, multi-sheet XLSX exports, PDFs and notes as searchable local snapshots. Add/remove/refresh and controller-only access are implemented. Gmail inbox/send and other Google products remain unconnected. Synthetic tests do not establish live account authorization, and commercial OAuth/tenant isolation remain delivery gates. See [setup, permission breadth and limits](google-workspace.md).
+
+## Gemini Public (unpaid non-sensitive questions)
+
+The operator selected free-tier Gemini. A separate fresh-question endpoint/tab excludes saved private sources and history and blocks Gemini from regular private routing while the public-only policy exists. Windows DPAPI setup, bounded model discovery, per-question public confirmation, durable ten-attempt UTC-day allowance and disable controls are implemented. Other business questions remain local by default. Native key unlock/model availability/public-answer acceptance is pending. No paid billing or private-data Gemini access is enabled. See [policy and setup](gemini-public.md).

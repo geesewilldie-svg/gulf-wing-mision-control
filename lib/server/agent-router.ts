@@ -3,6 +3,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { configuredLocalModel } from "./nexus-store";
 import { SyncError } from "./sync-store";
+import { hasPublicGeminiPolicy } from "./gemini-public";
 import type { ProviderId, ProviderStatus, AgentEvent } from "../agent-router";
 import type { ConversationTurn } from "../conversation";
 const names = {
@@ -18,6 +19,7 @@ const variables = {
 } as const;
 export async function providerStatus(): Promise<ProviderStatus[]> {
   const local = await configuredLocalModel();
+  const publicOnly = await hasPublicGeminiPolicy();
   return [
     {
       id: "local",
@@ -31,6 +33,7 @@ export async function providerStatus(): Promise<ProviderStatus[]> {
     ...(["openai", "anthropic", "gemini"] as const).map((id) => {
       const [key, model] = variables[id],
         configured =
+          !(id === "gemini" && publicOnly) &&
           process.env.GW_NEXUS_ALLOW_EXTERNAL === "1" &&
           !!process.env[key]?.trim() &&
           !!process.env[model]?.trim() &&
@@ -40,9 +43,12 @@ export async function providerStatus(): Promise<ProviderStatus[]> {
         name: names[id],
         configured,
         external: true,
-        detail: configured
-          ? "Configured, not independently health-checked. Requires per-question permission; provider billing may apply."
-          : "Disabled. Requires provider API configuration, an explicit request allowance and per-question sharing permission. Chat subscriptions do not grant API access.",
+        detail:
+          id === "gemini" && publicOnly
+            ? "Public-only Gemini: use the dedicated Gemini Public tab. Private-context routing, Auto and Compare exclude it."
+            : configured
+              ? "Configured, not independently health-checked. Requires per-question permission; provider billing may apply."
+              : "Disabled. Requires provider API configuration, an explicit request allowance and per-question sharing permission. Chat subscriptions do not grant API access.",
       };
     }),
   ];
@@ -221,6 +227,11 @@ async function callProvider(
       };
     }
   }
+  if (id === "gemini" && (await hasPublicGeminiPolicy()))
+    throw new SyncError(
+      403,
+      "Gemini became public-only before sending. Private context was withheld.",
+    );
   const result = await boundedJSON(
     await fetch(url, {
       method: "POST",
@@ -259,6 +270,11 @@ export async function askProvider(
   history: ConversationTurn[],
   signal: AbortSignal,
 ): Promise<string> {
+  if (id === "gemini" && (await hasPublicGeminiPolicy()))
+    throw new SyncError(
+      403,
+      "This Gemini setup is public-only. Use the dedicated Gemini Public tab; private context is blocked.",
+    );
   if (id !== "local") return callProvider(id, query, system, history, signal);
   if (localInference.nexusLocalInferenceBusy)
     throw new SyncError(
