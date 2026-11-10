@@ -4,9 +4,12 @@ import {
   availablePublicModels,
   writePublicConfig,
   validatePublicConfig,
+  parseGeminiSetupInput,
+  safeGeminiSetupDiagnostic,
 } from "./gemini-public-lib.mjs";
+const action = process.argv[2];
 try {
-  if (process.argv[2] === "--disable") {
+  if (action === "--disable") {
     const root = process.env.GW_SYNC_DATA_DIR || path.resolve(".gulf-wing"),
       v = validatePublicConfig(
         JSON.parse(
@@ -25,19 +28,31 @@ try {
       if (size > 30000) throw Error();
       chunks.push(chunk);
     }
-    const v = JSON.parse(Buffer.concat(chunks).toString("utf8"));
-    if (process.argv[2] === "--models")
-      console.log(JSON.stringify(await availablePublicModels(v.key)));
-    else if (process.argv[2] === "--save") {
+    const v = parseGeminiSetupInput(Buffer.concat(chunks));
+    if (action === "--models")
+      console.log(
+        JSON.stringify({
+          ok: true,
+          models: await availablePublicModels(v.key),
+        }),
+      );
+    else if (action === "--save") {
       await writePublicConfig(v);
       console.log(
-        "Public-only Gemini configured. No document, history or billing setting was submitted. Open Nexus > Gemini Public.",
+        JSON.stringify({
+          ok: true,
+          message:
+            "Public-only Gemini configured. No document, history or billing setting was submitted. Open Nexus > Gemini Public.",
+        }),
       );
     } else throw Error();
   }
-} catch {
-  console.error(
-    "Gemini setup did not complete. No secret or provider error body is shown. Check the key/model and retry; existing configuration is preserved.",
-  );
+} catch (error) {
+  const diagnostic = safeGeminiSetupDiagnostic(error);
+  if (action === "--disable")
+    console.log(
+      diagnostic.code + ": " + diagnostic.message + " " + diagnostic.next,
+    );
+  else console.log(JSON.stringify({ ok: false, diagnostic }));
   process.exitCode = 1;
 }
