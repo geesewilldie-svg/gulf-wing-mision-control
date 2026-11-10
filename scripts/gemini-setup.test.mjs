@@ -295,3 +295,73 @@ test("CLI success envelope survives Windows BOM input and saves only validated e
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test("opaque token punctuation and longer keys reach provider validation without being printed", async () => {
+  const { isGeminiApiKey, MAX_GEMINI_KEY_CHARS } = await import(
+    "./gemini-public-lib.mjs"
+  );
+  for (const token of [
+    "AQ.synthetic.opaque_key-0123456789",
+    "synthetic+token/0123456789012345==",
+    "a".repeat(300),
+    "b".repeat(MAX_GEMINI_KEY_CHARS),
+  ]) {
+    assert.equal(isGeminiApiKey(token), true);
+    let calls = 0;
+    const models = await availablePublicModels(token, async (_url, init) => {
+      calls++;
+      assert.equal(init.headers["x-goog-api-key"], token);
+      return Response.json({
+        models: [
+          {
+            name: "models/gemini-3.5-flash-lite",
+            supportedGenerationMethods: ["generateContent"],
+          },
+        ],
+      });
+    });
+    assert.equal(calls, 1);
+    assert.deepEqual(models, ["gemini-3.5-flash-lite"]);
+  }
+});
+test("format diagnoses reveal only a fixed category, never key characters, prefix or length", async () => {
+  const { isGeminiApiKey, MAX_GEMINI_KEY_CHARS } = await import(
+    "./gemini-public-lib.mjs"
+  );
+  const inputs = [
+    ["", "EMPTY"],
+    ["x".repeat(MAX_GEMINI_KEY_CHARS + 1), "TOO_LONG"],
+    ["***masked***", "MASKED_VALUE"],
+    ["AIza...masked-value", "MASKED_VALUE"],
+    ["https://example.test/" + canary, "URL_OR_LINK"],
+    ["bad " + key, "WHITESPACE_OR_CONTROL"],
+    [key + "\r\nx-secret: " + canary, "WHITESPACE_OR_CONTROL"],
+    ['"' + key + '"', "QUOTED_OR_CODE"],
+    ["short", "TOO_SHORT"],
+    ["synthetic:" + key, "UNSUPPORTED_CHARACTERS"],
+  ];
+  for (const [token, category] of inputs) {
+    assert.equal(isGeminiApiKey(token), false);
+    let calls = 0;
+    try {
+      await availablePublicModels(token, async () => {
+        calls++;
+      });
+      assert.fail("should reject unsafe shape");
+    } catch (error) {
+      const result = safeGeminiSetupDiagnostic(error);
+      assert.equal(result.code, "KEY_FORMAT");
+      assert.equal(result.inputCategory, category);
+      assert.ok(!JSON.stringify(result).includes(key));
+      assert.ok(!JSON.stringify(result).includes(canary));
+      assert.equal(result.keyLength, undefined);
+      assert.equal(result.prefix, undefined);
+    }
+    assert.equal(calls, 0);
+  }
+  const redacted = safeGeminiSetupDiagnostic({
+    setupCode: "KEY_FORMAT",
+    keyIssue: canary,
+  });
+  assert.equal(redacted.inputCategory, undefined);
+});

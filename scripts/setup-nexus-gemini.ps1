@@ -12,6 +12,7 @@ try {
   $result = $output | ConvertFrom-Json
   if ($modelExitCode -ne 0 -or !$result.ok) {
     Write-Host ("Gemini diagnosis: " + $result.diagnostic.code)
+    if ($result.diagnostic.inputCategory) { Write-Host ("Input category: " + $result.diagnostic.inputCategory) }
     if ($result.diagnostic.httpStatus) { Write-Host ("HTTP status: " + $result.diagnostic.httpStatus) }
     if ($null -ne $result.diagnostic.availableModels) { Write-Host ("Generate-content models returned: " + $result.diagnostic.availableModels) }
     Write-Host $result.diagnostic.message

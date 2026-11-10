@@ -38,9 +38,37 @@ export function validatePublicConfig(v) {
     dailyLimit: v.dailyLimit,
   };
 }
+export const MAX_GEMINI_KEY_CHARS = 4096;
+const KEY_INPUT_ISSUES = new Set([
+  "EMPTY",
+  "TOO_SHORT",
+  "TOO_LONG",
+  "MASKED_VALUE",
+  "URL_OR_LINK",
+  "WHITESPACE_OR_CONTROL",
+  "QUOTED_OR_CODE",
+  "UNSUPPORTED_CHARACTERS",
+]);
+export function geminiKeyInputIssue(key) {
+  if (typeof key !== "string" || !key.length) return "EMPTY";
+  if (key.length > MAX_GEMINI_KEY_CHARS) return "TOO_LONG";
+  if (/[*•●…]/u.test(key) || /\.{2,}/.test(key) || /^[._-]+$/.test(key))
+    return "MASKED_VALUE";
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(key)) return "URL_OR_LINK";
+  if (/[\s\x00-\x1f\x7f]/u.test(key)) return "WHITESPACE_OR_CONTROL";
+  if (/[\x22\x27\x60{}\[\]$]/.test(key)) return "QUOTED_OR_CODE";
+  if (key.length < 20) return "TOO_SHORT";
+  // Treat credentials as opaque header data, not a particular vendor prefix/alphabet.
+  // Punctuation/padding used by token formats is safe here; whitespace/control/code is not.
+  if (!/^[A-Za-z0-9._~+/-]+={0,2}$/.test(key)) return "UNSUPPORTED_CHARACTERS";
+  return null;
+}
+export function isGeminiApiKey(key) {
+  return geminiKeyInputIssue(key) === null;
+}
 export async function availablePublicModels(key, transport = fetch) {
-  if (typeof key !== "string" || !/^[A-Za-z0-9_-]{20,200}$/.test(key))
-    throw setupError("KEY_FORMAT");
+  const keyIssue = geminiKeyInputIssue(key);
+  if (keyIssue) throw setupError("KEY_FORMAT", { keyIssue });
   const names = new Set();
   let page = "";
   for (let i = 0; i < 3; i++) {
@@ -130,6 +158,7 @@ function setupError(setupCode, fields = {}) {
   const error = new Error("Gemini setup stopped.");
   error.setupCode = setupCode;
   if (Number.isInteger(fields.status)) error.httpStatus = fields.status;
+  if (KEY_INPUT_ISSUES.has(fields.keyIssue)) error.keyIssue = fields.keyIssue;
   if (SAFE_REASONS.has(fields.reason)) error.safeReason = fields.reason;
   if (
     Number.isSafeInteger(fields.availableCount) &&
@@ -293,6 +322,8 @@ export function safeGeminiSetupDiagnostic(error) {
   };
   if (!Object.hasOwn(messages, code)) code = "SETUP_FAILED";
   const result = { code, message: messages[code][0], next: messages[code][1] };
+  if (code === "KEY_FORMAT" && KEY_INPUT_ISSUES.has(error?.keyIssue))
+    result.inputCategory = error.keyIssue;
   if (
     Number.isInteger(error?.httpStatus) &&
     error.httpStatus >= 400 &&

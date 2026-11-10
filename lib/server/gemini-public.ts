@@ -3,7 +3,11 @@ import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { spawn } from "node:child_process";
 import { SyncError } from "./sync-store";
-import { validatePublicConfig } from "../../scripts/gemini-public-lib.mjs";
+import {
+  validatePublicConfig,
+  isGeminiApiKey,
+  MAX_GEMINI_KEY_CHARS,
+} from "../../scripts/gemini-public-lib.mjs";
 const root = () => path.resolve(process.env.GW_SYNC_DATA_DIR || ".gulf-wing");
 export async function hasPublicGeminiPolicy() {
   try {
@@ -113,7 +117,7 @@ async function unlock(protectedKey: string, signal: AbortSignal) {
       settled = true;
       clearTimeout(timer);
       signal.removeEventListener("abort", abort);
-      if (key && /^[A-Za-z0-9_-]{20,200}$/.test(key)) resolve(key);
+      if (isGeminiApiKey(key)) resolve(key!);
       else
         reject(
           new SyncError(
@@ -130,7 +134,7 @@ async function unlock(protectedKey: string, signal: AbortSignal) {
     signal.addEventListener("abort", abort, { once: true });
     child.stdout.on("data", (chunk) => {
       output += chunk.toString("utf8");
-      if (output.length > 300) {
+      if (output.length > MAX_GEMINI_KEY_CHARS) {
         child.kill();
         finish();
       }
