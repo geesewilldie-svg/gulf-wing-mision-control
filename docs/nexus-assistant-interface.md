@@ -2,6 +2,8 @@
 
 The November 11 interface increment moves conversation ownership into the shared application layout. This is a UI and browser-session improvement, not a native Windows agent installation or new external-action permission.
 
+The owner updated the color preference on November 12: use Gulf Wing Mission Control’s navy background and cyan accents. The layout and assistant behavior stay the same. Shared background, panel, border and cyan colors use the existing Mission Control CSS variables.
+
 ## Everyday use
 
 - **Overview** gives quick access to the assistant, daily brief, business work and knowledge.
@@ -24,6 +26,6 @@ The browser microphone stays off while Nexus thinks and speaks. Voice interrupti
 
 Browser tests cover draft/answer preservation, one voice controller, real synthetic AudioWorklet capture across client-side routes, mute/release, saved auto-resume behavior, loss of controller access, focused connection categories, existing co-hosting/Gemini behavior and desktop/mobile sizing. Synthetic browser audio does not establish laptop microphone quality or Windows background availability.
 
-For installation, stop the identified old Next server before rebuilding, then run the existing Windows launcher. Open Nexus, confirm the Overview and emerald theme, start a voice session, minimize it, move to Mission Control and back, and confirm the floating mute control works. Check Google accounts, selected Google files, laptop files and maintenance through their new categories. Existing credentials and source selections are not migrated by this UI increment.
+For installation, stop the identified old Next server before rebuilding, then run the existing Windows launcher. Open Nexus, confirm the Overview and Mission Control cyan theme, start a voice session, minimize it, move to Mission Control and back, and confirm the floating mute control works. Check Google accounts, selected Google files, laptop files and maintenance through their new categories. Existing credentials and source selections are not migrated by this UI increment.
 
 Cloud verification, November 12: production build and TypeScript passed. The full 444-scenario browser run initially recorded 429 passes, eight skips and seven failures. After correcting the category selectors, avoiding unauthorized pre-pairing requests and moving the dashboard launcher away from resize handles, all 102 affected desktop/mobile regression scenarios passed. The local runtime protocol, setup decisions, connection diagnostic, launcher decisions, ten Gemini diagnostic cases and ten Python voice protocol tests also passed using fixtures. No real provider inference or Windows microphone acceptance is claimed by those tests.

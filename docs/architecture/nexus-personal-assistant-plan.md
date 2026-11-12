@@ -12,7 +12,7 @@ The normal experience is a persistent conversation with visible listening, speak
 | --- | --- | --- |
 | Nexus identity; Windows first | Established | Preserve existing repository and Windows launcher |
 | Voice available across management screens | Established | Root-mounted conversation controller; native tray/helper later |
-| Dark background, green accents, clearer navigation | Established | Charcoal surfaces, high-contrast text, restrained emerald status/action accents |
+| Dark background, cyan accents, clearer navigation | Established | Navy surfaces, high-contrast text, restrained cyan status/action accents |
 | Persistent memory, rules and tasks | Established | Application-owned transactional records, independent of model provider |
 | Broad files, browser, applications and terminal capability | Established target | Incremental execution broker and Windows helper; current read-only search remains useful |
 | Use Codex and Claude as workers | Established target | Separate adapters with bounded work orders and supported authentication |
@@ -164,7 +164,7 @@ Core updates use a supervisor outside the component being replaced, schema compa
 
 Proposed layout: compact navigation for Today, Work, Knowledge and Connections; a persistent Nexus conversation drawer/dock on management screens; focused workspace content; expandable technical details. Separate Google accounts, Google files, laptop sources, model providers and laptop services rather than one long Connections form. Co-hosting shows clear intake → estimate → job → review stages with next actions.
 
-Use charcoal backgrounds, visibly distinct panel surfaces, readable neutral text and emerald emphasis. Provide keyboard focus, text labels, adequate contrast and reduced-motion treatment; do not use green or animation alone to convey status. A knowledge graph must display real source relationships and open the underlying evidence; it does not itself grant access.
+Use navy backgrounds, visibly distinct panel surfaces, readable neutral text and cyan emphasis. Provide keyboard focus, text labels, adequate contrast and reduced-motion treatment; do not use green or animation alone to convey status. A knowledge graph must display real source relationships and open the underlying evidence; it does not itself grant access.
 
 Root-mount one browser conversation controller so tab changes, drawer minimization and client-side management navigation do not destroy its state. Keep microphone off during model thinking and speech playback in the current loop. Show listening/muted/thinking/speaking/resume states and a prominent mute control. Stopping speech, pausing listening and cancelling a task are separate actions. Preserve selected voice and explicit saved auto-resume preference. Initial browser permission/autoplay gestures can still be necessary. Browser capture ends on close/navigation/sleep; native continuous operation/wake word requires separate implementation and testing.
 
@@ -206,7 +206,7 @@ Shared errors: invalid_input, permission_missing, credential_missing, device_una
 
 | Milestone | User-visible result | Dependency and acceptance evidence |
 | --- | --- | --- |
-| 1. Reconciled assistant shell | Conversation available across management screens; clearer navigation and dark/green hierarchy | Preserve existing APIs; desktop/mobile screenshots, keyboard checks, one voice instance across navigation, mute/auth-loss tests |
+| 1. Reconciled assistant shell | Conversation available across management screens; clearer navigation and dark/cyan hierarchy | Preserve existing APIs; desktop/mobile screenshots, keyboard checks, one voice instance across navigation, mute/auth-loss tests |
 | 2. Unified task ownership | Conversation can create/steer durable work with recoverable state | Revisioned contracts, event/artifact history; restart and cancellation tests; novel composed task without fixed menu |
 | 3. Memory and policy integration | Relevant corrected preferences/rules survive restart and apply to pending work | Transactional correction, scoped retrieval, policy dispatch recheck and deletion tests |
 | 4. Windows execution | Authorized file/process/browser actions with honest availability and takeover | Broker/helper contracts, native Windows test environment, path/account verification and uncertain-effect recovery |
@@ -274,4 +274,4 @@ Major requirement traceability: one identity → coordinator/task IDs → steeri
 
 No current provider documentation was live-verified in this reconciliation. Existing code and prior owner walkthroughs establish the baseline above; they do not establish future entitlement. Before implementing new provider/native adapters, check official Codex authentication/programmatic interfaces, Claude Code/Agent SDK authentication and embedding terms, Microsoft interactive services/UI Automation, Google scope/data handling documentation and each connector's limits. Record URL, date, specific claim and confirmed/inferred/unverified status. Do not assume the uploaded model target label is an available model identifier. Existing architecture links are research starting points, not verified guarantees.
 
-The first implementation boundary is milestone 1: persistent assistant placement, clear navigation, accessible dark/green styling and preservation of existing voice/privacy/authentication behavior. It does not add arbitrary terminal execution, Gmail sending, payments, extra providers or native microphone capture. Proposed later decisions are whether always-online availability justifies a cloud coordinator, which bounded action classes may execute under standing grants, and what native helper/desktop packaging to adopt after compatibility validation. Existing free-tier Gemini and no-live-money configuration remain in force while those choices are unresolved.
+The first implementation boundary is milestone 1: persistent assistant placement, clear navigation, accessible dark/cyan styling and preservation of existing voice/privacy/authentication behavior. It does not add arbitrary terminal execution, Gmail sending, payments, extra providers or native microphone capture. Proposed later decisions are whether always-online availability justifies a cloud coordinator, which bounded action classes may execute under standing grants, and what native helper/desktop packaging to adopt after compatibility validation. Existing free-tier Gemini and no-live-money configuration remain in force while those choices are unresolved.

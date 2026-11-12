@@ -19,7 +19,7 @@ Open the development server on port 3000 in your browser. Stop with Ctrl+C. No e
 
 ## Interface
 
-Nexus now has an Overview, focused connection categories and a persistent **Talk to Nexus** panel across management screens. The charcoal/emerald interface keeps voice, document imports and technical setup in clearer places. See [assistant interface and browser limits](docs/nexus-assistant-interface.md) and the [reconciled general-assistant plan](docs/architecture/nexus-personal-assistant-plan.md). This increment does not add native Windows control or new external actions.
+Nexus now has an Overview, focused connection categories and a persistent **Talk to Nexus** panel across management screens. The navy/cyan interface keeps voice, document imports and technical setup in clearer places. See [assistant interface and browser limits](docs/nexus-assistant-interface.md) and the [reconciled general-assistant plan](docs/architecture/nexus-personal-assistant-plan.md). This increment does not add native Windows control or new external actions.
 
 - Select any of four network nodes, then assign a demo mission.
 - Create a mission with a title and agent; tasks are scoped to the selected venture.
