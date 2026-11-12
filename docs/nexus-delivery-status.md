@@ -2,6 +2,10 @@
 
 Updated November 7, 2026. Repository status is distinct from installation on the operator's laptop.
 
+## November 12 optional Stephanie voice increment
+
+The ElevenLabs adapter supports the owner-selected Stephanie voice, secure Windows CurrentUser DPAPI setup, per-session cloud speech disclosure, persistent daily character reservation, cancellation/disable and a fixed authenticated provider endpoint. Existing local speech and local transcription stay available. Setup checks voice metadata only; no paid generation, subscription or provider credential is supplied by the repository. Actual account/voice/model access, quality and latency still require laptop setup and an audition. See [ElevenLabs setup and limits](elevenlabs-voice.md).
+
 ## November 11 assistant interface increment
 
 The shared application layout now owns the Nexus conversation panel and voice controller. Management navigation preserves session drafts/answers and background voice; a floating launcher and header start/mute controls remain available. Overview replaces the large initial question form. Connections has separate account, Google-file, laptop-file, device-access and model/tool categories; imports have a Knowledge screen. Co-hosting has numbered workflow links. Navy surfaces and cyan accents distinguish actions and selected navigation. See [behavior and native acceptance](nexus-assistant-interface.md). This does not complete native desktop automation, persistent conversation history, general skills, customer isolation or money movement.

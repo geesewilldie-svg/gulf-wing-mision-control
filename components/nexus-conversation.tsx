@@ -61,6 +61,7 @@ export default function NexusConversation({
   transcriptionReady,
   engine,
   voice,
+  cloudSpeechConsent = false,
   onAsk,
   onActive,
 }: {
@@ -69,6 +70,7 @@ export default function NexusConversation({
   transcriptionReady: boolean;
   engine: string;
   voice: SpeechSynthesisVoice | null;
+  cloudSpeechConsent?: boolean;
   onAsk: AskConversation;
   onActive: (active: boolean) => void;
 }) {
@@ -484,12 +486,21 @@ export default function NexusConversation({
       });
       return;
     }
-    const response = await fetch("/api/sync/voice?action=speak", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: text.slice(0, 3000), engine }),
-      signal,
-    });
+    const response = await fetch(
+      engine === "elevenlabs"
+        ? "/api/sync/elevenlabs"
+        : "/api/sync/voice?action=speak",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          engine === "elevenlabs"
+            ? { text: text.slice(0, 3000), cloudSpeechConsent }
+            : { text: text.slice(0, 3000), engine },
+        ),
+        signal,
+      },
+    );
     if (!response.ok)
       throw new Error(
         (await response.json()).error || "Speech generation failed.",

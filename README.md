@@ -17,6 +17,10 @@ npm run dev
 
 Open the development server on port 3000 in your browser. Stop with Ctrl+C. No environment file is needed. The server binds to all interfaces for cloud compatibility; use your local firewall as appropriate.
 
+## Optional Stephanie cloud voice
+
+[ElevenLabs setup and disclosure](docs/elevenlabs-voice.md) adds the owner-selected Stephanie voice through an explicit, budgeted cloud-speech option. Run `Setup-Nexus-ElevenLabs.cmd` on Windows for the hidden DPAPI-protected key setup. No paid generation occurs during setup; an actual preview uses API credits. Existing local voices remain available.
+
 ## Interface
 
 Nexus now has an Overview, focused connection categories and a persistent **Talk to Nexus** panel across management screens. The navy/cyan interface keeps voice, document imports and technical setup in clearer places. See [assistant interface and browser limits](docs/nexus-assistant-interface.md) and the [reconciled general-assistant plan](docs/architecture/nexus-personal-assistant-plan.md). This increment does not add native Windows control or new external actions.

@@ -42,6 +42,8 @@ jobs:
         run: npm run test:launcher
       - name: Test redacted Gemini setup diagnostics
         run: node --test scripts/gemini-setup.test.mjs
+      - name: Test encrypted ElevenLabs setup and redaction
+        run: node --test scripts/elevenlabs-setup.test.mjs
       - name: Install Chromium and system dependencies
         run: npx playwright install --with-deps chromium
       - name: Test desktop and mobile workflows

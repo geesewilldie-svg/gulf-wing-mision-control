@@ -24,6 +24,35 @@ export default function NexusVoice({
   onTranscript: (text: string) => void;
   disabled?: boolean;
 }) {
+  const [cloudConsent, setCloudConsent] = useState(false);
+  const [cloud, setCloud] = useState<{
+    configured: boolean;
+    enabled: boolean;
+    supported: boolean;
+    dailyCharacters: number;
+    usedCharacters: number;
+    warning?: string;
+  } | null>(null);
+  const refreshCloud = async (signal?: AbortSignal) => {
+    try {
+      const response = await fetch("/api/sync/elevenlabs", { signal });
+      if (!response.ok) throw Error();
+      const value = await response.json();
+      if (!signal?.aborted) setCloud(value);
+    } catch {
+      if (!signal?.aborted) setCloud(null);
+    }
+  };
+  useEffect(() => {
+    if (disabled) {
+      setCloud(null);
+      setCloudConsent(false);
+      return;
+    }
+    const controller = new AbortController();
+    void refreshCloud(controller.signal);
+    return () => controller.abort();
+  }, [disabled]);
   const [conversationActive, setConversationActive] = useState(false);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [voice, setVoice] = useState("");
@@ -108,6 +137,12 @@ export default function NexusVoice({
     };
   }, [disabled, local.transcription]);
   const speak = async () => {
+    if (effectiveBackend === "elevenlabs" && !cloudConsent) {
+      setMessage(
+        "Allow cloud speech before using Stephanie. Text will be sent to ElevenLabs and paid credits may be used.",
+      );
+      return;
+    }
     stopSpeech();
     setMessage("");
     const text = (
@@ -136,14 +171,27 @@ export default function NexusVoice({
       const controller = new AbortController();
       request.current = controller;
       setSpeaking(true);
-      setMessage("Preparing local speech…");
+      setMessage(
+        effectiveBackend === "elevenlabs"
+          ? "Preparing Stephanie cloud speech…"
+          : "Preparing local speech…",
+      );
       try {
-        const r = await fetch("/api/sync/voice?action=speak", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text, engine: effectiveBackend }),
-          signal: controller.signal,
-        });
+        const r = await fetch(
+          effectiveBackend === "elevenlabs"
+            ? "/api/sync/elevenlabs"
+            : "/api/sync/voice?action=speak",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(
+              effectiveBackend === "elevenlabs"
+                ? { text, cloudSpeechConsent: cloudConsent }
+                : { text, engine: effectiveBackend },
+            ),
+            signal: controller.signal,
+          },
+        );
         if (!r.ok) throw new Error((await r.json()).error);
         const blob = await r.blob();
         if (controller.signal.aborted || !mounted.current) return;
@@ -172,7 +220,9 @@ export default function NexusVoice({
         setMessage(
           effectiveBackend === "kokoro"
             ? "Speaking with Isabella · speed 0.95."
-            : "Speaking with Piper.",
+            : effectiveBackend === "elevenlabs"
+              ? "Speaking with Stephanie · ElevenLabs."
+              : "Speaking with Piper.",
         );
       } catch (error) {
         if (mounted.current && request.current === controller) {
@@ -262,9 +312,17 @@ export default function NexusVoice({
     <>
       <NexusConversation
         section={section}
-        disabled={disabled || busy || recording || speaking}
+        disabled={
+          disabled ||
+          busy ||
+          recording ||
+          speaking ||
+          (effectiveBackend === "elevenlabs" &&
+            (!cloudConsent || !cloud?.enabled || !cloud?.supported))
+        }
         transcriptionReady={Boolean(local.transcription)}
         engine={effectiveBackend}
+        cloudSpeechConsent={cloudConsent}
         voice={
           voices.find((v) => v.voiceURI === voice) ??
           voices.find((v) => v.lang === "en-GB") ??
@@ -273,6 +331,7 @@ export default function NexusVoice({
         onAsk={onAsk}
         onActive={(active) => {
           setConversationActive(active);
+          if (!active && conversationActive) setCloudConsent(false);
           onConversationActive(active);
         }}
       />
@@ -283,30 +342,103 @@ export default function NexusVoice({
           control. No voice cloning. Device voices vary; choose an installed
           British voice if available.
         </p>
-        <label>
-          Speech engine
-          <select
-            disabled={conversationActive}
-            value={backend}
-            onChange={(e) => {
+        <label htmlFor="nexus-speech-engine">Speech engine</label>
+        <select
+          id="nexus-speech-engine"
+          aria-label="Speech engine"
+          disabled={conversationActive}
+          value={backend}
+          onChange={(e) => {
+            stopSpeech();
+            setCloudConsent(false);
+            setBackend(e.target.value);
+          }}
+        >
+          <option value="auto">
+            Preferred available voice — Isabella first
+          </option>
+          <option value="kokoro" disabled={!engines.includes("kokoro")}>
+            Local Kokoro · Isabella · 0.95{" "}
+            {engines.includes("kokoro") ? "ready" : "— setup required"}
+          </option>
+          <option
+            value="elevenlabs"
+            disabled={!cloud?.enabled || !cloud?.supported}
+          >
+            ElevenLabs · Stephanie ·{" "}
+            {cloud?.enabled && cloud?.supported
+              ? "configured · cloud"
+              : "setup required"}
+          </option>
+          <option value="device">Device speech (browser-managed)</option>
+          <option value="piper" disabled={!engines.includes("piper")}>
+            Local Piper{" "}
+            {engines.includes("piper") ? "ready" : "— setup required"}
+          </option>
+        </select>
+        <details>
+          <summary>ElevenLabs voice setup · Stephanie</summary>
+          <p>
+            Run Setup-Nexus-ElevenLabs.cmd on the Windows laptop. The hidden
+            setup prompt protects your API key with Windows DPAPI. No key is
+            entered in this browser.
+          </p>
+          <p>
+            {cloud?.configured
+              ? `Configured · ${cloud.enabled ? "enabled" : "disabled"} · ${cloud.usedCharacters} / ${cloud.dailyCharacters} characters reserved today (UTC; refresh for current usage).`
+              : "Not configured or status unavailable."}
+          </p>
+          <p>
+            Character limits apply to this Nexus installation, not a dollar
+            spending cap. Account pricing, credits and voice eligibility are
+            managed in ElevenLabs. Speech text leaves the laptop.
+          </p>
+          {cloud?.warning && <p>{cloud.warning}</p>}
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => void refreshCloud()}
+          >
+            Refresh ElevenLabs status
+          </button>
+          <button
+            type="button"
+            disabled={disabled || !cloud?.enabled}
+            onClick={async () => {
+              window.dispatchEvent(new Event("nexus:voice-mute"));
               stopSpeech();
-              setBackend(e.target.value);
+              try {
+                const r = await fetch("/api/sync/elevenlabs", {
+                  method: "DELETE",
+                });
+                if (!r.ok) throw Error();
+                setCloud(await r.json());
+                setCloudConsent(false);
+                if (effectiveBackend === "elevenlabs") setBackend("auto");
+                setMessage("ElevenLabs disabled for future speech requests.");
+              } catch {
+                setMessage(
+                  "Could not confirm disabling ElevenLabs. Use Disable-Nexus-ElevenLabs.cmd on the laptop.",
+                );
+              }
             }}
           >
-            <option value="auto">
-              Preferred available voice — Isabella first
-            </option>
-            <option value="kokoro" disabled={!engines.includes("kokoro")}>
-              Local Kokoro · Isabella · 0.95{" "}
-              {engines.includes("kokoro") ? "ready" : "— setup required"}
-            </option>
-            <option value="device">Device speech (browser-managed)</option>
-            <option value="piper" disabled={!engines.includes("piper")}>
-              Local Piper{" "}
-              {engines.includes("piper") ? "ready" : "— setup required"}
-            </option>
-          </select>
-        </label>
+            Disable ElevenLabs
+          </button>
+        </details>
+        {effectiveBackend === "elevenlabs" && (
+          <label className="nexus-sharing">
+            <input
+              type="checkbox"
+              checked={cloudConsent}
+              disabled={disabled || conversationActive || speaking}
+              onChange={(e) => setCloudConsent(e.target.checked)}
+            />
+            Allow cloud speech with Stephanie for this session. Spoken text,
+            including private replies and morning briefs, goes to ElevenLabs and
+            may use paid credits.
+          </label>
+        )}
         {effectiveBackend === "device" && (
           <label>
             Device voice
@@ -331,13 +463,21 @@ export default function NexusVoice({
             ? "Isabella · British English · speed 0.95"
             : effectiveBackend === "piper"
               ? "Piper · local fallback"
-              : "Browser/device voice"}
+              : effectiveBackend === "elevenlabs"
+                ? "Stephanie · ElevenLabs · cloud"
+                : "Browser/device voice"}
           . Automatic selection never switches a voice you explicitly chose.
         </p>
         <div className="nexus-buttons">
           <button
             onClick={speak}
-            disabled={disabled || speaking || conversationActive}
+            disabled={
+              disabled ||
+              speaking ||
+              conversationActive ||
+              (effectiveBackend === "elevenlabs" &&
+                (!cloudConsent || !cloud?.enabled || !cloud?.supported))
+            }
           >
             Speak {answer ? "answer" : "voice preview"}
           </button>
