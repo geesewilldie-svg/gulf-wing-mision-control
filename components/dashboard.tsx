@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useEffect, useRef, useState, type SetStateAction } from "react";
 import {
   Activity,
@@ -271,9 +272,9 @@ export default function Dashboard() {
           </div>
           <SyncControls />
           <ScreenControls />
-          <a className="nexus-launch" href="/nexus">
+          <Link className="nexus-launch" href="/nexus">
             Open Nexus → Voice, knowledge, Co-hosting and marketing
-          </a>
+          </Link>
           <VentureWorkspace
             venture={venture}
             enabled={

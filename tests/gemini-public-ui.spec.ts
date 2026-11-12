@@ -66,7 +66,7 @@ test("dedicated public form sends only its current question and resets confirmat
     panel.getByRole("article", { name: "Gemini Public answer" }),
   ).toContainText("Rainbows result");
   await expect(confirm).not.toBeChecked();
-  await page.getByRole("button", { name: "Ask Nexus", exact: true }).click();
+  await page.getByRole("button", { name: "Overview", exact: true }).click();
   await expect(
     page.getByRole("article", { name: "Gemini Public answer" }),
   ).toHaveCount(0);

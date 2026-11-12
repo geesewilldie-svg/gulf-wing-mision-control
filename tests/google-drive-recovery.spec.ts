@@ -56,6 +56,9 @@ test("a controller can rebuild a corrupt Drive snapshot from the browser without
     await page
       .getByRole("button", { name: "Connections", exact: true })
       .click();
+    await page
+      .getByRole("button", { name: "Google files", exact: true })
+      .click();
     const panel = page.getByRole("region", {
       name: "Google Drive Docs and Sheets",
     });

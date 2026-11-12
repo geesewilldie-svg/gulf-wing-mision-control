@@ -1,3 +1,8 @@
+import {
+  openAssistant,
+  minimizeAssistant,
+  nexusSection,
+} from "./helpers/assistant";
 import { test, expect, type Cookie } from "@playwright/test";
 import { SpeechBoundary, parseHistory } from "../lib/conversation";
 
@@ -144,6 +149,7 @@ test("hands-free loop releases microphone for answers, remembers follow-up and s
     });
   });
   await page.goto("/nexus");
+  await openAssistant(page);
   await page.getByText("Nexus voice · Push to talk", { exact: true }).click();
   const panel = page.getByRole("region", { name: "Hands-free conversation" });
   await expect(
@@ -189,13 +195,14 @@ test("hands-free loop releases microphone for answers, remembers follow-up and s
   expect(await page.evaluate(() => (window as any).mics.length)).toBe(2);
   await panel.getByRole("button", { name: "Start conversation" }).click();
   await expect(panel.locator(".conversation-phase")).toContainText("Listening");
-  await page.getByText("Nexus voice · Push to talk", { exact: true }).click();
-  await expect
-    .poll(async () =>
-      page.evaluate(() => (window as any).mics.every((m: any) => m.stopped)),
-    )
-    .toBe(true);
-  await page.getByText("Nexus voice · Push to talk", { exact: true }).click();
+  await minimizeAssistant(page);
+  expect(
+    await page.evaluate(() =>
+      (window as any).mics.some((m: any) => !m.stopped),
+    ),
+  ).toBe(true);
+  await openAssistant(page);
+  await panel.getByRole("button", { name: "Stop conversation / Mute" }).click();
   await expect(panel.locator(".conversation-phase")).toContainText(
     "Microphone off",
   );
@@ -213,6 +220,7 @@ test("microphone denial leaves conversation off", async ({ page }) => {
     route.fulfill({ json: { available: true, transcription: true } }),
   );
   await page.goto("/nexus");
+  await openAssistant(page);
   await page.getByText("Nexus voice · Push to talk", { exact: true }).click();
   const panel = page.getByRole("region", { name: "Hands-free conversation" });
   await panel.getByRole("button", { name: "Start conversation" }).click();
@@ -326,14 +334,30 @@ test("background assistant processes real worklet audio when hidden and survives
 }) => {
   await syntheticAudio(page);
   await page.goto("/nexus");
+  await openAssistant(page);
   await page.getByText("Nexus voice · Push to talk", { exact: true }).click();
   const panel = page.locator(".nexus-conversation");
   expect(await page.evaluate(() => (window as any).mics.length)).toBe(0);
-  await panel
-    .getByRole("button", { name: "Start background assistant", exact: true })
-    .click();
+  await expect(
+    panel.getByRole("button", {
+      name: "Start background assistant",
+      exact: true,
+    }),
+  ).toBeEnabled();
+  await page.getByRole("button", { name: "Start voice", exact: true }).click();
   await expect(panel.locator(".conversation-phase")).toContainText("Listening");
-  await page.getByRole("button", { name: "Co-hosting", exact: true }).click();
+  await minimizeAssistant(page);
+  await page
+    .getByRole("link", { name: "← Mission Control", exact: true })
+    .click();
+  await openAssistant(page);
+  await expect(panel.locator(".conversation-phase")).toContainText("Listening");
+  expect(await page.evaluate(() => (window as any).mics.length)).toBe(1);
+  await minimizeAssistant(page);
+  await page.locator("a.nexus-launch").click();
+  await openAssistant(page);
+  await nexusSection(page, "Co-hosting");
+  await openAssistant(page);
   await expect(panel.locator(".conversation-phase")).toContainText(
     "Background assistant on",
   );
@@ -400,6 +424,7 @@ test("normal conversation stops on hidden tab and background audio startup can b
 }) => {
   await syntheticAudio(page);
   await page.goto("/nexus");
+  await openAssistant(page);
   await page.getByText("Nexus voice · Push to talk", { exact: true }).click();
   const panel = page.getByRole("region", { name: "Hands-free conversation" });
   await panel
@@ -446,6 +471,7 @@ test("starting another Nexus window mutes the existing background session", asyn
 }) => {
   await syntheticAudio(page);
   await page.goto("/nexus");
+  await openAssistant(page);
   await page.getByText("Nexus voice · Push to talk", { exact: true }).click();
   await page
     .getByRole("button", { name: "Start background assistant", exact: true })
@@ -454,6 +480,7 @@ test("starting another Nexus window mutes the existing background session", asyn
   const other = await context.newPage();
   await syntheticAudio(other);
   await other.goto("/nexus");
+  await openAssistant(other);
   await other.getByText("Nexus voice · Push to talk", { exact: true }).click();
   await other
     .getByRole("button", { name: "Start conversation", exact: true })
@@ -503,7 +530,9 @@ test("saved automatic listening resumes on reload and explicit mute persists off
 }) => {
   await automaticAudio(page);
   await page.goto("/nexus");
+  await openAssistant(page);
   await page.getByText("Nexus voice · Push to talk", { exact: true }).click();
+  await page.getByText("Listening preferences", { exact: true }).click();
   const pref = page.getByLabel(
     "Automatically resume background listening on this device",
   );
@@ -536,6 +565,7 @@ test("automatic listening waits for controller and permission, with a visible re
     localStorage.setItem("gulf-wing.nexus-auto-listen.v1", "enabled"),
   );
   await page.goto("/nexus");
+  await openAssistant(page);
   const dock = page.getByRole("complementary", {
     name: "Nexus background assistant",
   });
@@ -552,7 +582,9 @@ test("saved automatic listening does not steal a conversation from another activ
 }) => {
   await automaticAudio(page);
   await page.goto("/nexus");
+  await openAssistant(page);
   await page.getByText("Nexus voice · Push to talk", { exact: true }).click();
+  await page.getByText("Listening preferences", { exact: true }).click();
   await page
     .getByLabel("Automatically resume background listening on this device")
     .check();
@@ -579,6 +611,7 @@ test("display-only access never auto-captures even with a saved listening prefer
     localStorage.setItem("gulf-wing.nexus-auto-listen.v1", "enabled"),
   );
   await page.goto("/nexus");
+  await openAssistant(page);
   const dock = page.getByRole("complementary", {
     name: "Nexus background assistant",
   });
@@ -610,6 +643,7 @@ test("morning voice brief uses the conversation player before capture and speaks
     }),
   );
   await page.goto("/nexus");
+  await openAssistant(page);
   await page.getByText("Nexus voice · Push to talk", { exact: true }).click();
   await page
     .getByRole("button", { name: "Start conversation", exact: true })

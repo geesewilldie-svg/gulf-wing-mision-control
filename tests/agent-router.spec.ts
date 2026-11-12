@@ -1,3 +1,4 @@
+import { openAssistant } from "./helpers/assistant";
 import { test, expect } from "@playwright/test";
 import {
   mkdtemp,
@@ -267,6 +268,9 @@ test("controller search UI and activity authenticate, explicit unavailable agent
     ).status(),
   ).toBe(403);
   await page.goto("/nexus");
+  await page.getByText("Connection activity", { exact: true }).click();
+  await openAssistant(page);
+  await page.getByText("Answer settings and sharing", { exact: true }).click();
   await expect(
     page.getByRole("region", { name: "Nexus request activity" }),
   ).toBeVisible();
@@ -355,6 +359,9 @@ test("sharing permission and separate public terms are one-question controls", a
     } else await route.continue();
   });
   await page.goto("/nexus");
+  await page.getByText("Connection activity", { exact: true }).click();
+  await openAssistant(page);
+  await page.getByText("Answer settings and sharing", { exact: true }).click();
   await page
     .getByRole("combobox", { name: "Routing", exact: true })
     .selectOption("knowledge");
@@ -389,6 +396,9 @@ test("downloaded tool inventory distinguishes development, evaluation and unveri
   });
   await page.goto("/nexus");
   await page.getByRole("button", { name: "Connections", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Models and tools", exact: true })
+    .click();
   await page
     .getByText("Downloaded tools — setup and connection status", {
       exact: true,

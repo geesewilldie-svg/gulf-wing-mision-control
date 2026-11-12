@@ -66,10 +66,11 @@ export default function NexusVoice({
     load();
     window.speechSynthesis?.addEventListener("voiceschanged", load);
     const check = new AbortController();
-    fetch("/api/sync/voice", { signal: check.signal })
-      .then((r) => r.json())
-      .then(setLocal)
-      .catch(() => {});
+    if (!disabled)
+      fetch("/api/sync/voice", { signal: check.signal })
+        .then((r) => r.json())
+        .then(setLocal)
+        .catch(() => {});
     return () => {
       mounted.current = false;
       check.abort();
@@ -258,104 +259,7 @@ export default function NexusVoice({
     }
   };
   return (
-    <details className="nexus-voice">
-      <summary>Nexus voice · Push to talk</summary>
-      <p>
-        Listening starts only when you choose a recording or conversation
-        control. No voice cloning. Device voices vary; choose an installed
-        British voice if available.
-      </p>
-      <label>
-        Speech engine
-        <select
-          disabled={conversationActive}
-          value={backend}
-          onChange={(e) => {
-            stopSpeech();
-            setBackend(e.target.value);
-          }}
-        >
-          <option value="auto">
-            Preferred available voice — Isabella first
-          </option>
-          <option value="kokoro" disabled={!engines.includes("kokoro")}>
-            Local Kokoro · Isabella · 0.95{" "}
-            {engines.includes("kokoro") ? "ready" : "— setup required"}
-          </option>
-          <option value="device">Device speech (browser-managed)</option>
-          <option value="piper" disabled={!engines.includes("piper")}>
-            Local Piper{" "}
-            {engines.includes("piper") ? "ready" : "— setup required"}
-          </option>
-        </select>
-      </label>
-      {effectiveBackend === "device" && (
-        <label>
-          Device voice
-          <select
-            disabled={conversationActive}
-            value={voice}
-            onChange={(e) => setVoice(e.target.value)}
-          >
-            <option value="">Automatic / British preferred</option>
-            {voices.map((v) => (
-              <option key={v.voiceURI} value={v.voiceURI}>
-                {v.name} ({v.lang})
-                {v.localService ? " · on-device" : " · may use network"}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
-      <p>
-        Current voice:{" "}
-        {effectiveBackend === "kokoro"
-          ? "Isabella · British English · speed 0.95"
-          : effectiveBackend === "piper"
-            ? "Piper · local fallback"
-            : "Browser/device voice"}
-        . Automatic selection never switches a voice you explicitly chose.
-      </p>
-      <div className="nexus-buttons">
-        <button
-          onClick={speak}
-          disabled={disabled || speaking || conversationActive}
-        >
-          Speak {answer ? "answer" : "voice preview"}
-        </button>
-        <button onClick={stopSpeech} disabled={conversationActive}>
-          Stop speech
-        </button>
-        <button
-          onClick={record}
-          disabled={
-            disabled || busy || !local.transcription || conversationActive
-          }
-        >
-          {recording
-            ? "Stop recording"
-            : busy
-              ? "Transcribing…"
-              : "Record question"}
-        </button>
-      </div>
-      <button
-        onClick={async () => {
-          try {
-            const r = await fetch("/api/sync/voice");
-            setLocal(await r.json());
-          } catch {
-            setLocal({ available: false });
-          }
-        }}
-      >
-        Check local voice
-      </button>
-      <p>
-        Local transcription: {local.transcription ? "ready" : "not configured"}.
-        Manual recording stops after 30 seconds and requires Ask Nexus.
-        Conversation mode submits automatically while active.
-      </p>
+    <>
       <NexusConversation
         section={section}
         disabled={disabled || busy || recording || speaking}
@@ -372,7 +276,107 @@ export default function NexusVoice({
           onConversationActive(active);
         }}
       />
-      <p role="status">{message}</p>
-    </details>
+      <details className="nexus-voice">
+        <summary>Nexus voice · Push to talk</summary>
+        <p>
+          Listening starts only when you choose a recording or conversation
+          control. No voice cloning. Device voices vary; choose an installed
+          British voice if available.
+        </p>
+        <label>
+          Speech engine
+          <select
+            disabled={conversationActive}
+            value={backend}
+            onChange={(e) => {
+              stopSpeech();
+              setBackend(e.target.value);
+            }}
+          >
+            <option value="auto">
+              Preferred available voice — Isabella first
+            </option>
+            <option value="kokoro" disabled={!engines.includes("kokoro")}>
+              Local Kokoro · Isabella · 0.95{" "}
+              {engines.includes("kokoro") ? "ready" : "— setup required"}
+            </option>
+            <option value="device">Device speech (browser-managed)</option>
+            <option value="piper" disabled={!engines.includes("piper")}>
+              Local Piper{" "}
+              {engines.includes("piper") ? "ready" : "— setup required"}
+            </option>
+          </select>
+        </label>
+        {effectiveBackend === "device" && (
+          <label>
+            Device voice
+            <select
+              disabled={conversationActive}
+              value={voice}
+              onChange={(e) => setVoice(e.target.value)}
+            >
+              <option value="">Automatic / British preferred</option>
+              {voices.map((v) => (
+                <option key={v.voiceURI} value={v.voiceURI}>
+                  {v.name} ({v.lang})
+                  {v.localService ? " · on-device" : " · may use network"}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        <p>
+          Current voice:{" "}
+          {effectiveBackend === "kokoro"
+            ? "Isabella · British English · speed 0.95"
+            : effectiveBackend === "piper"
+              ? "Piper · local fallback"
+              : "Browser/device voice"}
+          . Automatic selection never switches a voice you explicitly chose.
+        </p>
+        <div className="nexus-buttons">
+          <button
+            onClick={speak}
+            disabled={disabled || speaking || conversationActive}
+          >
+            Speak {answer ? "answer" : "voice preview"}
+          </button>
+          <button onClick={stopSpeech} disabled={conversationActive}>
+            Stop speech
+          </button>
+          <button
+            onClick={record}
+            disabled={
+              disabled || busy || !local.transcription || conversationActive
+            }
+          >
+            {recording
+              ? "Stop recording"
+              : busy
+                ? "Transcribing…"
+                : "Record question"}
+          </button>
+        </div>
+        <button
+          onClick={async () => {
+            try {
+              const r = await fetch("/api/sync/voice");
+              setLocal(await r.json());
+            } catch {
+              setLocal({ available: false });
+            }
+          }}
+        >
+          Check local voice
+        </button>
+        <p>
+          Local transcription:{" "}
+          {local.transcription ? "ready" : "not configured"}. Manual recording
+          stops after 30 seconds and requires Ask Nexus. Conversation mode
+          submits automatically while active.
+        </p>
+        <p role="status">{message}</p>
+      </details>
+    </>
   );
 }

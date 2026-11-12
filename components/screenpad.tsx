@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useState } from "react";
 import { ArrowLeft, Maximize2 } from "lucide-react";
 import { agents, ventures, type Task } from "@/lib/demo";
@@ -44,10 +45,10 @@ export default function ScreenPad() {
   return (
     <main className="screenpad-console">
       <header className="screenpad-header">
-        <a href="/">
+        <Link href="/">
           <ArrowLeft size={14} /> Main dashboard
-        </a>
-        <a href="/nexus">Nexus voice &amp; search</a>
+        </Link>
+        <Link href="/nexus">Nexus voice &amp; search</Link>
         <strong>
           GW / SCREENPAD <span>DEMO</span>
         </strong>

@@ -59,7 +59,7 @@ export default function MorningBriefNotice({
       );
     }
   }, [voiceActive, brief]);
-  if (disabled) return null;
+  if (disabled || (!brief && !error)) return null;
   return (
     <aside className="nexus-card" aria-label="Morning briefing">
       <p role="status">{error}</p>

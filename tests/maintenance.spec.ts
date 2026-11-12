@@ -77,6 +77,9 @@ test("maintenance UI is disabled until enabled locally on a supported host", asy
   await fixtureRole(context, "controller");
   await page.goto("/nexus");
   await page.getByRole("button", { name: "Connections", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Device access", exact: true })
+    .click();
   const panel = page.getByRole("region", { name: "Laptop maintenance" });
   await expect(
     panel.getByRole("button", { name: "Start missing Nexus services" }),
@@ -100,6 +103,9 @@ test("enabled panel submits only the selected operation and displays its result"
   });
   await page.goto("/nexus");
   await page.getByRole("button", { name: "Connections", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Device access", exact: true })
+    .click();
   const panel = page.getByRole("region", { name: "Laptop maintenance" });
   await panel.getByRole("button", { name: "Check laptop services" }).click();
   await expect(panel.getByRole("status")).toHaveText(

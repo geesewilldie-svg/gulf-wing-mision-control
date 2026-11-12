@@ -85,6 +85,9 @@ test("controller searches selected Google snapshots in the browser and Ask Nexus
     await page
       .getByRole("button", { name: "Connections", exact: true })
       .click();
+    await page
+      .getByRole("button", { name: "Google files", exact: true })
+      .click();
     const panel = page.getByRole("region", {
       name: "Google Drive Docs and Sheets",
     });
@@ -158,6 +161,9 @@ test("an existing Calendar account can request Drive access without losing Calen
     await page.goto("http://localhost:3000/nexus");
     await page
       .getByRole("button", { name: "Connections", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Google accounts", exact: true })
       .click();
     await page
       .getByRole("button", {

@@ -3206,3 +3206,101 @@ body {
 .nexus-foundation button { min-height: 44px; }
 .nexus-foundation :focus-visible, .nexus-scope select:focus-visible { outline: 2px solid #48dfff; outline-offset: 3px; }
 .nexus-scope { display: grid; gap: .35rem; max-width: 24rem; margin-block: 1rem; }
+
+/* Nexus personal assistant shell. Presentation displays keep their own styling. */
+.nexus-app-frame { min-height: 100dvh; }
+.nexus-redesign {
+  --nexus-line: #30473e;
+  color: #edf5ef;
+  max-width: 1450px;
+  padding: 36px 40px 110px;
+  background: radial-gradient(ellipse at 90% 0, #13271e 0, transparent 50%), #0b100e;
+  min-height: 100dvh;
+}
+.nexus-redesign .nexus-heading { padding: 0 0 22px; }
+.nexus-redesign .nexus-heading > span { margin-top: 24px; color: #88ab98; letter-spacing: .15em; font-size: 11px; }
+.nexus-redesign .nexus-heading h1 { font-size: clamp(40px, 6vw, 66px); margin: 10px 0; line-height: 1.1; }
+.nexus-redesign .nexus-heading h1 span { color: #65e4a2; }
+.nexus-redesign .nexus-heading a { color: #a8d8bc; }
+.nexus-redesign .nexus-card, .nexus-assistant-drawer.nexus-card {
+  background: #121c17; border: 1px solid #30473e; color: #edf5ef; border-radius: 18px;
+  padding: 26px; margin-bottom: 24px; box-shadow: 0 12px 36px #0002;
+}
+.nexus-redesign .nexus-card p, .nexus-assistant-drawer.nexus-card p { color: #b8c9bf; line-height: 1.65; }
+.nexus-redesign h2, .nexus-assistant-drawer h2 { color: #f2f8f4; font-size: 25px; margin: 0 0 12px; }
+.nexus-redesign h3 { color: #e0eee5; }
+.nexus-redesign button, .nexus-assistant-drawer button, .nexus-assistant-launcher {
+  background: #1b3528; border: 1px solid #47705a; color: #e5f9ed;
+  border-radius: 10px; padding: 12px 16px; min-height: 44px; cursor: pointer; font: inherit;
+}
+.nexus-redesign button:hover, .nexus-assistant-drawer button:hover { background: #284d39; border-color: #8ce5b2; }
+.nexus-redesign button[aria-pressed="true"] { background: #b3f3cc; color: #092318; border-color: #b3f3cc; }
+.nexus-redesign button:disabled, .nexus-assistant-drawer button:disabled { cursor: not-allowed; opacity: .5; }
+.nexus-redesign :is(input, select, textarea), .nexus-assistant-drawer :is(input, select, textarea) {
+  color: #f0f7f2; background: #0b130f; border: 1px solid #496154; border-radius: 8px; padding: 10px; max-width: 100%;
+}
+.nexus-redesign :is(input, textarea)::placeholder, .nexus-assistant-drawer textarea::placeholder { color: #9aafa1; }
+.nexus-redesign :focus-visible, .nexus-assistant-drawer :focus-visible, .nexus-assistant-launcher:focus-visible { outline: 3px solid #89efb5; outline-offset: 3px; }
+.nexus-redesign .nexus-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 28px; padding: 12px; background: #111a15; border: 1px solid #2d4336; border-radius: 14px; }
+.nexus-redesign .nexus-tabs button { flex: 1 0 auto; background: transparent; }
+.nexus-redesign .nexus-tabs button[aria-pressed="true"] { background: #b3f3cc; }
+.nexus-quick-actions, .nexus-connection-tabs { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0; }
+.nexus-overview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 30px; }
+.nexus-overview-grid article { padding: 22px; border: 1px solid #30473e; border-radius: 12px; background: #17231c; }
+.nexus-redesign details, .nexus-assistant-drawer details { border: 1px solid #30473e; border-radius: 10px; padding: 14px; margin: 16px 0; }
+.nexus-redesign summary, .nexus-assistant-drawer summary { cursor: pointer; color: #d3eedf; }
+.nexus-redesign .nexus-connections article { background: #17231c; border-color: #30473e; }
+.nexus-redesign a, .nexus-assistant-drawer a { color: #99e4b8; }
+.nexus-assistant-drawer.nexus-card { position: fixed; z-index: 70; top: 16px; right: 16px; bottom: 76px; width: 390px; max-width: calc(100vw - 24px); overflow-y: auto; margin: 0; padding: 22px; box-shadow: 0 20px 90px #000a; overscroll-behavior: contain; }
+.nexus-assistant-drawer[hidden], .nexus-redesign [hidden] { display: none !important; }
+.assistant-title { display: flex; justify-content: space-between; align-items: center; gap: 16px; border-bottom: 1px solid #30473e; padding-bottom: 18px; }
+.assistant-title h2 { margin: 5px 0 0; font-size: 30px; }
+.assistant-title h2 span { color: #65e4a2; font-size: 12px; padding-left: 10px; }
+.assistant-title button { font-size: 24px; }
+.assistant-eyebrow { color: #8db59e; font-size: 10px; letter-spacing: .16em; }
+.nexus-assistant-drawer .assistant-presence { color: #a9e8c3; font-size: 13px; }
+.nexus-assistant-drawer .assistant-hint { font-size: 13px; }
+.nexus-assistant-drawer label { display: block; margin: 14px 0 8px; font-size: 14px; }
+.nexus-assistant-drawer textarea { display: block; width: 100%; min-height: 105px; resize: vertical; margin: 10px 0; }
+.nexus-assistant-drawer select { width: 100%; }
+.nexus-assistant-drawer .nexus-sharing { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; }
+.nexus-assistant-drawer .nexus-sharing input { flex-shrink: 0; }
+.nexus-assistant-drawer .nexus-router-note { font-size: 12px; }
+.nexus-assistant-drawer .nexus-answer p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.nexus-assistant-drawer .nexus-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.nexus-assistant-drawer section[aria-label="Hands-free conversation"] { padding-bottom: 12px; border-bottom: 1px solid #30473e; }
+.nexus-assistant-drawer section[aria-label="Hands-free conversation"] h3 { font-size: 18px; }
+.nexus-assistant-drawer section[aria-label="Hands-free conversation"] p { font-size: 13px; }
+.nexus-assistant-launcher { position: fixed; z-index: 72; bottom: 16px; right: 20px; background: #b3f3cc; color: #082317; box-shadow: 0 8px 30px #0006; border-color: #b3f3cc; font-weight: 600; }
+.nexus-assistant-launcher.is-listening { background: #17462c; color: #c5ffda; border-color: #71e5a0; }
+@media (min-width: 1150px) { .assistant-is-open { padding-right: 420px; } .assistant-is-open .nexus-redesign { padding-left: 26px; padding-right: 26px; } }
+@media (max-width: 700px) {
+  .nexus-redesign { padding: 22px 16px 110px; }
+  .nexus-redesign .nexus-card { padding: 20px 16px; }
+  .nexus-overview-grid { grid-template-columns: 1fr; }
+  .nexus-redesign .nexus-tabs { gap: 6px; padding: 8px; }
+  .nexus-redesign .nexus-tabs button { font-size: 13px; padding: 10px; }
+  .nexus-assistant-drawer.nexus-card { top: 8px; right: 8px; bottom: 76px; max-width: calc(100vw - 16px); padding: 18px; }
+  .nexus-assistant-launcher { bottom: 14px; right: 12px; }
+}
+@media print { .nexus-assistant-drawer, .nexus-assistant-launcher { display: none !important; } .assistant-is-open { padding-right: 0; } }
+.cohosting-stages { display:flex; flex-wrap:wrap; gap:12px; margin:24px 0; padding:16px; background:#192b20; border-radius:12px; }
+.cohosting-stages a { padding:8px; font-size:14px; }
+.nexus-redesign [id^="cohosting-"] { scroll-margin-top:24px; padding-top:24px; border-top:1px solid #30473e; }
+.nexus-assistant-dock { bottom:76px; right:20px; max-width:365px; color:#e6f6ec; border-color:#6acb91; background:#11251af5; }
+.nexus-assistant-dock strong { color:#b4f1cb; }
+.nexus-assistant-dock button { color:#e6f6ec; border-color:#6acb91; background:#1b3528; }
+@media(max-width:420px) { .nexus-assistant-dock { bottom:76px; left:12px; right:12px; } }
+.nexus-assistant-drawer .nexus-conversation { background:#101a14; border-color:#30473e; padding:16px; margin:20px 0; }
+.nexus-assistant-drawer .nexus-conversation .nexus-buttons { display:grid; grid-template-columns:1fr; }
+.nexus-assistant-drawer .nexus-conversation .nexus-buttons button { width:100%; }
+.assistant-title > div { flex:1; }
+.assistant-title { gap:8px; }
+.assistant-title > button { font-size:13px; padding:10px; white-space:nowrap; }
+.assistant-title > button[aria-label="Minimize Nexus assistant"] { font-size:22px; }
+.nexus-assistant-drawer { scrollbar-width:thin; scrollbar-color:#4c735b #101a14; }
+@media(prefers-reduced-motion:reduce) { .nexus-assistant-drawer *, .nexus-redesign * { scroll-behavior:auto !important; } }
+/* Leave the dashboard's bottom-right panel resize handles unobstructed. */
+.nexus-route-dashboard .nexus-assistant-launcher { right:auto; left:20px; }
+.nexus-redesign .nexus-tabs { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); }
+@media(max-width:700px) { .nexus-redesign .nexus-tabs { grid-template-columns:repeat(2,minmax(0,1fr)); } }

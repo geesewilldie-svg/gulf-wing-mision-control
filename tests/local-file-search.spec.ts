@@ -26,6 +26,9 @@ test("controller refreshes selected folders, searches, previews, uses Ask Nexus 
     await page
       .getByRole("button", { name: "Connections", exact: true })
       .click();
+    await page
+      .getByRole("button", { name: "Laptop files", exact: true })
+      .click();
     const panel = page.getByRole("region", {
       name: "Laptop files and Obsidian",
       exact: true,
@@ -67,6 +70,9 @@ test("controller refreshes selected folders, searches, previews, uses Ask Nexus 
     await page.reload();
     await page
       .getByRole("button", { name: "Connections", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Laptop files", exact: true })
       .click();
     page.once("dialog", (dialog) => dialog.accept());
     await page

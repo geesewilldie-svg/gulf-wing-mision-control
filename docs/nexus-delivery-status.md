@@ -2,6 +2,12 @@
 
 Updated November 7, 2026. Repository status is distinct from installation on the operator's laptop.
 
+## November 11 assistant interface increment
+
+The shared application layout now owns the Nexus conversation panel and voice controller. Management navigation preserves session drafts/answers and background voice; a floating launcher and header start/mute controls remain available. Overview replaces the large initial question form. Connections has separate account, Google-file, laptop-file, device-access and model/tool categories; imports have a Knowledge screen. Co-hosting has numbered workflow links. Charcoal surfaces and emerald accents distinguish actions and selected navigation. See [behavior and native acceptance](nexus-assistant-interface.md). This does not complete native desktop automation, persistent conversation history, general skills, customer isolation or money movement.
+
+The operator has reported successful local voice/Ollama, selected laptop/Obsidian search, two Google Calendar accounts, selected Drive/Docs/workbook retrieval and public-only Gemini generation. Older setup-pending notes below describe their original increments, not a claim that these reported walkthroughs have not happened. The current interface still needs installation and acceptance on the operator's Windows laptop.
+
 ## Working prototype
 
 Holographic Mission Control and venture desks; local device pairing and synchronization; saved business records and estimates; imported document search; local Ollama and voice adapters; optional explicitly configured model routing; Windows launcher. Laptop voice/background startup still needs operator acceptance on the latest launcher version. Existing shared controller access is a trusted-household prototype, not customer or contractor identity management.

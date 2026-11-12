@@ -295,12 +295,12 @@ export default function CohostingWorkspace({
           <span>Accepted estimates</span>
         </div>
       </div>
-      <nav className="business-toolbar" aria-label="Co-hosting workflow">
-        <a href="#cohosting-intake">Client intake</a>
-        <a href="#cohosting-records">Work list</a>
-        <a href="#cohosting-estimates">Estimates</a>
-      </nav>
       <ServiceCatalog state={state} save={save} disabled={disabled} />
+      <nav className="cohosting-stages" aria-label="Co-hosting workflow">
+        <a href="#cohosting-intake">1 · Intake</a>
+        <a href="#cohosting-estimates">2 · Estimate</a>
+        <a href="#cohosting-records">3 · Jobs and review</a>
+      </nav>
       <h3 id="cohosting-intake">
         {editing ? "Edit operating record" : "Client intake and scheduling"}
       </h3>

@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
   Download,
@@ -223,9 +224,9 @@ export default function VentureWorkspace({
           Your saved customers, properties, service catalog, estimates and job
           checklists are in the Co-hosting workspace.
         </p>
-        <a className="primary-button" href="/nexus?section=cohosting">
+        <Link className="primary-button" href="/nexus?section=cohosting">
           Open Co-hosting operations →
-        </a>
+        </Link>
       </section>
     );
   const records = data?.records.filter((r) => r.venture === current) ?? [];
@@ -386,11 +387,11 @@ export default function VentureWorkspace({
                   <small>Open operating desk →</small>
                 </button>
               ))}
-              <a href="/nexus?section=cohosting">
+              <Link href="/nexus?section=cohosting">
                 <span>Co-hosting</span>
                 <strong>Customer operations</strong>
                 <small>Intake, estimates and jobs →</small>
-              </a>
+              </Link>
             </div>
           )}
           <div className="venture-controls">

@@ -233,6 +233,9 @@ const listen = (s) =>
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto(base + "/nexus");
     await page
+      .getByRole("button", { name: "Talk to Nexus", exact: true })
+      .click();
+    await page
       .locator("form")
       .getByLabel("Ask Nexus", { exact: true })
       .fill("cleaning");

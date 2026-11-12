@@ -1,3 +1,4 @@
+import { openAssistant, nexusSection } from "./helpers/assistant";
 import { test, expect } from "@playwright/test";
 const documents = [
   {
@@ -91,7 +92,10 @@ test.describe("Nexus private business foundation", () => {
       });
     });
     await page.goto("/nexus");
-    await page.getByLabel("Ask Nexus", { exact: true }).fill("SyntheticNexusCleaningFixture");
+    await openAssistant(page);
+    await page
+      .getByLabel("Ask Nexus", { exact: true })
+      .fill("SyntheticNexusCleaningFixture");
     await page
       .locator("form")
       .getByRole("button", { name: "Ask Nexus", exact: true })
@@ -117,8 +121,9 @@ test.describe("Nexus private business foundation", () => {
     await page
       .getByRole("button", { name: "Stop speech", exact: true })
       .click();
+    await nexusSection(page, "Connections");
     await page
-      .getByRole("button", { name: "Connections", exact: true })
+      .getByRole("button", { name: "Models and tools", exact: true })
       .click();
     await expect(
       page.getByRole("heading", { name: "GitHub Copilot", exact: true }),
@@ -217,6 +222,7 @@ test.describe("Nexus private business foundation", () => {
     ).toBe(403);
     expect((await page.request.get("/api/sync/access")).status()).toBe(403);
     await page.goto("/nexus");
+    await openAssistant(page);
     await expect(
       page
         .locator("form")
@@ -283,6 +289,7 @@ test("Isabella is preferred when ready and explicit Piper selection stays select
     });
   });
   await page.goto("/nexus");
+  await openAssistant(page);
   await page.getByText("Nexus voice · Push to talk", { exact: true }).click();
   await expect(page.getByText(/Current voice: Isabella/)).toBeVisible();
   await page
@@ -379,6 +386,7 @@ test("Stop speech cancels a local answer while audio is still being prepared", a
     });
   });
   await page.goto("/nexus");
+  await openAssistant(page);
   await page.getByText("Nexus voice · Push to talk", { exact: true }).click();
   await expect(page.getByText(/Current voice: Isabella/)).toBeVisible();
   await page

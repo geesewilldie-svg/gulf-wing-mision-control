@@ -356,6 +356,7 @@ test("browser imports a private note and shows team access instructions", async 
   page,
 }, info) => {
   await page.goto("/nexus");
+  await page.getByRole("button", { name: "Knowledge", exact: true }).click();
   await page
     .getByText("Import business plans or Obsidian knowledge", { exact: true })
     .click();
@@ -372,6 +373,10 @@ test("browser imports a private note and shows team access instructions", async 
   await expect(
     page.getByRole("status").filter({ hasText: /Imported 1 sections/ }),
   ).toBeVisible();
+  await page.getByRole("button", { name: "Connections", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Device access", exact: true })
+    .click();
   await page.getByText("Family / team device access", { exact: true }).click();
   await page
     .getByRole("button", { name: "Show laptop network addresses" })

@@ -667,6 +667,19 @@ export default function NexusConversation({
     }
   }
 
+  useEffect(() => {
+    const begin = () => {
+      void autoStart.current();
+    };
+    const mute = () => muteRef.current();
+    window.addEventListener("nexus:voice-start", begin);
+    window.addEventListener("nexus:voice-mute", mute);
+    return () => {
+      window.removeEventListener("nexus:voice-start", begin);
+      window.removeEventListener("nexus:voice-mute", mute);
+    };
+  }, []);
+
   autoStart.current = () => start(true);
 
   return (
@@ -677,37 +690,34 @@ export default function NexusConversation({
     >
       <h3>Talk with Nexus</h3>
       <p>
-        Start once to automatically listen, transcribe, answer aloud and listen
-        again. The microphone is off while Nexus thinks and speaks. Silence of
-        about 1.4 seconds ends your turn.
+        Start a voice session to talk naturally while you work. Use background
+        mode to keep listening when you switch apps.
       </p>
-      <p>
-        Background assistant mode keeps listening when you switch apps or Nexus
-        sections. Speech picked up in that mode is automatically submitted to
-        Nexus. Mute it for calls or private conversations.
-      </p>
-      <label className="nexus-sharing">
-        <input
-          type="checkbox"
-          checked={autoResume}
-          disabled={disabled}
-          onChange={(e) => {
-            const enabled = e.target.checked;
-            remember(enabled);
-            if (enabled) {
-              autoAttempted.current = true;
-              if (session.current && !backgroundRef.current) stop();
-              if (!session.current && transcriptionReady) void start(true);
-              else if (!transcriptionReady) {
-                autoAttempted.current = false;
-                setMessage("Waiting for local transcription readiness.");
-              }
-            } else stop("Automatic listening disabled. Microphone is off.");
-          }}
-        />
-        Automatically resume background listening on this device
-      </label>
-      {preferenceNotice && <p>{preferenceNotice}</p>}
+      <details className="conversation-options">
+        <summary>Listening preferences</summary>
+        <label className="nexus-sharing">
+          <input
+            type="checkbox"
+            checked={autoResume}
+            disabled={disabled}
+            onChange={(e) => {
+              const enabled = e.target.checked;
+              remember(enabled);
+              if (enabled) {
+                autoAttempted.current = true;
+                if (session.current && !backgroundRef.current) stop();
+                if (!session.current && transcriptionReady) void start(true);
+                else if (!transcriptionReady) {
+                  autoAttempted.current = false;
+                  setMessage("Waiting for local transcription readiness.");
+                }
+              } else stop("Automatic listening disabled. Microphone is off.");
+            }}
+          />
+          Automatically resume background listening on this device
+        </label>
+        {preferenceNotice && <p>{preferenceNotice}</p>}
+      </details>
       <div className="nexus-buttons">
         <button
           onClick={() => void start()}
@@ -731,17 +741,20 @@ export default function NexusConversation({
       </p>
       {heard && <p>Last heard: {heard}</p>}
       {message && <p role="status">{message}</p>}
-      <small>
-        Enable the device setting once to resume background listening on future
-        page loads when controller access, local transcription and browser
-        microphone permission are ready. Mute, Ctrl+Alt+M (while this window has
-        focus), or “stop listening” turns this setting off. The microphone
-        remains off while Nexus thinks and speaks. Browser autoplay restrictions
-        can require Resume listening. Closing the browser, navigating away,
-        sign-out, sleep or losing controller access stops capture. This is not a
-        Windows microphone service or a wake-word listener. Recent conversation
-        context stays in this session only.
-      </small>
+      <details>
+        <summary>How listening works</summary>
+        <small>
+          Enable the device setting once to resume background listening on
+          future page loads when controller access, local transcription and
+          browser microphone permission are ready. Mute, Ctrl+Alt+M (while this
+          window has focus), or “stop listening” turns this setting off. The
+          microphone remains off while Nexus thinks and speaks. Browser autoplay
+          restrictions can require Resume listening. Closing the browser,
+          navigating away, sign-out, sleep or losing controller access stops
+          capture. This is not a Windows microphone service or a wake-word
+          listener. Recent conversation context stays in this session only.
+        </small>
+      </details>
       {((active && background) || (autoResume && preferenceLoaded)) &&
         createPortal(
           <aside
