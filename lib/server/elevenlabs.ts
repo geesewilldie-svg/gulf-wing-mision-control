@@ -3,6 +3,7 @@ import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { spawn } from "node:child_process";
 import { SyncError } from "./sync-store";
+import { redactedElevenError } from "./elevenlabs-diagnostic";
 import {
   validateElevenConfig,
   writeElevenConfig,
@@ -251,16 +252,8 @@ export async function generateElevenSpeech(
         signal: combined,
       },
     );
-    if (!response.ok) {
-      await response.body?.cancel();
-      const message =
-        response.status === 401 || response.status === 403
-          ? "ElevenLabs rejected access. Check API key permissions, Stephanie voice access and account eligibility."
-          : response.status === 429
-            ? "ElevenLabs quota or rate limit reached. No automatic retry was made."
-            : "ElevenLabs speech generation failed. Check account status, selected model and voice availability.";
-      throw new SyncError(503, message);
-    }
+    if (!response.ok)
+      throw new SyncError(503, await redactedElevenError(response));
     if (
       !response.headers
         .get("content-type")

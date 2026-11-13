@@ -39,3 +39,7 @@ On November 12, 2026, read-only official SDK source confirmed the text-to-speech
 - [Voice metadata transport](https://github.com/elevenlabs/elevenlabs-python/blob/main/src/elevenlabs/voices/raw_client.py)
 
 These moving upstream links support the integration shape, not a claim of account entitlement or verified prices. The pricing and selected voice pages were blocked by the environment's proxy. Automated tests use synthetic metadata/audio/transports and verify consent, auth, budget persistence, redaction, abort/disable, invalid audio and UI routing. A successful live Stephanie audition remains a laptop acceptance step.
+
+## Troubleshooting generation failures
+
+If metadata setup succeeds but preview generation fails, read the voice-settings status. Failed provider responses now expose the HTTP status and only an allowlisted machine-code reason, with a fixed next-step hint. Arbitrary provider messages, request text, credentials, metadata and response headers are discarded. Diagnostic body parsing is bounded to 16 KB and two seconds. No retry, account upgrade or model change happens automatically. Share only this redacted status line when troubleshooting. Metadata access does not establish generation entitlement, plan credits or model/voice compatibility.

@@ -1,3 +1,4 @@
+import { redactedElevenError } from "../lib/server/elevenlabs-diagnostic";
 import { test, expect } from "@playwright/test";
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -307,4 +308,37 @@ test("cloud speech routes require controller access, same origin, consent and bo
       })
     ).status(),
   ).toBe(403);
+});
+
+test("speech diagnosis reports only allowlisted reasons and HTTP status", async () => {
+  const secret = "private-key-and-spoken-business-text";
+  for (const [status, code] of [
+    [400, "model_not_found"],
+    [402, "paid_plan_required"],
+    [401, "missing_permissions"],
+    [404, "voice_not_found"],
+    [429, "quota_exceeded"],
+  ] as const) {
+    const message = await redactedElevenError(
+      Response.json(
+        { detail: { status: code, message: secret, metadata: { secret } } },
+        { status },
+      ),
+    );
+    expect(message).toContain(`HTTP ${status}`);
+    expect(message).toContain(code.toUpperCase());
+    expect(message).not.toContain(secret);
+  }
+  for (const response of [
+    Response.json(
+      { detail: { status: secret, message: secret } },
+      { status: 422 },
+    ),
+    new Response(secret.repeat(1000), { status: 500 }),
+    new Response("invalid json " + secret, { status: 400 }),
+  ]) {
+    const message = await redactedElevenError(response);
+    expect(message).toContain(`HTTP ${response.status}`);
+    expect(message).not.toContain(secret);
+  }
 });
