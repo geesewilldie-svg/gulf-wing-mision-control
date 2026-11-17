@@ -4,6 +4,10 @@ An original, futuristic command workspace built with Next.js App Router, TypeScr
 
 **Demo visuals and real local tools are separate.** The original GPT, Claude, Hermes and Codex dashboard nodes, agent feed and model costs are simulations. Private device pairing, saved business records, imported knowledge and the optional local Nexus voice/Ollama runtime are real laptop-hosted tools. The Nexus agent router supports explicitly configured providers and opt-in public research; external models remain disabled by default. No paid service or credential is supplied. See the setup sections below for storage, permissions and limitations.
 
+## Framework security update
+
+Next.js is pinned to **16.4.6**. Existing installations must pull the updated lockfile, stop the web server, run `npm.cmd ci`, rebuild, then use the existing launcher. See [advisory verification and install notes](docs/security/nextjs-16.4.6.md). Saved private data and voice credentials remain outside node_modules.
+
 ## Windows local setup
 
 Install Node.js 24 LTS and Git for Windows. In PowerShell:
