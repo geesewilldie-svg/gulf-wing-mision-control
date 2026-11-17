@@ -97,6 +97,7 @@ export default function NexusAssistant({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: text,
+          voiceConversation: Boolean(signal),
           workspaceScope,
           mode,
           history,

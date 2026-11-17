@@ -41,6 +41,9 @@ const listen = (s) =>
       const body = JSON.parse(raw);
       if (
         body.model !== "test-model" ||
+        body.keep_alive !== "5m" ||
+        body.messages[0].content.includes("one or two short sentences") !==
+          (body.messages.length > 2) ||
         !body.messages[0].content.includes("Fixture services") ||
         (body.messages.length > 2 &&
           (body.messages[1]?.role !== "user" ||
@@ -157,6 +160,7 @@ const listen = (s) =>
       headers,
       body: JSON.stringify({
         query: "cleaning",
+        voiceConversation: true,
         mode: "auto",
         history: [
           { role: "user", content: "Earlier question" },

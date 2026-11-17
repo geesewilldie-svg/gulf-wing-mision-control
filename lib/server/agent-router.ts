@@ -184,7 +184,7 @@ async function callProvider(
     body = {
       model,
       stream: false,
-      keep_alive: "2m",
+      keep_alive: "5m",
       options: { num_ctx: 4096, num_predict: 256 },
       messages,
     };
