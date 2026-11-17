@@ -2,6 +2,11 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
 export const STEPHANIE_VOICE = "oT5lntmfa8t37GiBBd3k";
+export const JESSICA_VOICE = "cgSgspJ2msm6clMCkdW9";
+export const ELEVEN_VOICES = Object.freeze({
+  [STEPHANIE_VOICE]: "Stephanie",
+  [JESSICA_VOICE]: "Jessica",
+});
 export const ELEVEN_MODEL = "eleven_flash_v2_5";
 export const validVoiceKey = (key) =>
   typeof key === "string" &&
@@ -17,7 +22,7 @@ export function validateElevenConfig(v) {
     v.secretType !== "windows-dpapi" ||
     typeof v.protectedKey !== "string" ||
     !/^01000000[a-f0-9]{100,20000}$/i.test(v.protectedKey) ||
-    v.voiceId !== STEPHANIE_VOICE ||
+    !Object.hasOwn(ELEVEN_VOICES, v.voiceId) ||
     v.model !== ELEVEN_MODEL ||
     !Number.isSafeInteger(v.dailyCharacters) ||
     v.dailyCharacters < 100 ||
@@ -32,8 +37,8 @@ export function validateElevenConfig(v) {
     enabled: v.enabled,
     secretType: "windows-dpapi",
     protectedKey: v.protectedKey,
-    voiceId: STEPHANIE_VOICE,
-    voiceName: "Stephanie",
+    voiceId: v.voiceId,
+    voiceName: ELEVEN_VOICES[v.voiceId],
     model: ELEVEN_MODEL,
     dailyCharacters: v.dailyCharacters,
     cloudSpeechAccepted: true,
@@ -64,7 +69,13 @@ export async function writeElevenConfig(
     await fs.rm(temp, { force: true });
   }
 }
-export async function verifyStephanie(key, transport = fetch) {
+export async function verifyElevenVoice(
+  key,
+  voiceId = JESSICA_VOICE,
+  transport = fetch,
+) {
+  if (!Object.hasOwn(ELEVEN_VOICES, voiceId))
+    throw Error("VOICE_CHECK: Unsupported voice profile.");
   if (!validVoiceKey(key))
     throw Error(
       "KEY_FORMAT: Copy the full API key without quotes, spaces or code.",
@@ -72,7 +83,7 @@ export async function verifyStephanie(key, transport = fetch) {
   let response;
   try {
     response = await transport(
-      `https://api.elevenlabs.io/v1/voices/${STEPHANIE_VOICE}`,
+      `https://api.elevenlabs.io/v1/voices/${voiceId}`,
       {
         headers: { "xi-api-key": key },
         redirect: "error",
@@ -87,7 +98,7 @@ export async function verifyStephanie(key, transport = fetch) {
   if (!response.ok) {
     await response.body?.cancel();
     throw Error(
-      `HTTP_${response.status}: Voice access was not confirmed. Check the key's Voices read permission and add Stephanie to My Voices. No configuration changed.`,
+      `HTTP_${response.status}: Voice access was not confirmed. Check the key's Voices read permission and check the selected voice in My Voices. No configuration changed.`,
     );
   }
   const reader = response.body?.getReader();
@@ -110,7 +121,34 @@ export async function verifyStephanie(key, transport = fetch) {
   } catch {
     throw Error("VOICE_CHECK: Invalid metadata response.");
   }
-  if (data.voice_id !== STEPHANIE_VOICE)
+  if (data.voice_id !== voiceId)
     throw Error("VOICE_CHECK: The selected voice was not confirmed.");
   return true;
+}
+
+// Compatibility for existing Stephanie setup consumers; new setup defaults to Jessica.
+export const verifyStephanie = (key, transport = fetch) =>
+  verifyElevenVoice(key, STEPHANIE_VOICE, transport);
+export async function switchToJessica(
+  root = process.env.GW_SYNC_DATA_DIR || path.resolve(".gulf-wing"),
+) {
+  const target = path.join(root, "elevenlabs.json");
+  const handle = await fs.open(target, "r");
+  let current;
+  try {
+    const bytes = Buffer.alloc(30001),
+      { bytesRead } = await handle.read(bytes, 0, bytes.length, 0);
+    if (bytesRead > 30000) throw Error("Invalid saved configuration.");
+    current = validateElevenConfig(
+      JSON.parse(bytes.subarray(0, bytesRead).toString("utf8")),
+    );
+  } finally {
+    await handle.close();
+  }
+  await writeElevenConfig({ ...current, voiceId: JESSICA_VOICE }, root);
+  return {
+    enabled: current.enabled,
+    voiceId: JESSICA_VOICE,
+    voiceName: "Jessica",
+  };
 }

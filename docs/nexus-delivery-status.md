@@ -2,6 +2,10 @@
 
 Updated November 7, 2026. Repository status is distinct from installation on the operator's laptop.
 
+## November 17 Jessica voice selection
+
+The owner selected Jessica's default platform voice after ElevenLabs support confirmed that Stephanie's shared-library API use requires a paid plan. The new profile-aware adapter supports Jessica and preserves existing Stephanie settings. `Use-Nexus-Jessica.cmd`, run while the web server is stopped, changes an existing setup without key re-entry, provider calls or resetting its daily allowance. UI labels show the configured voice. A live Jessica preview on the operator's account remains necessary; no free-tier entitlement is inferred solely from a successful build.
+
 ## November 12 optional Stephanie voice increment
 
 The ElevenLabs adapter supports the owner-selected Stephanie voice, secure Windows CurrentUser DPAPI setup, per-session cloud speech disclosure, persistent daily character reservation, cancellation/disable and a fixed authenticated provider endpoint. Existing local speech and local transcription stay available. Setup checks voice metadata only; no paid generation, subscription or provider credential is supplied by the repository. Actual account/voice/model access, quality and latency still require laptop setup and an audition. See [ElevenLabs setup and limits](elevenlabs-voice.md).

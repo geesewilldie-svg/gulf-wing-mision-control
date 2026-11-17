@@ -17,9 +17,9 @@ npm run dev
 
 Open the development server on port 3000 in your browser. Stop with Ctrl+C. No environment file is needed. The server binds to all interfaces for cloud compatibility; use your local firewall as appropriate.
 
-## Optional Stephanie cloud voice
+## Optional ElevenLabs cloud voice
 
-[ElevenLabs setup and disclosure](docs/elevenlabs-voice.md) adds the owner-selected Stephanie voice through an explicit, budgeted cloud-speech option. Run `Setup-Nexus-ElevenLabs.cmd` on Windows for the hidden DPAPI-protected key setup. No paid generation occurs during setup; an actual preview uses API credits. Existing local voices remain available.
+[ElevenLabs setup and disclosure](docs/elevenlabs-voice.md) adds Jessica (the current selected default voice) and supports existing Stephanie profiles through an explicit, budgeted cloud-speech option. Run `Setup-Nexus-ElevenLabs.cmd` on Windows for the hidden DPAPI-protected key setup. No paid generation occurs during setup; an actual preview uses API credits. Existing local voices remain available. To switch an existing encrypted setup to Jessica, stop the web server and run `Use-Nexus-Jessica.cmd`; it preserves the saved key and usage allowance.
 
 ## Interface
 

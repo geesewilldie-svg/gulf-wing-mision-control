@@ -5,7 +5,11 @@ import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { STEPHANIE_VOICE, ELEVEN_MODEL } from "./elevenlabs-lib.mjs";
+import {
+  STEPHANIE_VOICE,
+  JESSICA_VOICE,
+  ELEVEN_MODEL,
+} from "./elevenlabs-lib.mjs";
 const script = fileURLToPath(
   new URL("./setup-nexus-elevenlabs.mjs", import.meta.url),
 );
@@ -84,6 +88,41 @@ test("CLI rejects malformed credentials and config without exposing inputs or ov
         before,
       );
     }
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("Jessica switch preserves the encrypted key, disabled state, model and accounting without contacting a provider", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "eleven-jessica-"));
+  try {
+    assert.equal(
+      run(root, "--save", JSON.stringify({ ...config, enabled: false })).status,
+      0,
+    );
+    const usage = JSON.stringify({ day: "2026-11-17", used: 321 });
+    await writeFile(path.join(root, "elevenlabs-allowance.json"), usage);
+    const result = run(root, "--jessica");
+    assert.equal(result.status, 0);
+    const saved = JSON.parse(
+      await readFile(path.join(root, "elevenlabs.json"), "utf8"),
+    );
+    assert.equal(saved.voiceId, JESSICA_VOICE);
+    assert.equal(saved.voiceName, "Jessica");
+    assert.equal(saved.enabled, false);
+    assert.equal(saved.protectedKey, config.protectedKey);
+    assert.equal(saved.model, config.model);
+    assert.equal(saved.dailyCharacters, config.dailyCharacters);
+    assert.equal(
+      await readFile(path.join(root, "elevenlabs-allowance.json"), "utf8"),
+      usage,
+    );
+    assert.ok(!result.stdout.toString().includes(config.protectedKey));
+    assert.equal(run(root, "--jessica").status, 0);
+    assert.equal(
+      await readFile(path.join(root, "elevenlabs-allowance.json"), "utf8"),
+      usage,
+    );
   } finally {
     await rm(root, { recursive: true, force: true });
   }

@@ -26,6 +26,7 @@ export default function NexusVoice({
 }) {
   const [cloudConsent, setCloudConsent] = useState(false);
   const [cloud, setCloud] = useState<{
+    voiceName?: string;
     configured: boolean;
     enabled: boolean;
     supported: boolean;
@@ -33,6 +34,7 @@ export default function NexusVoice({
     usedCharacters: number;
     warning?: string;
   } | null>(null);
+  const cloudVoiceName = cloud?.voiceName || "Jessica";
   const refreshCloud = async (signal?: AbortSignal) => {
     try {
       const response = await fetch("/api/sync/elevenlabs", { signal });
@@ -139,7 +141,7 @@ export default function NexusVoice({
   const speak = async () => {
     if (effectiveBackend === "elevenlabs" && !cloudConsent) {
       setMessage(
-        "Allow cloud speech before using Stephanie. Text will be sent to ElevenLabs and paid credits may be used.",
+        `Allow cloud speech before using ${cloudVoiceName}. Text will be sent to ElevenLabs and credits may be used.`,
       );
       return;
     }
@@ -173,7 +175,7 @@ export default function NexusVoice({
       setSpeaking(true);
       setMessage(
         effectiveBackend === "elevenlabs"
-          ? "Preparing Stephanie cloud speech…"
+          ? `Preparing ${cloudVoiceName} cloud speech…`
           : "Preparing local speech…",
       );
       try {
@@ -221,7 +223,7 @@ export default function NexusVoice({
           effectiveBackend === "kokoro"
             ? "Speaking with Isabella · speed 0.95."
             : effectiveBackend === "elevenlabs"
-              ? "Speaking with Stephanie · ElevenLabs."
+              ? `Speaking with ${cloudVoiceName} · ElevenLabs.`
               : "Speaking with Piper.",
         );
       } catch (error) {
@@ -365,7 +367,7 @@ export default function NexusVoice({
             value="elevenlabs"
             disabled={!cloud?.enabled || !cloud?.supported}
           >
-            ElevenLabs · Stephanie ·{" "}
+            ElevenLabs · {cloudVoiceName} ·{" "}
             {cloud?.enabled && cloud?.supported
               ? "configured · cloud"
               : "setup required"}
@@ -377,7 +379,7 @@ export default function NexusVoice({
           </option>
         </select>
         <details>
-          <summary>ElevenLabs voice setup · Stephanie</summary>
+          <summary>ElevenLabs voice setup · {cloudVoiceName}</summary>
           <p>
             Run Setup-Nexus-ElevenLabs.cmd on the Windows laptop. The hidden
             setup prompt protects your API key with Windows DPAPI. No key is
@@ -434,9 +436,9 @@ export default function NexusVoice({
               disabled={disabled || conversationActive || speaking}
               onChange={(e) => setCloudConsent(e.target.checked)}
             />
-            Allow cloud speech with Stephanie for this session. Spoken text,
-            including private replies and morning briefs, goes to ElevenLabs and
-            may use paid credits.
+            Allow cloud speech with {cloudVoiceName} for this session. Spoken
+            text, including private replies and morning briefs, goes to
+            ElevenLabs and may use paid credits.
           </label>
         )}
         {effectiveBackend === "device" && (
@@ -464,7 +466,7 @@ export default function NexusVoice({
             : effectiveBackend === "piper"
               ? "Piper · local fallback"
               : effectiveBackend === "elevenlabs"
-                ? "Stephanie · ElevenLabs · cloud"
+                ? `${cloudVoiceName} · ElevenLabs · cloud`
                 : "Browser/device voice"}
           . Automatic selection never switches a voice you explicitly chose.
         </p>

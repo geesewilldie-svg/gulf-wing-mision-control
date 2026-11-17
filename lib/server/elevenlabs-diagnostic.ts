@@ -12,9 +12,9 @@ const REASONS: Record<string, string> = {
   character_limit_exceeded:
     "The provider account or API key character allowance was exceeded. Review the key and account limits.",
   voice_not_found:
-    "Stephanie is not accessible to this API key. Add the selected voice to My Voices in the same account.",
+    "The selected voice is not accessible to this API key. Add the selected voice to My Voices in the same account.",
   invalid_voice_id:
-    "The selected voice ID was rejected. Verify Stephanie's current API voice ID.",
+    "The selected voice ID was rejected. Verify the selected voice's current API voice ID.",
   voice_not_allowed:
     "This API account is not permitted to generate speech with the selected voice. Check voice eligibility.",
   model_not_found:
@@ -83,7 +83,7 @@ export async function redactedElevenError(response: Response) {
   const hint = reason
     ? REASONS[reason]
     : response.status === 401 || response.status === 403
-      ? "ElevenLabs rejected access. Check API key permissions, Stephanie voice access and account eligibility."
+      ? "ElevenLabs rejected access. Check API key permissions, selected voice access and account eligibility."
       : response.status === 402
         ? "The provider requires a billing or account-plan update. Check API credits and voice eligibility."
         : response.status === 429

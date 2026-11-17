@@ -6,6 +6,9 @@ import os from "node:os";
 import {
   writeElevenConfig,
   verifyStephanie,
+  verifyElevenVoice,
+  switchToJessica,
+  JESSICA_VOICE,
   parseElevenInput,
   STEPHANIE_VOICE,
   ELEVEN_MODEL,
@@ -75,6 +78,35 @@ test.describe("ElevenLabs speech boundary", () => {
     expect(status.usedCharacters).toBe(17);
     expect(JSON.stringify(status)).not.toContain(base.protectedKey);
     expect(JSON.stringify(status)).not.toContain(key);
+  });
+  test("Jessica uses the supplied default voice ID while preserving the key and existing allowance", async () => {
+    await fs.writeFile(
+      path.join(root, "elevenlabs-allowance.json"),
+      JSON.stringify({ day: new Date().toISOString().slice(0, 10), used: 20 }),
+    );
+    await switchToJessica(root);
+    const saved = JSON.parse(
+      await fs.readFile(path.join(root, "elevenlabs.json"), "utf8"),
+    );
+    expect(saved.voiceId).toBe(JESSICA_VOICE);
+    expect(saved.voiceName).toBe("Jessica");
+    expect(saved.protectedKey).toBe(base.protectedKey);
+    expect(saved.dailyCharacters).toBe(base.dailyCharacters);
+    const result = await generateElevenSpeech(input(), signal(), {
+      unlock: unlocked,
+      transport: (async (url) => {
+        expect(String(url)).toContain(`/text-to-speech/${JESSICA_VOICE}?`);
+        return audio();
+      }) as typeof fetch,
+    });
+    expect(result.length).toBe(6);
+    const status = await elevenSpeechStatus();
+    expect(status.voiceName).toBe("Jessica");
+    expect(status.usedCharacters).toBe(37);
+    await verifyElevenVoice(key, JESSICA_VOICE, (async (url) => {
+      expect(String(url)).toContain(`/voices/${JESSICA_VOICE}`);
+      return Response.json({ voice_id: JESSICA_VOICE });
+    }) as typeof fetch);
   });
   test("missing consent, extra private fields and excessive text never dispatch", async () => {
     for (const value of [

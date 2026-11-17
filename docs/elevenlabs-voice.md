@@ -1,18 +1,26 @@
-# Optional ElevenLabs voice: Stephanie
+# Optional ElevenLabs voices: Jessica and legacy Stephanie
 
-Owner-selected voice: **Stephanie**, ID `oT5lntmfa8t37GiBBd3k`. The name is the owner's label; the setup checks that this ID is accessible through the supplied account. No actor imitation, sample cloning, new voice upload or provider subscription is created by this integration.
+Current owner-selected voice: **Jessica**, default platform voice ID `cgSgspJ2msm6clMCkdW9` (November 17, 2026). Previous **Stephanie**, ID `oT5lntmfa8t37GiBBd3k`, remains a valid legacy profile; loading an older setup does not silently replace it. Voice names come from this fixed profile map, not arbitrary browser fields.
+
+The owner supplied ElevenLabs support's explanation that shared Voice Library voices such as Stephanie require a paid subscription for API use, while default platform voices can use Free-tier API credits. The owner's account showed credits remaining but Stephanie generation returned HTTP 402 `PAYMENT_REQUIRED`. Jessica's actual account eligibility and successful audio still require one laptop preview; no unlimited free usage or permanent provider entitlement is promised.
+
+## Switch an existing setup to Jessica
+
+After pulling the update, stop the old Nexus web server and run `Use-Nexus-Jessica.cmd` on the laptop. Run this configuration change while the server is stopped. It replaces only the saved voice profile, preserves the encrypted API key, model, daily limit, enabled/disabled state and existing allowance, and makes no provider call or speech request. No key entry or purchase is required. A disabled configuration stays disabled. A missing or corrupt configuration requires the full setup below instead.
+
+Build and start the updated app, refresh the browser, select **ElevenLabs · Jessica**, allow cloud speech for the session and preview once. An older running build cannot validate the Jessica profile, so complete the build/start sequence before using the app. The new build accepts both profiles. The UI reports the configured name, including Stephanie when an installation has not been switched yet.
 
 ## Setup on the Windows laptop
 
-1. Add the selected voice to My Voices in ElevenLabs. Check API eligibility, pricing, voice terms and the account's privacy/data settings. Web-app access alone does not establish API access or commercial redistribution rights. Current prices and this account's voice/model entitlements have not been independently verified.
+1. Confirm the selected Jessica default voice is available in your ElevenLabs account. Check API eligibility, pricing, voice terms and the account's privacy/data settings. Web-app access alone does not establish API access or commercial redistribution rights. Current prices and this account's voice/model entitlements have not been independently verified.
 2. Create a restricted API key with Text to Speech permission and Voices read access. Do not paste it into chat, browser forms, environment arguments or source code.
 3. Run `Setup-Nexus-ElevenLabs.cmd`. It explains cloud disclosure and asks for explicit `YES`, a daily character limit (default 1,000) and a hidden API key. It performs one fixed voice metadata GET and stores only a Windows CurrentUser DPAPI-protected secret in the ignored private `.gulf-wing/elevenlabs.json` directory. UTF-8 BOM and UTF-16LE PowerShell pipe input are supported. No generation, purchase, billing change or model download occurs during setup. Failed validation preserves the existing configuration.
-4. In Talk to Nexus, expand **Nexus voice · Push to talk**, choose **Refresh ElevenLabs status**, then select **ElevenLabs · Stephanie** in Speech engine. Check the cloud-speech control before previewing or starting conversation. Selection and sharing are session state; reloading returns to the existing local-first default. Cloud speech never becomes an automatic fallback.
+4. In Talk to Nexus, expand **Nexus voice · Push to talk**, choose **Refresh ElevenLabs status**, then select **ElevenLabs · Jessica** in Speech engine. Check the cloud-speech control before previewing or starting conversation. Selection and sharing are session state; reloading returns to the existing local-first default. Cloud speech never becomes an automatic fallback.
 5. Begin with the short voice preview. It is a real generation request and can use paid credits. Test audio quality, playback and latency on the laptop. Conversation transcription still uses the existing local worker.
 
 ## What is sent and how it is bounded
 
-Only the selected text to speak and fixed model identifier are sent to `https://api.elevenlabs.io/v1/text-to-speech/oT5lntmfa8t37GiBBd3k`. Text can include private assistant replies or morning-brief content; choosing cloud speech discloses those texts to ElevenLabs. The provider receives plaintext and applies its own account terms. No direct document collection, user history, credential store or microphone recording is added to the speech request. Gemini Public's separate boundary is unchanged.
+Only the selected text to speak and fixed model identifier are sent to `https://api.elevenlabs.io/v1/text-to-speech/{configured_voice_id}` (only the Jessica and legacy Stephanie profiles are accepted). Text can include private assistant replies or morning-brief content; choosing cloud speech discloses those texts to ElevenLabs. The provider receives plaintext and applies its own account terms. No direct document collection, user history, credential store or microphone recording is added to the speech request. Gemini Public's separate boundary is unchanged.
 
 The fixed model is `eleven_flash_v2_5`, with `mp3_44100_128` output. Setup checks voice metadata; generation-time account/model availability can still fail. The current browser path buffers a bounded MP3 before playback. It is not yet incremental streaming playback, and no latency improvement over Kokoro is claimed without a native audition.
 
@@ -38,7 +46,7 @@ On November 12, 2026, read-only official SDK source confirmed the text-to-speech
 - [TTS transport](https://github.com/elevenlabs/elevenlabs-python/blob/main/src/elevenlabs/text_to_speech/raw_client.py)
 - [Voice metadata transport](https://github.com/elevenlabs/elevenlabs-python/blob/main/src/elevenlabs/voices/raw_client.py)
 
-These moving upstream links support the integration shape, not a claim of account entitlement or verified prices. The pricing and selected voice pages were blocked by the environment's proxy. Automated tests use synthetic metadata/audio/transports and verify consent, auth, budget persistence, redaction, abort/disable, invalid audio and UI routing. A successful live Stephanie audition remains a laptop acceptance step.
+These moving upstream links support the integration shape, not a claim of account entitlement or verified prices. The pricing and selected voice pages were blocked by the environment's proxy. Automated tests use synthetic metadata/audio/transports and verify consent, auth, budget persistence, redaction, abort/disable, invalid audio and UI routing. A successful live audition remains a laptop acceptance step.
 
 ## Troubleshooting generation failures
 
