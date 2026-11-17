@@ -1,0 +1,9 @@
+FROM node:24-bookworm-slim
+ENV NODE_ENV=production HOST=0.0.0.0 PORT=8788 GW_SYNC_DATA_DIR=/app/.gulf-wing
+WORKDIR /app
+RUN mkdir -p /app/.gulf-wing && chown node:node /app/.gulf-wing
+COPY --chown=node:node lib/server/gulf-wing-integration.ts ./lib/server/gulf-wing-integration.ts
+COPY --chown=node:node scripts/gulf-wing-receiver-server.mjs scripts/gulf-wing-inbox.mjs ./scripts/
+USER node
+EXPOSE 8788
+CMD ["node", "scripts/gulf-wing-receiver-server.mjs"]

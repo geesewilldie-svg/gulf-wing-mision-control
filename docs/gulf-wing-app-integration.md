@@ -40,3 +40,7 @@ Never rotate the company ID/key while an ambiguous sender request is unresolved.
 ## Validation
 
 `node --test scripts/gulf-wing-integration.test.mjs` exercises disabled/invalid configuration, signed nonce acknowledgements, signature/time/company rejection, strict minimal payloads, size/type limits, durable duplicates/conflicts across restart, and out-of-order receipt. Fixtures are temporary and synthetic. `npm run typecheck` validates the new Next route modules. These checks do not establish deployed HTTPS connectivity, host backup schedules or a running cross-project connection.
+
+## Dedicated deployment option
+
+A small signed-inbox HTTP host and a Render deployment blueprint are now available without exposing Controller routes. See [receiver deployment](gulf-wing-receiver-deployment.md) for the exact boundary, local validation and remaining hosting/operator-inbox acceptance. No cloud deployment or laptop inbox synchronization is established by those files.

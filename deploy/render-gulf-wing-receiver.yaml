@@ -1,0 +1,23 @@
+# Dedicated inbox only. This does not host the Mission Control UI or Controller routes.
+# A paid service/disk is created only when an operator applies this blueprint in Render.
+services:
+  - type: web
+    name: gulf-wing-nexus-inbox
+    runtime: docker
+    dockerfilePath: ./Dockerfile.gulf-wing-receiver
+    dockerContext: .
+    plan: starter
+    healthCheckPath: /healthz
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: GW_SYNC_DATA_DIR
+        value: /app/.gulf-wing
+      - key: GULF_WING_COMPANY_ID
+        value: gulf-wing-cohosting
+      - key: GULF_WING_INTEGRATION_KEY
+        sync: false
+    disk:
+      name: gulf-wing-inbox
+      mountPath: /app/.gulf-wing
+      sizeGB: 1

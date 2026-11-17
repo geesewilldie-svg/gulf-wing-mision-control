@@ -1,0 +1,8 @@
+**
+!Dockerfile.gulf-wing-receiver
+!lib/
+!lib/server/
+!lib/server/gulf-wing-integration.ts
+!scripts/
+!scripts/gulf-wing-receiver-server.mjs
+!scripts/gulf-wing-inbox.mjs
