@@ -33,3 +33,7 @@ Cloud verification, November 12: production build and TypeScript passed. The ful
 ## Voice response latency
 
 Live voice requests ask for one or two short sentences by default, while retaining necessary qualifications and citations and honoring explicit requests for detail. Typed requests keep the existing answer style. The local model stays eligible for reuse for five minutes after a request instead of two, reducing repeated loading during short pauses; Ollama may still evict it under memory pressure. This can retain model memory longer on the 8 GB laptop. Answers still finish before speech generation begins; sentence streaming is not implemented. No latency improvement is claimed until measured on the laptop.
+
+## Current date and time
+
+The assistant sends the browser's IANA time zone with typed and conversational requests. The host samples its system clock for each request and supplies that current-time context to generated answers. Direct current date/time questions in Auto or Local mode are answered deterministically without document retrieval or inference, so the clock also works without a loaded model. Explicit provider selection and Knowledge-only retain their routing behavior. Missing or invalid zones fall back to America/New_York; spoken answers label the zone. A named-city question or a question about an appointment remains a reasoning/retrieval request. Accuracy depends on the host clock being correct and the device zone being set correctly; this does not add alarms, reminders or scheduling actions.

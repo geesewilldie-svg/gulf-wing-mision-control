@@ -98,6 +98,7 @@ export default function NexusAssistant({
         body: JSON.stringify({
           query: text,
           voiceConversation: Boolean(signal),
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           workspaceScope,
           mode,
           history,
