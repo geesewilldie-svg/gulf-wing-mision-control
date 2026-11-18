@@ -25,3 +25,16 @@ test("paired clock answers need no local model", async ({ request }) => {
   expect(answer.answer).toContain("Asia/Tokyo");
   expect(answer.routing.selected).toEqual([]);
 });
+
+test("clock explicitly uses standard time at midnight, noon and evening", () => {
+  for (const [instant, expected] of [
+    ["2026-11-18T00:05:00Z", "12:05 AM"],
+    ["2026-11-18T12:00:00Z", "12:00 PM"],
+    ["2026-11-18T21:30:00Z", "9:30 PM"],
+  ]) {
+    const clock = clockContext("UTC", new Date(instant));
+    expect(clock.time).toContain(expected);
+    expect(directClockAnswer("What time is it?", clock)).toContain(expected);
+    expect(clock.text).toContain("Use 12-hour time with AM or PM");
+  }
+});

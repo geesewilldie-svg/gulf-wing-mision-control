@@ -5,8 +5,8 @@ export function clockContext(zone: unknown, now = new Date()) {
     try { new Intl.DateTimeFormat("en-US", { timeZone: zone }).format(now); timeZone = zone; } catch {}
   }
   const date = new Intl.DateTimeFormat("en-US", { timeZone, weekday: "long", year: "numeric", month: "long", day: "numeric" }).format(now);
-  const time = new Intl.DateTimeFormat("en-US", { timeZone, hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(now);
-  return { timeZone, date, time, text: `Current date: ${date}. Current time: ${time}. Time zone: ${timeZone}. Source: Nexus host system clock, sampled for this request. This is current-time context, not a scheduled event date.` };
+  const time = new Intl.DateTimeFormat("en-US", { timeZone, hour: "numeric", hour12: true, minute: "2-digit", timeZoneName: "short" }).format(now);
+  return { timeZone, date, time, text: `Current date: ${date}. Current time: ${time}. Time zone: ${timeZone}. Source: Nexus host system clock, sampled for this request. Use 12-hour time with AM or PM in answers (for example, 3:30 PM, not 15:30). This is current-time context, not a scheduled event date.` };
 }
 export function directClockAnswer(query: string, clock: ReturnType<typeof clockContext>) {
   const normalized = query.toLowerCase().trim().replace(/[’]/g, "'").replace(/[?!.]/g, "").replace(/\s+/g, " ").replace(/^(?:hey |hi )?nexus[, ]+/, "").replace(/,? please$/, "");
