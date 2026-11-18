@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { WorkspaceProvider } from "@/components/workspace-provider";
 import NexusAssistant from "@/components/nexus-assistant";
+export const viewport: Viewport = { themeColor: "#07111c" };
 export const metadata: Metadata = {
   icons: { icon: "/favicon.svg" },
   title: "Gulf Wing | Mission Control",

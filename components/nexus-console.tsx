@@ -202,6 +202,7 @@ export default function NexusConsole() {
             <LocalFileSearch disabled={disabled} />
           </div>
           <div hidden={connection !== "Device access"}>
+            <p><Link href="/phone">Set up Nexus on your Android phone →</Link></p>
             <SyncControls />
             <TeamAccess disabled={disabled} />
             <LaptopMaintenance disabled={disabled} />

@@ -283,3 +283,7 @@ The owner reaffirmed that Nexus must become a general personal assistant used th
 Future acceptance must cover authenticated mobile access away from home, reconnects and offline behavior, microphone/background restrictions on iOS and Android, and hands-free vehicle audio and interruption behavior. Bluetooth audio testing and native CarPlay/Android Auto integration are separate milestones, not existing capabilities. An always-available host or coordinator is needed when the laptop sleeps or is offline. Each new action capability needs its own integration and authorization; “full assistant” is a product direction, not a claim of unrestricted or already implemented access.
 
 The owner further requires a central assistant across any chosen connected device, including televisions and other home devices, added one integration at a time. Maintain a device registry with connection health, supported actions, authorization and revocation. Discover actual device protocols before promising control; distinguish audio/display endpoints from controllable devices. Device control remains future work until each adapter and its real-device acceptance checks pass.
+
+### Android first delivery — November 18, 2026
+
+The owner selected Android. The initial installable web app and `/phone` setup flow reuse the current host and controller pairing; native Android services and car/device adapters remain later milestones. See `docs/nexus-android-app.md` for HTTPS prerequisites, always-on migration acceptance and explicit capability limits.
