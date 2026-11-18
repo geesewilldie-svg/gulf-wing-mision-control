@@ -88,3 +88,7 @@ Up to four Google identities preserve the verified Calendar connection, combine 
 ## Gemini Public (unpaid non-sensitive questions)
 
 The operator selected free-tier Gemini. A separate fresh-question endpoint/tab excludes saved private sources and history and blocks Gemini from regular private routing while the public-only policy exists. Windows DPAPI setup, bounded model discovery, per-question public confirmation, durable ten-attempt UTC-day allowance and disable controls are implemented. Other business questions remain local by default. Native key unlock/model availability/public-answer acceptance is pending. No paid billing or private-data Gemini access is enabled. See [policy and setup](gemini-public.md).
+
+## Spoken interruption — November 18, 2026
+
+Conversation replies now have an Interrupt and speak button plus an optional per-page automatic interruption setting under Listening preferences. Automatic mode opens an echo-cancelled microphone during playback, stops speech on sustained voice energy and carries that recording into the next turn. The existing single-session ownership, Mute, cloud consent and provider allowance rules remain in place. No listening during inference, native background capture or wake word is added. Real Android/laptop echo and vehicle audio acceptance remain pending; headphones and the button fallback are recommended. See `nexus-assistant-interface.md` for behavior and limits.

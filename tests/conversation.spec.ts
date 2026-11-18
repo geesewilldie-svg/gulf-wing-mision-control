@@ -26,6 +26,20 @@ test("speech boundaries ignore silence and end only after a voiced pause", () =>
   ).toThrow();
 });
 
+test("interruption detector ignores residual echo and requires sustained speech", () => {
+  const detector = new SpeechBoundary(0, 1400, 0.055, 320);
+  detector.sample(0.035, 80);
+  detector.sample(0.035, 160);
+  expect(detector.heardSpeech).toBe(false);
+  detector.sample(0.1, 240);
+  detector.sample(0.1, 320);
+  detector.sample(0.1, 400);
+  expect(detector.heardSpeech).toBe(false);
+  detector.sample(0.1, 480);
+  expect(detector.heardSpeech).toBe(true);
+  expect(detector.sample(0, 1880)).toBe("speech");
+});
+
 test.describe.configure({ mode: "serial" });
 let cookies: Cookie[] = [];
 test.beforeAll(async ({ request }) => {
@@ -669,3 +683,185 @@ test("morning voice brief uses the conversation player before capture and speaks
     .getByRole("button", { name: "Stop conversation / Mute", exact: true })
     .click();
 });
+
+for (const automatic of [false, true]) {
+  test(`reply interruption ${automatic ? "by voice" : "by button"} keeps the session and releases resources`, async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      const w = window as any;
+      w.mics = [];
+      w.players = [];
+      w.level = 0;
+      Object.defineProperty(navigator.mediaDevices, "getUserMedia", {
+        value: async () => {
+          const track = {
+            stopped: false,
+            stop() {
+              this.stopped = true;
+            },
+            onended: null,
+          };
+          w.mics.push(track);
+          return { getTracks: () => [track], getAudioTracks: () => [track] };
+        },
+      });
+      w.AudioContext = class {
+        resume() {
+          return Promise.resolve();
+        }
+        close() {
+          return Promise.resolve();
+        }
+        createMediaStreamSource() {
+          return { connect() {} };
+        }
+        createAnalyser() {
+          return {
+            fftSize: 1024,
+            getFloatTimeDomainData(values: Float32Array) {
+              values.fill(w.level);
+            },
+          };
+        }
+      };
+      w.MediaRecorder = class {
+        state = "inactive";
+        mimeType = "audio/webm";
+        onstop: any;
+        ondataavailable: any;
+        start() {
+          this.state = "recording";
+        }
+        stop() {
+          this.state = "inactive";
+          queueMicrotask(() => {
+            this.ondataavailable?.({ data: new Blob(["synthetic audio"]) });
+            this.onstop?.();
+          });
+        }
+      };
+      w.Audio = class {
+        onended: any;
+        onerror: any;
+        paused = false;
+        constructor() {
+          w.players.push(this);
+        }
+        play() {
+          return Promise.resolve();
+        }
+        pause() {
+          this.paused = true;
+        }
+      };
+    });
+    await page.route("**/api/sync/voice", (route) =>
+      route.fulfill({
+        json: {
+          available: true,
+          transcription: true,
+          speech: true,
+          engines: ["kokoro"],
+        },
+      }),
+    );
+    let turns = 0;
+    await page.route("**/api/sync/voice?action=transcribe", (route) =>
+      route.fulfill({
+        json: {
+          text:
+            ++turns === 1
+              ? "What services are available?"
+              : "What about cleaning?",
+        },
+      }),
+    );
+    await page.route("**/api/sync/voice?action=speak", (route) =>
+      route.fulfill({ contentType: "audio/wav", body: "synthetic" }),
+    );
+    const requests: any[] = [];
+    await page.route("**/api/sync/nexus", (route) => {
+      if (route.request().method() !== "POST") return route.continue();
+      requests.push(route.request().postDataJSON());
+      return route.fulfill({
+        json: {
+          engine: "Synthetic test model",
+          answer: "Fixture answer",
+          sources: [],
+        },
+      });
+    });
+
+    await page.goto("/nexus");
+    await openAssistant(page);
+    await page.getByText("Nexus voice · Push to talk", { exact: true }).click();
+    const panel = page.getByRole("region", { name: "Hands-free conversation" });
+    if (automatic) {
+      await panel.getByText("Listening preferences", { exact: true }).click();
+      await panel
+        .getByLabel("Let me interrupt spoken replies", { exact: true })
+        .check();
+    }
+    await panel
+      .getByRole("button", { name: "Start conversation", exact: true })
+      .click();
+    await expect(panel.locator(".conversation-phase")).toContainText(
+      "Listening",
+    );
+    await page.evaluate(() => ((window as any).level = 0.1));
+    await page.waitForTimeout(350);
+    await page.evaluate(() => ((window as any).level = 0));
+    await expect
+      .poll(() => page.evaluate(() => (window as any).players.length))
+      .toBe(1);
+    if (automatic) {
+      await expect
+        .poll(() => page.evaluate(() => (window as any).mics.length))
+        .toBe(2);
+      await page.waitForTimeout(450);
+      // Lower residual speaker energy must not cut off the reply.
+      await page.evaluate(() => ((window as any).level = 0.035));
+      await page.waitForTimeout(500);
+      expect(await page.evaluate(() => (window as any).players[0].paused)).toBe(
+        false,
+      );
+      await page.evaluate(() => ((window as any).level = 0.1));
+      await expect
+        .poll(() => page.evaluate(() => (window as any).players[0].paused))
+        .toBe(true);
+      await page.evaluate(() => ((window as any).level = 0));
+      await expect.poll(() => requests.length).toBe(2);
+      expect(requests[1].query).toBe("What about cleaning?");
+      expect(requests[1].history[0].content).toBe(
+        "What services are available?",
+      );
+    } else {
+      await panel
+        .getByRole("button", { name: "Interrupt and speak", exact: true })
+        .click();
+      await expect
+        .poll(() => page.evaluate(() => (window as any).players[0].paused))
+        .toBe(true);
+      await expect(panel.locator(".conversation-phase")).toContainText(
+        "Listening",
+      );
+    }
+    await panel
+      .getByRole("button", { name: "Stop conversation / Mute" })
+      .click();
+    await expect(panel.locator(".conversation-phase")).toContainText(
+      "Microphone off",
+    );
+    await expect
+      .poll(() =>
+        page.evaluate(() => (window as any).mics.every((m: any) => m.stopped)),
+      )
+      .toBe(true);
+    expect(
+      await page.evaluate(() =>
+        (window as any).players.every((p: any) => p.paused),
+      ),
+    ).toBe(true);
+  });
+}

@@ -84,6 +84,10 @@ export default function NexusConversation({
   autoRequested.current = autoResume;
   const anotherActive = useRef(false);
   const autoStart = useRef<() => Promise<void>>(async () => {});
+  const [allowInterruption, setAllowInterruption] = useState(false);
+  const interruptionEnabled = useRef(false);
+  interruptionEnabled.current = allowInterruption;
+  const interruptSpeech = useRef<(() => void) | null>(null);
   const [background, setBackground] = useState(false);
   const backgroundRef = useRef(false);
   const previousSection = useRef(section);
@@ -272,7 +276,10 @@ export default function NexusConversation({
     return () => controller.abort();
   }, [disabled, preferenceLoaded, autoResume, transcriptionReady]);
 
-  async function capture(signal: AbortSignal): Promise<Blob | null> {
+  async function capture(
+    signal: AbortSignal,
+    interruption?: { ready: () => boolean; onSpeech: () => void },
+  ): Promise<Blob | null> {
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: {
         echoCancellation: true,
@@ -343,12 +350,23 @@ export default function NexusConversation({
       signal.addEventListener("abort", cancel, { once: true });
       try {
         const source = audioContext.createMediaStreamSource(stream);
-        const detector = new SpeechBoundary(
-          backgroundRef.current ? 0 : performance.now(),
-        );
+        let detector = interruption
+          ? null
+          : new SpeechBoundary(backgroundRef.current ? 0 : performance.now());
+        let announced = false;
         const sample = (rms: number, now: number) => {
           if (done) return;
+          if (interruption && !detector) {
+            if (!interruption.ready() || rms < 0.055) return;
+            detector = new SpeechBoundary(now, 1400, 0.055, 320);
+            media?.start();
+          }
+          if (!detector) return;
           const boundary = detector.sample(rms, now);
+          if (interruption && detector.heardSpeech && !announced) {
+            announced = true;
+            interruption.onSpeech();
+          }
           if (boundary === "limit")
             finish(
               null,
@@ -374,7 +392,7 @@ export default function NexusConversation({
           );
         media.onstop = () =>
           finish(
-            detector.heardSpeech && !signal.aborted
+            detector?.heardSpeech && !signal.aborted
               ? new Blob(chunks, { type: media!.mimeType })
               : null,
           );
@@ -387,8 +405,10 @@ export default function NexusConversation({
               ),
             );
         });
-        media.start();
-        setPhase("Listening");
+        if (!interruption) {
+          media.start();
+          setPhase("Listening");
+        }
         if (backgroundRef.current) {
           meter = new AudioWorkletNode(audioContext, "nexus-audio-meter");
           const silence = audioContext.createGain();
@@ -449,7 +469,11 @@ export default function NexusConversation({
     });
   }
 
-  async function speak(text: string, signal: AbortSignal) {
+  async function speak(
+    text: string,
+    signal: AbortSignal,
+    onPlayback?: () => void,
+  ) {
     if (signal.aborted) throw aborted();
     if (engine === "device") {
       if (!window.speechSynthesis)
@@ -472,6 +496,7 @@ export default function NexusConversation({
           window.speechSynthesis.cancel();
           finish(aborted());
         };
+        utterance.onstart = () => onPlayback?.();
         utterance.onend = () => finish();
         utterance.onerror = () =>
           finish(
@@ -535,6 +560,7 @@ export default function NexusConversation({
           .play()
           .then(() => {
             if (signal.aborted) player.pause();
+            else onPlayback?.();
           })
           .catch(() =>
             finish(
@@ -547,6 +573,68 @@ export default function NexusConversation({
     } finally {
       player.pause();
       URL.revokeObjectURL(url);
+    }
+  }
+
+  // Speech cancellation is separate from session cancellation: an interruption
+  // must stop playback without losing the microphone recording of the new turn.
+  async function reply(
+    text: string,
+    parent: AbortSignal,
+    label = "Speaking",
+  ): Promise<Blob | null> {
+    const speech = new AbortController();
+    const microphone = new AbortController();
+    const cancel = () => {
+      speech.abort();
+      microphone.abort();
+    };
+    parent.addEventListener("abort", cancel, { once: true });
+    if (parent.aborted) cancel();
+    let interrupted = false;
+    let monitorError: unknown;
+    let playbackAt = Infinity;
+    const interrupt = () => {
+      interrupted = true;
+      speech.abort();
+      setPhase("Listening · reply interrupted");
+    };
+    const manual = () => {
+      interrupt();
+      microphone.abort();
+    };
+    interruptSpeech.current = manual;
+    const recording = interruptionEnabled.current
+      ? capture(microphone.signal, {
+          ready: () => performance.now() - playbackAt >= 350,
+          onSpeech: interrupt,
+        }).catch((error) => {
+          monitorError = error;
+          speech.abort();
+          return null;
+        })
+      : Promise.resolve(null);
+    try {
+      setPhase(
+        `${label} · ${interruptionEnabled.current ? "interruption microphone on" : "microphone off"}`,
+      );
+      try {
+        await speak(text, speech.signal, () => {
+          playbackAt = performance.now();
+        });
+      } catch (error) {
+        if (monitorError) throw monitorError;
+        if (parent.aborted || !interrupted) throw error;
+      }
+      if (!interrupted) microphone.abort();
+      const audio = await recording;
+      if (monitorError) throw monitorError;
+      return audio;
+    } finally {
+      cancel();
+      await recording;
+      if (interruptSpeech.current === manual) interruptSpeech.current = null;
+      parent.removeEventListener("abort", cancel);
     }
   }
 
@@ -577,9 +665,10 @@ export default function NexusConversation({
     setMessage("");
     setHeard("");
     const history: ConversationTurn[] = [];
+    let pendingAudio: Blob | null = null;
     try {
-      // Use the conversation player before opening the microphone, never a
-      // second competing speech channel. Calendar absence remains explicit.
+      // Use one conversation player for the brief and replies; interruption
+      // capture is opt-in. Calendar absence remains explicit.
       try {
         const response = await fetch("/api/sync/brief/morning", {
           method: "POST",
@@ -607,8 +696,11 @@ export default function NexusConversation({
               Number(values.hour) < 12 &&
               localStorage.getItem(key) !== "yes"
             ) {
-              setPhase("Morning brief · microphone off");
-              await speak(brief.text, controller.signal);
+              pendingAudio = await reply(
+                brief.text,
+                controller.signal,
+                "Morning brief · Speaking",
+              );
               if (!controller.signal.aborted) localStorage.setItem(key, "yes");
             }
           }
@@ -619,7 +711,8 @@ export default function NexusConversation({
       }
       while (!controller.signal.aborted) {
         setPhase("Opening microphone");
-        const audio = await capture(controller.signal);
+        const audio = pendingAudio || (await capture(controller.signal));
+        pendingAudio = null;
         if (controller.signal.aborted) break;
         if (!audio || !audio.size) {
           await wait(300, controller.signal);
@@ -665,10 +758,9 @@ export default function NexusConversation({
           { role: "assistant", content: answer.slice(0, 800) },
         );
         if (history.length > 4) history.splice(0, history.length - 4);
-        setPhase("Speaking · microphone off");
-        await speak(answer, controller.signal);
+        pendingAudio = await reply(answer, controller.signal);
         setPhase("Getting ready to listen");
-        await wait(450, controller.signal);
+        if (!pendingAudio) await wait(450, controller.signal);
       }
     } catch (error) {
       if (!controller.signal.aborted)
@@ -709,6 +801,20 @@ export default function NexusConversation({
         <label className="nexus-sharing">
           <input
             type="checkbox"
+            checked={allowInterruption}
+            disabled={disabled || active}
+            onChange={(e) => setAllowInterruption(e.target.checked)}
+          />
+          Let me interrupt spoken replies
+        </label>
+        <p>
+          When enabled, the microphone stays on during replies. Use headphones
+          for best results; speaker echo or loud noise may interrupt her. This
+          setting applies to this page session.
+        </p>
+        <label className="nexus-sharing">
+          <input
+            type="checkbox"
             checked={autoResume}
             disabled={disabled}
             onChange={(e) => {
@@ -742,6 +848,12 @@ export default function NexusConversation({
         >
           Start background assistant
         </button>
+        <button
+          onClick={() => interruptSpeech.current?.()}
+          disabled={!active || !phase.includes("Speaking")}
+        >
+          Interrupt and speak
+        </button>
         <button onClick={() => muteRef.current()} disabled={!active}>
           Stop conversation / Mute
         </button>
@@ -759,7 +871,9 @@ export default function NexusConversation({
           future page loads when controller access, local transcription and
           browser microphone permission are ready. Mute, Ctrl+Alt+M (while this
           window has focus), or “stop listening” turns this setting off. The
-          microphone remains off while Nexus thinks and speaks. Browser autoplay
+          microphone remains off while Nexus thinks. During replies it is on
+          only when you enable spoken interruption. Interrupt and speak also
+          stops a reply without ending the session. Browser autoplay
           restrictions can require Resume listening. Closing the browser,
           navigating away, sign-out, sleep or losing controller access stops
           capture. This is not a Windows microphone service or a wake-word

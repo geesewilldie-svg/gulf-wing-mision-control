@@ -20,7 +20,7 @@ The application mounts one assistant and voice controller. Client-side links bet
 
 Presentation and estimate pages hide assistant controls and disable capture. Losing controller access aborts a pending typed request, stops conversation through the existing voice authorization path and clears the private query/answer. Responses, draft text and voice history remain session state, not a new durable conversation database.
 
-The browser microphone stays off while Nexus thinks and speaks. Voice interruption during playback, OS-wide invocation, wake-word detection and a Windows microphone service remain separate implementation work. No Google write, Gmail sending, banking, payment, marketing spend or arbitrary shell capability is introduced.
+The browser microphone stays off while Nexus thinks. During replies, automatic interruption can be enabled explicitly in Listening preferences; otherwise it stays off until you use Interrupt and speak. OS-wide invocation, wake-word detection and a Windows microphone service remain separate implementation work. No Google write, Gmail sending, banking, payment, marketing spend or arbitrary shell capability is introduced.
 
 ## Verification and laptop acceptance
 
@@ -37,3 +37,10 @@ Live voice requests ask for one or two short sentences by default, while retaini
 ## Current date and time
 
 The assistant sends the browser's IANA time zone with typed and conversational requests. The host samples its system clock for each request and supplies that current-time context to generated answers. Direct current date/time questions in Auto or Local mode are answered deterministically without document retrieval or inference, so the clock also works without a loaded model. Explicit provider selection and Knowledge-only retain their routing behavior. Missing or invalid zones fall back to America/New_York; spoken answers label the zone. A named-city question or a question about an appointment remains a reasoning/retrieval request. Accuracy depends on the host clock being correct and the device zone being set correctly; this does not add alarms, reminders or scheduling actions.
+
+
+## Interrupting spoken replies
+
+During an active conversation, **Interrupt and speak** cancels speech generation/playback and opens a new listening turn without ending the session. Under Listening preferences, **Let me interrupt spoken replies** enables an additional echo-cancelled microphone recording during replies; it defaults off and applies only to the current page session. Change it while the conversation is stopped. Sustained microphone energy above the interruption threshold stops playback; the same recording continues through the user's pause and becomes the next transcribed question. No extra inference request is made until transcription finishes. The previous text answer remains available; interruption does not undo work or refund a provider attempt.
+
+Automatic detection is energy-based, not speaker recognition. A short playback guard and higher sustained threshold reduce residual echo triggers but cannot eliminate them; headphones are recommended. Loud speaker echo, music, road noise, quiet speech and Android audio routing can affect results. Use the button fallback when automatic detection is unreliable. Stop/Mute, permission loss, hidden-tab stop, session cancellation and unmount cancel both playback and interruption capture. Android background/lock-screen limits still apply. This does not listen during Thinking or add a wake word, native background service, or streaming answers. Synthetic desktop/mobile tests verify cancellation and follow-up continuity; real laptop, Android and vehicle echo behavior still need acceptance testing.

@@ -9,16 +9,18 @@ export class SpeechBoundary {
   constructor(
     private start: number,
     private pause = 1400,
+    private threshold = 0.018,
+    private minimumVoice = 160,
   ) {
     this.previous = this.lastVoice = start;
   }
   sample(rms: number, now: number): "speech" | "idle" | "limit" | null {
     const delta = Math.max(0, Math.min(now - this.previous, 150));
     this.previous = now;
-    if (rms >= 0.018) {
+    if (rms >= this.threshold) {
       this.voiced += delta;
       this.lastVoice = now;
-      if (this.voiced >= 160) this.heardSpeech = true;
+      if (this.voiced >= this.minimumVoice) this.heardSpeech = true;
     }
     if (now - this.start >= 30000) return this.heardSpeech ? "limit" : "idle";
     return this.heardSpeech && now - this.lastVoice >= this.pause
