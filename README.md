@@ -92,7 +92,7 @@ npm run build
 npm run start
 ```
 
-The setup command prints a private pairing code once **in your laptop's terminal**. Keep it there; do not paste it into chat, GitHub, screenshots, or public URLs. The server stores only its SHA-256 hash plus a signing secret in `.gulf-wing/sync-config.json`; the shared demo workspace is saved in `.gulf-wing/workspace.json`. This entire directory is ignored by Git and is not served as public content. Keep one Node server running against this directory; multi-process or hosted/serverless storage is outside this implementation.
+The setup command prints a private pairing code once **in your laptop's terminal**. Keep it there; do not paste it into chat, GitHub, screenshots, or public URLs. The server stores only its SHA-256 hash plus session-signing and Google-encryption secrets in `.gulf-wing/sync-config.json`; the shared demo workspace is saved in `.gulf-wing/workspace.json`. This entire directory is ignored by Git and is not served as public content. Keep one Node server running against this directory; multi-process or hosted/serverless storage is outside this implementation.
 
 1. Connect the Windows laptop and Samsung Galaxy phone to the same trusted private Wi-Fi. Keep the laptop awake while using shared screens.
 2. Run `ipconfig` on Windows and find the Wi-Fi adapter's **IPv4 Address** (usually `192.168.x.x` or `10.x.x.x`). Open `http://YOUR-LAPTOP-IP:3000` in Chrome/Edge on the laptop and Chrome/Samsung Internet on the phone. Use your actual private IP. This is a LAN address, not a public deployment.

@@ -31,7 +31,7 @@ Google authorization cannot be completed by Codex from the development workspace
 
 ## Storage, disconnect and recovery
 
-Client credentials are stored locally, outside Git. Access/refresh tokens are AES-256-GCM encrypted using a key derived from the laptop pairing signing secret. The key and ciphertext ultimately reside on the same machine; this is not an OS credential vault or production multi-tenant secret-management system. Protect the Windows account, folder permissions and private backups. Changing/replacing the pairing signing secret requires reconnecting Google.
+Client credentials are stored locally, outside Git. Access/refresh tokens are AES-256-GCM encrypted using a dedicated Google encryption root in the private sync configuration. Legacy files fall back to the original signing secret until their first pairing rotation, which preserves that value as the Google encryption root. The key and ciphertext ultimately reside on the same machine; this is not an OS credential vault or production multi-tenant secret-management system. Protect the Windows account, folder permissions and private backups. The supported pairing-code rotation command changes session signing but preserves Google encryption, so accounts remain readable. Deleting/replacing the whole sync configuration or changing its Google encryption root still requires recovery or reconnection.
 
 OAuth uses PKCE, random single-use state, a ten-minute HttpOnly SameSite=Lax callback cookie and fixed Google endpoints. Callback codes/tokens/provider error bodies are not reflected into the browser response. Controller-only API responses use no-store caching. No browser token storage or model access to OAuth secrets is provided.
 

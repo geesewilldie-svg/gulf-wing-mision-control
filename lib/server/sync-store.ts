@@ -10,7 +10,12 @@ import { createWorkspace, parseWorkspace, type Workspace } from "../workspace";
 
 export const COOKIE = "gw_sync_session";
 type Role = "controller" | "display";
-type Config = { version: 1; pairingHash: string; signingSecret: string };
+type Config = {
+  version: 1;
+  pairingHash: string;
+  signingSecret: string;
+  googleEncryptionSecret?: string;
+};
 export type Snapshot = { revision: number; workspace: Workspace };
 export class SyncError extends Error {
   constructor(
@@ -41,7 +46,10 @@ export async function config(): Promise<Config | null> {
     typeof value.pairingHash !== "string" ||
     !/^[a-f0-9]{64}$/.test(value.pairingHash) ||
     typeof value.signingSecret !== "string" ||
-    value.signingSecret.length < 40
+    value.signingSecret.length < 40 ||
+    (value.googleEncryptionSecret !== undefined &&
+      (typeof value.googleEncryptionSecret !== "string" ||
+        value.googleEncryptionSecret.length < 40))
   )
     throw new SyncError(503, "The laptop sync configuration is invalid.");
   return value;

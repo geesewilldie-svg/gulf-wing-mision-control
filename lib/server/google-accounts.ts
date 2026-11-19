@@ -61,7 +61,7 @@ async function key() {
   const c = await config();
   if (!c) throw new SyncError(503, "Configure private pairing first.");
   return createHash("sha256")
-    .update("nexus-google-v1:" + c.signingSecret)
+    .update("nexus-google-v1:" + (c.googleEncryptionSecret ?? c.signingSecret))
     .digest();
 }
 async function book(): Promise<Book> {

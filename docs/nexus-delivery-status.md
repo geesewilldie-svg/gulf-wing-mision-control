@@ -96,3 +96,8 @@ Conversation replies now have an Interrupt and speak button plus an optional per
 ## Background noise gate — November 19, 2026
 
 Added per-device Normal room / High noise conversation sensitivity. High noise requires continuous stronger input before accepting a turn and uses a stricter spoken-interruption gate. Browser noise suppression/echo cancellation remain enabled. Quiet input can be missed and loud competing speech can still trigger; there is no speaker recognition or guarantee that accepted audio is noise-free. Real phone/headset/vehicle acceptance remains necessary.
+
+
+## Pairing reset reliability — November 19, 2026
+
+Supported pairing-code rotation now retains an independent Google encryption root while replacing the session-signing secret and pairing-code hash. For legacy installations the first rotation retains the old signing secret solely as the Google encryption root; encrypted Google tokens are not rewritten or exposed. Fresh setup creates independent roots. Malformed configuration fails closed instead of being replaced. This prevents future resets from invalidating otherwise readable Google credentials; it cannot unlock files already orphaned by an earlier reset. No operator reset or reconnect is needed to install the fix. These changes do not implement encryption-key compromise recovery; replacing the encryption root remains separate work.
