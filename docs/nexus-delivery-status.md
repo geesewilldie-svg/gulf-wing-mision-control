@@ -92,3 +92,7 @@ The operator selected free-tier Gemini. A separate fresh-question endpoint/tab e
 ## Spoken interruption — November 18, 2026
 
 Conversation replies now have an Interrupt and speak button plus an optional per-page automatic interruption setting under Listening preferences. Automatic mode opens an echo-cancelled microphone during playback, stops speech on sustained voice energy and carries that recording into the next turn. The existing single-session ownership, Mute, cloud consent and provider allowance rules remain in place. No listening during inference, native background capture or wake word is added. Real Android/laptop echo and vehicle audio acceptance remain pending; headphones and the button fallback are recommended. See `nexus-assistant-interface.md` for behavior and limits.
+
+## Background noise gate — November 19, 2026
+
+Added per-device Normal room / High noise conversation sensitivity. High noise requires continuous stronger input before accepting a turn and uses a stricter spoken-interruption gate. Browser noise suppression/echo cancellation remain enabled. Quiet input can be missed and loud competing speech can still trigger; there is no speaker recognition or guarantee that accepted audio is noise-free. Real phone/headset/vehicle acceptance remains necessary.

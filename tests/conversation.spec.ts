@@ -4,7 +4,7 @@ import {
   nexusSection,
 } from "./helpers/assistant";
 import { test, expect, type Cookie } from "@playwright/test";
-import { SpeechBoundary, parseHistory } from "../lib/conversation";
+import { SpeechBoundary, parseHistory, speechGate } from "../lib/conversation";
 
 test("speech boundaries ignore silence and end only after a voiced pause", () => {
   const silent = new SpeechBoundary(0);
@@ -38,6 +38,25 @@ test("interruption detector ignores residual echo and requires sustained speech"
   detector.sample(0.1, 480);
   expect(detector.heardSpeech).toBe(true);
   expect(detector.sample(0, 1880)).toBe("speech");
+});
+
+test("high-noise gate rejects low rumble and isolated bumps but accepts sustained speech", () => {
+  for (const interruption of [false, true]) {
+    const gate = speechGate("noisy", interruption);
+    const detector = new SpeechBoundary(
+      0,
+      1400,
+      gate.threshold,
+      gate.minimumVoice,
+      gate.continuous,
+    );
+    for (let t = 80; t <= 2400; t += 80)
+      detector.sample(t % 400 === 0 ? 0.1 : 0.035, t);
+    expect(detector.heardSpeech).toBe(false);
+    for (let t = 2480; t <= 3040; t += 80) detector.sample(0.1, t);
+    expect(detector.heardSpeech).toBe(true);
+    expect(detector.sample(0, 4480)).toBe("speech");
+  }
 });
 
 test.describe.configure({ mode: "serial" });
@@ -684,8 +703,22 @@ test("morning voice brief uses the conversation player before capture and speaks
     .click();
 });
 
-for (const automatic of [false, true]) {
-  test(`reply interruption ${automatic ? "by voice" : "by button"} keeps the session and releases resources`, async ({
+test("saved noise sensitivity is restored on this device", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("gulf-wing.nexus-noise-mode.v1", "noisy"));
+  await page.goto("/nexus");
+  await openAssistant(page);
+  await page.getByText("Nexus voice · Push to talk", { exact: true }).click();
+  const panel = page.getByRole("region", { name: "Hands-free conversation" });
+  await panel.getByText("Listening preferences", { exact: true }).click();
+  await expect(panel.getByLabel("Background noise", { exact: true })).toHaveValue("noisy");
+});
+
+for (const { automatic, noisy } of [
+  { automatic: false, noisy: false },
+  { automatic: true, noisy: false },
+  { automatic: true, noisy: true },
+]) {
+  test(`reply interruption ${automatic ? "by voice" : "by button"}${noisy ? " in high noise" : ""} keeps the session and releases resources`, async ({
     page,
   }) => {
     await page.addInitScript(() => {
@@ -803,14 +836,24 @@ for (const automatic of [false, true]) {
         .getByLabel("Let me interrupt spoken replies", { exact: true })
         .check();
     }
+    if (noisy)
+      await panel
+        .getByLabel("Background noise", { exact: true })
+        .selectOption("noisy");
     await panel
       .getByRole("button", { name: "Start conversation", exact: true })
       .click();
     await expect(panel.locator(".conversation-phase")).toContainText(
       "Listening",
     );
+    if (noisy) {
+      await page.evaluate(() => ((window as any).level = 0.035));
+      await page.waitForTimeout(650);
+      expect(requests.length).toBe(0);
+      expect(await page.evaluate(() => (window as any).players.length)).toBe(0);
+    }
     await page.evaluate(() => ((window as any).level = 0.1));
-    await page.waitForTimeout(350);
+    await page.waitForTimeout(noisy ? 650 : 350);
     await page.evaluate(() => ((window as any).level = 0));
     await expect
       .poll(() => page.evaluate(() => (window as any).players.length))

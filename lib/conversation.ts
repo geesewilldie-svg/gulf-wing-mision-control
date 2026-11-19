@@ -1,5 +1,20 @@
 export type ConversationTurn = { role: "user" | "assistant"; content: string };
 
+export type NoiseMode = "normal" | "noisy";
+export function speechGate(mode: NoiseMode, interruption = false) {
+  return mode === "noisy"
+    ? {
+        threshold: interruption ? 0.075 : 0.045,
+        minimumVoice: interruption ? 480 : 400,
+        continuous: true,
+      }
+    : {
+        threshold: interruption ? 0.055 : 0.018,
+        minimumVoice: interruption ? 320 : 160,
+        continuous: false,
+      };
+}
+
 // Local energy detector only: audio is sent for transcription after a voiced turn.
 export class SpeechBoundary {
   private previous: number;
@@ -11,6 +26,7 @@ export class SpeechBoundary {
     private pause = 1400,
     private threshold = 0.018,
     private minimumVoice = 160,
+    private continuous = false,
   ) {
     this.previous = this.lastVoice = start;
   }
@@ -21,7 +37,7 @@ export class SpeechBoundary {
       this.voiced += delta;
       this.lastVoice = now;
       if (this.voiced >= this.minimumVoice) this.heardSpeech = true;
-    }
+    } else if (this.continuous && !this.heardSpeech) this.voiced = 0;
     if (now - this.start >= 30000) return this.heardSpeech ? "limit" : "idle";
     return this.heardSpeech && now - this.lastVoice >= this.pause
       ? "speech"

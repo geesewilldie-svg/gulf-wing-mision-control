@@ -1,7 +1,12 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { SpeechBoundary, type ConversationTurn } from "@/lib/conversation";
+import {
+  SpeechBoundary,
+  speechGate,
+  type NoiseMode,
+  type ConversationTurn,
+} from "@/lib/conversation";
 
 export type AskConversation = (
   text: string,
@@ -84,6 +89,9 @@ export default function NexusConversation({
   autoRequested.current = autoResume;
   const anotherActive = useRef(false);
   const autoStart = useRef<() => Promise<void>>(async () => {});
+  const [noiseMode, setNoiseMode] = useState<NoiseMode>("normal");
+  const noiseModeRef = useRef<NoiseMode>("normal");
+  noiseModeRef.current = noiseMode;
   const [allowInterruption, setAllowInterruption] = useState(false);
   const interruptionEnabled = useRef(false);
   interruptionEnabled.current = allowInterruption;
@@ -134,6 +142,11 @@ export default function NexusConversation({
   useEffect(() => {
     try {
       setAutoResume(localStorage.getItem(preferenceKey) === "enabled");
+      setNoiseMode(
+        localStorage.getItem("gulf-wing.nexus-noise-mode.v1") === "noisy"
+          ? "noisy"
+          : "normal",
+      );
     } catch {
       setPreferenceNotice(
         "Saved listening settings could not be read. Start listening manually.",
@@ -350,15 +363,28 @@ export default function NexusConversation({
       signal.addEventListener("abort", cancel, { once: true });
       try {
         const source = audioContext.createMediaStreamSource(stream);
+        const gate = speechGate(noiseModeRef.current, Boolean(interruption));
         let detector = interruption
           ? null
-          : new SpeechBoundary(backgroundRef.current ? 0 : performance.now());
+          : new SpeechBoundary(
+              backgroundRef.current ? 0 : performance.now(),
+              1400,
+              gate.threshold,
+              gate.minimumVoice,
+              gate.continuous,
+            );
         let announced = false;
         const sample = (rms: number, now: number) => {
           if (done) return;
           if (interruption && !detector) {
-            if (!interruption.ready() || rms < 0.055) return;
-            detector = new SpeechBoundary(now, 1400, 0.055, 320);
+            if (!interruption.ready() || rms < gate.threshold) return;
+            detector = new SpeechBoundary(
+              now,
+              1400,
+              gate.threshold,
+              gate.minimumVoice,
+              gate.continuous,
+            );
             media?.start();
           }
           if (!detector) return;
@@ -798,6 +824,34 @@ export default function NexusConversation({
       </p>
       <details className="conversation-options">
         <summary>Listening preferences</summary>
+        <label>
+          Background noise
+          <select
+            aria-label="Background noise"
+            value={noiseMode}
+            disabled={disabled || active}
+            onChange={(event) => {
+              const value = event.target.value === "noisy" ? "noisy" : "normal";
+              setNoiseMode(value);
+              try {
+                localStorage.setItem("gulf-wing.nexus-noise-mode.v1", value);
+              } catch {
+                setPreferenceNotice(
+                  "Noise setting applies to this page; it could not be saved.",
+                );
+              }
+            }}
+          >
+            <option value="normal">Normal room</option>
+            <option value="noisy">High noise — room or vehicle</option>
+          </select>
+        </label>
+        <p>
+          High noise ignores softer sounds and short bumps before starting a
+          question or interrupting a reply. Speak clearly near the microphone.
+          Nearby voices or a loud TV can still trigger listening; this is not
+          voice identification.
+        </p>
         <label className="nexus-sharing">
           <input
             type="checkbox"
