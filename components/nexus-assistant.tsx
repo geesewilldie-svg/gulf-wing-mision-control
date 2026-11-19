@@ -61,6 +61,12 @@ export default function NexusAssistant({
   useEffect(() => () => pendingAnswer.current?.abort(), []);
   const [conversationActive, setConversationActive] = useState(false);
   const [message, setMessage] = useState("");
+  const [lastQuestion, setLastQuestion] = useState("");
+  const feedbackRegion = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!conversationActive && (answer || message))
+      feedbackRegion.current?.scrollIntoView({ block: "nearest" });
+  }, [answer, message, conversationActive]);
   const [status, setStatus] = useState<{
     sections: number;
     sources: string[];
@@ -93,6 +99,7 @@ export default function NexusAssistant({
       setAnswer(null);
       taskContext.current = undefined;
       setQuery("");
+      setLastQuestion("");
       setMessage("");
       setAllowExternal(false);
       setPublicQuery("");
@@ -107,6 +114,7 @@ export default function NexusAssistant({
     if (controller) pendingAnswer.current = controller;
     const requestSignal = signal || controller!.signal;
     setBusy(true);
+    setLastQuestion(text.trim());
     setAnswer(null);
     setMessage("");
     setAllowExternal(false);
@@ -286,96 +294,106 @@ export default function NexusAssistant({
               </p>
             </details>{" "}
           </form>
-          {answer && (
-            <article className="nexus-answer">
-              <h3>{answer.engine}</h3>
-              <p>{answer.answer}</p>
-              {answer.taskChoices?.map((task) => (
-                <button
-                  key={task.id}
-                  disabled={disabled || busy}
-                  onClick={() => {
-                    taskContext.current = {
-                      id: task.id,
-                      revision: task.revision,
-                      scope: task.scope,
-                    };
-                    setMessage(
-                      `Selected: ${task.request}. Say or type “Pause that task”, “Resume that task”, “Cancel that task” or “Show that task”.`,
-                    );
-                  }}
-                >
-                  Select task: {task.request} · {task.state} ·{" "}
-                  {task.id.slice(0, 8)}
-                </button>
-              ))}
-              {answer.taskDetail && (
-                <details>
-                  <summary>Saved task progress and output</summary>
-                  <p>{answer.taskDetail.reason}</p>
-                  <p>Updated: {answer.taskDetail.updatedAt}</p>
-                  <p>{answer.taskDetail.output || "No saved output yet."}</p>
-                </details>
-              )}
-              {answer.task && (
-                <p>
-                  Task reference: {answer.task.id}. Manage it under Nexus →
-                  Foundation.
-                </p>
-              )}
-              {answer.agents?.length ? (
-                <p className="nexus-router-note">
-                  Answered by:{" "}
-                  {answer.agents
-                    .filter((a) => a.answer)
-                    .map((a) => a.name)
-                    .join(", ")}
-                  . Verify generated claims against the sources.
-                </p>
-              ) : null}
-              {answer.routing && (
-                <p className="nexus-router-note">{answer.routing.reason}</p>
-              )}
-              {answer.warnings?.map((w) => (
-                <p className="nexus-router-note" key={w}>
-                  {w}
-                </p>
-              ))}
-              {answer.agents && answer.agents.length > 1 && (
-                <details>
-                  <summary>Individual agent responses</summary>
-                  {answer.agents.map((a) => (
-                    <section key={a.provider}>
-                      <h4>{a.name}</h4>
-                      <p>{a.answer || a.error}</p>
-                    </section>
-                  ))}
-                </details>
-              )}
-              <h4>
-                Retrieved sources · verify generated claims against these
-                passages
-              </h4>
-              {answer.sources.map((source, i) => (
-                <details key={source.id}>
-                  <summary>
-                    [{i + 1}] {source.source} · {source.location}
-                  </summary>
-                  {/^(https?:)\/\//.test(source.location) && (
-                    <a
-                      href={source.location}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Open public source ↗
-                    </a>
-                  )}
-                  <p>{source.text}</p>
-                </details>
-              ))}
-            </article>
-          )}
-
+          <div ref={feedbackRegion} className="nexus-request-feedback">
+            {lastQuestion && (
+              <p>
+                <strong>Your request:</strong> {lastQuestion}
+              </p>
+            )}
+            {message && <p role="status">{message}</p>}
+            {answer && (
+              <article className="nexus-answer">
+                <h3>{answer.engine}</h3>
+                <p>{answer.answer}</p>
+                {!!answer.taskChoices?.length && (
+                  <p>Select a task below before saying “that task”.</p>
+                )}
+                {answer.taskChoices?.map((task) => (
+                  <button
+                    key={task.id}
+                    disabled={disabled || busy}
+                    onClick={() => {
+                      taskContext.current = {
+                        id: task.id,
+                        revision: task.revision,
+                        scope: task.scope,
+                      };
+                      setMessage(
+                        `Selected: ${task.request}. Say or type “Pause that task”, “Resume that task”, “Cancel that task” or “Show that task”.`,
+                      );
+                    }}
+                  >
+                    Select task: {task.request} · {task.state} ·{" "}
+                    {task.id.slice(0, 8)}
+                  </button>
+                ))}
+                {answer.taskDetail && (
+                  <details>
+                    <summary>Saved task progress and output</summary>
+                    <p>{answer.taskDetail.reason}</p>
+                    <p>Updated: {answer.taskDetail.updatedAt}</p>
+                    <p>{answer.taskDetail.output || "No saved output yet."}</p>
+                  </details>
+                )}
+                {answer.task && (
+                  <p>
+                    Task reference: {answer.task.id}. Manage it under Nexus →
+                    Foundation.
+                  </p>
+                )}
+                {answer.agents?.length ? (
+                  <p className="nexus-router-note">
+                    Answered by:{" "}
+                    {answer.agents
+                      .filter((a) => a.answer)
+                      .map((a) => a.name)
+                      .join(", ")}
+                    . Verify generated claims against the sources.
+                  </p>
+                ) : null}
+                {answer.routing && (
+                  <p className="nexus-router-note">{answer.routing.reason}</p>
+                )}
+                {answer.warnings?.map((w) => (
+                  <p className="nexus-router-note" key={w}>
+                    {w}
+                  </p>
+                ))}
+                {answer.agents && answer.agents.length > 1 && (
+                  <details>
+                    <summary>Individual agent responses</summary>
+                    {answer.agents.map((a) => (
+                      <section key={a.provider}>
+                        <h4>{a.name}</h4>
+                        <p>{a.answer || a.error}</p>
+                      </section>
+                    ))}
+                  </details>
+                )}
+                <h4>
+                  Retrieved sources · verify generated claims against these
+                  passages
+                </h4>
+                {answer.sources.map((source, i) => (
+                  <details key={source.id}>
+                    <summary>
+                      [{i + 1}] {source.source} · {source.location}
+                    </summary>
+                    {/^(https?:)\/\//.test(source.location) && (
+                      <a
+                        href={source.location}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Open public source ↗
+                      </a>
+                    )}
+                    <p>{source.text}</p>
+                  </details>
+                ))}
+              </article>
+            )}
+          </div>
           <NexusVoice
             disabled={disabled}
             section={tab}
@@ -424,7 +442,6 @@ export default function NexusAssistant({
               features.
             </p>
           )}
-          <p role="status">{message}</p>
         </aside>
         {!presentation && (
           <button

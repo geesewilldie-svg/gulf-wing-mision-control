@@ -44,6 +44,27 @@ test("scoped task steering checks revisions, pauses edits, cancels and rejects a
   result = await (await ask("Pause that task", original)).json();
   expect(result.taskDetail.state).toBe("paused");
   const paused = result.task;
+  const retriedCreation = await request.post("/api/sync/nexus", {
+    data: {
+      query: "Create a task to " + title,
+      mode: "auto",
+      workspaceScope: "Personal",
+      requestId: original.id,
+    },
+  });
+  const retried = await retriedCreation.json();
+  expect(retried.answer).toContain("already saved");
+  expect(retried.answer).toContain("Status: paused");
+  expect(retried.task.revision).toBe(paused.revision);
+
+  const repeatedPause = await (await ask("Pause that task", original)).json();
+  expect(repeatedPause.answer).toContain("already paused");
+  expect(repeatedPause.task.revision).toBe(paused.revision);
+  const noSelection = await (await ask("Pause that task")).json();
+  expect(noSelection.taskChoices.some((t: any) => t.id === original.id)).toBe(
+    true,
+  );
+
   expect((await ask("Cancel that task", original)).status()).toBe(409);
   result = await (await ask("Show that task", original)).json();
   expect(result.task.revision).toBe(paused.revision);
@@ -55,7 +76,17 @@ test("scoped task steering checks revisions, pauses edits, cancels and rejects a
   expect(result.taskDetail.request).toBe(title + " revised");
   result = await (await ask("Cancel that task", result.task)).json();
   expect(result.taskDetail.state).toBe("cancelled");
-  expect((await ask("Resume that task", result.task)).status()).toBe(409);
+  const cancelled = result.task;
+  const repeatedCancel = await (
+    await ask("Cancel that task", cancelled)
+  ).json();
+  expect(repeatedCancel.answer).toContain("already cancelled");
+  expect(repeatedCancel.task.revision).toBe(cancelled.revision);
+  const finishedResume = await (
+    await ask("Resume that task", cancelled)
+  ).json();
+  expect(finishedResume.answer).toContain("already cancelled");
+  expect(finishedResume.task.revision).toBe(cancelled.revision);
   expect(
     (await ask("Pause that task", result.task, "Co-hosting")).status(),
   ).toBe(400);
@@ -194,4 +225,45 @@ test("selecting a listed task enables pronoun controls in the assistant", async 
   expect(snapshot.tasks.find((t: any) => t.request === name).state).toBe(
     "paused",
   );
+});
+
+test("assistant displays the submitted request and error above voice controls", async ({
+  page,
+}) => {
+  await page.request.post("/api/sync/session", {
+    data: { code: process.env.GW_SYNC_TEST_CODE, role: "controller" },
+  });
+  await page.route("**/api/sync/nexus", (route) =>
+    route.request().method() === "POST"
+      ? route.fulfill({
+          status: 503,
+          json: { error: "Fixture task service unavailable" },
+        })
+      : route.continue(),
+  );
+  await page.goto("/nexus");
+  await openAssistant(page);
+  await page
+    .locator("form")
+    .getByLabel("Ask Nexus", { exact: true })
+    .fill("Show my tasks");
+  await page
+    .locator("form")
+    .getByRole("button", { name: "Ask Nexus", exact: true })
+    .click();
+  const feedback = page.locator(".nexus-request-feedback");
+  await expect(feedback).toContainText("Your request: Show my tasks");
+  await expect(feedback.getByRole("status")).toHaveText(
+    "Fixture task service unavailable",
+  );
+  await expect(feedback.getByRole("status")).toBeInViewport();
+  expect(
+    await feedback.evaluate((element) =>
+      Boolean(
+        element.compareDocumentPosition(
+          document.querySelector(".nexus-conversation")!,
+        ) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ),
+    ),
+  ).toBe(true);
 });

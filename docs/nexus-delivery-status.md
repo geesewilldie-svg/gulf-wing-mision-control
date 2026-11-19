@@ -112,3 +112,8 @@ Auto/Local assistant conversations now recognize explicit task creation and task
 ## Conversational task steering — November 19, 2026
 
 The assistant now supports task selection, status, pause, cancellation, objective correction and planning-only resume using Foundation revisions and transitions. Lists/ambiguous results clear the prior selection; stable references permit fresh retrieval after reload or on another paired device. Old selected revisions fail closed, and development resume cannot add worker authorization. Saved reasons/output remain distinct from real-world completion evidence. Production build, 40 regression checks and ten focused steering checks passed with fixtures. Native voice/phone acceptance remains pending deployment.
+
+
+## Task feedback repair — November 19, 2026
+
+The owner's screenshot confirmed that the stereo task was already paused; the generic rejection and bottom-of-panel error placement obscured the successful result. Conversational task feedback now reports already-satisfied/inapplicable states without mutation, offers scoped choices after unresolved references, and reports current state on creation retries. The assistant displays the submitted request and errors above voice controls with typed-feedback scrolling. New checks cover unchanged state revisions and viewport-visible feedback. Existing Foundation transitions, revision checks and worker-consent boundaries remain in place.

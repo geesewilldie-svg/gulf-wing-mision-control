@@ -3304,3 +3304,6 @@ body {
 .nexus-route-dashboard .nexus-assistant-launcher { right:auto; left:20px; }
 .nexus-redesign .nexus-tabs { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); }
 @media(max-width:700px) { .nexus-redesign .nexus-tabs { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+
+.nexus-request-feedback { overflow-wrap: anywhere; scroll-margin-block: 16px; }
+.nexus-assistant-drawer .nexus-answer button { display: block; width: 100%; text-align: left; margin-top: 8px; overflow-wrap: anywhere; }

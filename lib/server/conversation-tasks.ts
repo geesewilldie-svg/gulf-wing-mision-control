@@ -42,12 +42,16 @@ export function conversationTask(
       mode: "plan",
       requestId,
     });
+    const saved = listConversationTasks(workspace, 1000).find(
+      (t) => t.id === id,
+    )!;
     return {
       ...base,
-      answer: `Saved your task in ${workspace}: ${intent.request}. It is recorded for planning; no action has started.`,
-      task: reference(
-        listConversationTasks(workspace, 1000).find((t) => t.id === id)!,
-      ),
+      answer:
+        saved.state === "accepted"
+          ? `Saved your task in ${workspace}: ${intent.request}. It is recorded for planning; no action has started.`
+          : `This task is already saved in ${workspace}: ${saved.request}. Status: ${saved.state}. ${saved.reason}. No duplicate record was created.`,
+      task: reference(saved),
     };
   }
   if (intent.kind === "list") {
@@ -101,12 +105,30 @@ export function conversationTask(
       answer: matches.length
         ? "More than one task matches. Select a task below, then repeat the command using ‘that task’, or use its full reference. Nothing was changed."
         : "I could not identify one saved task in this workspace. Name it, or say ‘Show my tasks’ and select one. Nothing was changed.",
-      taskChoices: matches
+      taskChoices: (matches.length ? matches : tasks)
         .slice(0, 10)
         .map((t) => ({ ...reference(t), request: t.request, state: t.state })),
     };
   let task = matches[0];
-  if (intent.action !== "status") {
+  let feedback: string | undefined;
+  if (intent.action === "pause" && task.state === "paused")
+    feedback = "This task is already paused. Nothing was changed.";
+  else if (intent.action === "cancel" && task.state === "cancelled")
+    feedback = "This task is already cancelled. Nothing was changed.";
+  else if (
+    intent.action !== "status" &&
+    ["completed", "cancelled"].includes(task.state)
+  )
+    feedback = `This task is already ${task.state}. Nothing was changed. Create a new task if more work is needed.`;
+  else if (
+    intent.action === "resume" &&
+    ["queued", "running", "verifying"].includes(task.state)
+  )
+    feedback = `This task is already ${task.state}. No duplicate work was queued.`;
+  else if (intent.action === "pause" && task.state === "failed")
+    feedback =
+      "This task has failed rather than running. Nothing was changed. Review its reason before resuming or correcting it.";
+  if (intent.action !== "status" && !feedback) {
     if (intent.action === "resume" && task.mode !== "plan")
       throw new SyncError(
         409,
@@ -124,7 +146,8 @@ export function conversationTask(
     )!;
   }
   const note =
-    intent.action === "resume"
+    feedback ||
+    (intent.action === "resume"
       ? "Queued for local planning; this does not authorize external actions."
       : intent.action === "steer"
         ? "Objective updated and paused for review. Say ‘Resume that task’ to queue local planning."
@@ -132,7 +155,7 @@ export function conversationTask(
           ? "Cancelled; existing artifacts and completed effects are retained."
           : intent.action === "pause"
             ? "Paused; completed effects are retained."
-            : "This is the saved task status, not proof that external actions happened.";
+            : "This is the saved task status, not proof that external actions happened.");
   return {
     ...base,
     task: reference(task),
