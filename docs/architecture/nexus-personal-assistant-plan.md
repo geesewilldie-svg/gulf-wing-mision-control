@@ -293,3 +293,8 @@ The owner selected Android. The initial installable web app and `/phone` setup f
 The owner asked to retain stereo information until installation. Confirmed manual/photo evidence and the pending real-device checklist are saved at `docs/devices/haudio-cvd1662.md`. Do not treat direct APK, microphone or Android Auto compatibility as tested.
 
 The next milestone-2 slice connects explicit conversation commands to the existing planning task store. “Create a task to…” records accepted work; “Show my tasks” retrieves the selected workspace's latest records. Execution, queueing and steering still use existing Foundation controls. See `docs/nexus-conversation-tasks.md` for limits, retry behavior and acceptance.
+
+
+### Milestone 2 conversational steering — November 19, 2026
+
+Added scoped task selection, saved status/output retrieval, revision-aware pause/cancel/objective correction and planning-only resume through the existing Foundation state machine. Ambiguity produces choices rather than a guessed mutation; page-session references do not survive reloads, but stable task IDs/state do. Development worker consent is not granted through resume. See `docs/nexus-conversation-tasks.md` for tested boundaries. General composed-task execution and broader effect recovery remain unfinished portions of the architecture; these controls do not claim milestone 2 as universally complete.

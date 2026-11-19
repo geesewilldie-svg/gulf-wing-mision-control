@@ -107,3 +107,8 @@ Supported pairing-code rotation now retains an independent Google encryption roo
 Saved the deferred Haudio/Lightcomm CVD1662 vehicle reference in `docs/devices/haudio-cvd1662.md`, based on owner-supplied manual screenshots. Android 12, APK support, Wi-Fi/hotspot and memory/display specifications are documented; actual stereo/browser/microphone acceptance remains pending installation.
 
 Auto/Local assistant conversations now recognize explicit task creation and task-list requests using the existing Foundation store. Records are planning-only, accepted, scoped, durable and referenceable; matching request retries reuse the same ID. They do not dispatch a worker or execute the objective. Build, 30 Foundation/assistant regression checks and six focused command/UI checks passed using synthetic records. Real laptop/phone voice task acceptance is pending installation. This is an initial milestone-2 slice; general task steering and execution remain separate work.
+
+
+## Conversational task steering — November 19, 2026
+
+The assistant now supports task selection, status, pause, cancellation, objective correction and planning-only resume using Foundation revisions and transitions. Lists/ambiguous results clear the prior selection; stable references permit fresh retrieval after reload or on another paired device. Old selected revisions fail closed, and development resume cannot add worker authorization. Saved reasons/output remain distinct from real-world completion evidence. Production build, 40 regression checks and ten focused steering checks passed with fixtures. Native voice/phone acceptance remains pending deployment.

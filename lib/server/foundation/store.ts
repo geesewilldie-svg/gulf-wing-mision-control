@@ -246,14 +246,14 @@ function policy(db: DatabaseSync) {
     planningEnabled: !!p.planning_enabled,
   };
 }
-export function listConversationTasks(workspace: unknown) {
+export function listConversationTasks(workspace: unknown, limit = 10) {
   const selected = scope(workspace);
   return withStore((db) =>
     db
       .prepare(
-        "SELECT * FROM tasks WHERE scope=? ORDER BY created_at DESC,rowid DESC LIMIT 10",
+        "SELECT * FROM tasks WHERE scope=? ORDER BY created_at DESC,rowid DESC LIMIT ?",
       )
-      .all(selected)
+      .all(selected, Math.max(1, Math.min(1000, limit)))
       .map(task),
   );
 }

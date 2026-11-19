@@ -14,7 +14,21 @@ const AssistantContext = createContext({
 export const useNexusAssistant = () => useContext(AssistantContext);
 type Answer = {
   engine: string;
-  task?: { id: string; scope: string };
+  task?: { id: string; scope: string; revision: number };
+  taskChoices?: {
+    id: string;
+    scope: string;
+    revision: number;
+    request: string;
+    state: string;
+  }[];
+  taskDetail?: {
+    request: string;
+    state: string;
+    reason: string;
+    output: string;
+    updatedAt: string;
+  };
   answer: string;
   sources: KnowledgeDocument[];
   warnings?: string[];
@@ -40,6 +54,10 @@ export default function NexusAssistant({
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [busy, setBusy] = useState(false);
   const pendingAnswer = useRef<AbortController | null>(null);
+  const taskContext = useRef<Answer["task"]>(undefined);
+  useEffect(() => {
+    taskContext.current = undefined;
+  }, [workspaceScope]);
   useEffect(() => () => pendingAnswer.current?.abort(), []);
   const [conversationActive, setConversationActive] = useState(false);
   const [message, setMessage] = useState("");
@@ -73,6 +91,7 @@ export default function NexusAssistant({
     if (disabled) {
       pendingAnswer.current?.abort();
       setAnswer(null);
+      taskContext.current = undefined;
       setQuery("");
       setMessage("");
       setAllowExternal(false);
@@ -99,6 +118,7 @@ export default function NexusAssistant({
         body: JSON.stringify({
           query: text,
           requestId: globalThis.crypto?.randomUUID?.(),
+          taskContext: taskContext.current,
           voiceConversation: Boolean(signal),
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           workspaceScope,
@@ -113,6 +133,8 @@ export default function NexusAssistant({
       if (!r.ok) throw new Error(data.error);
       if (requestSignal.aborted)
         throw new DOMException("Stopped", "AbortError");
+      if (data.taskChoices) taskContext.current = undefined;
+      if (data.task) taskContext.current = data.task;
       setAnswer(data);
       return data.answer as string;
     } catch (e) {
@@ -268,6 +290,33 @@ export default function NexusAssistant({
             <article className="nexus-answer">
               <h3>{answer.engine}</h3>
               <p>{answer.answer}</p>
+              {answer.taskChoices?.map((task) => (
+                <button
+                  key={task.id}
+                  disabled={disabled || busy}
+                  onClick={() => {
+                    taskContext.current = {
+                      id: task.id,
+                      revision: task.revision,
+                      scope: task.scope,
+                    };
+                    setMessage(
+                      `Selected: ${task.request}. Say or type “Pause that task”, “Resume that task”, “Cancel that task” or “Show that task”.`,
+                    );
+                  }}
+                >
+                  Select task: {task.request} · {task.state} ·{" "}
+                  {task.id.slice(0, 8)}
+                </button>
+              ))}
+              {answer.taskDetail && (
+                <details>
+                  <summary>Saved task progress and output</summary>
+                  <p>{answer.taskDetail.reason}</p>
+                  <p>Updated: {answer.taskDetail.updatedAt}</p>
+                  <p>{answer.taskDetail.output || "No saved output yet."}</p>
+                </details>
+              )}
               {answer.task && (
                 <p>
                   Task reference: {answer.task.id}. Manage it under Nexus →

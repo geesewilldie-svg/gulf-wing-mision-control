@@ -1,3 +1,4 @@
+import { conversationTask } from "@/lib/server/conversation-tasks";
 import { taskIntent } from "@/lib/task-intent";
 import { clockContext, directClockAnswer } from "@/lib/server/nexus-clock";
 import {
@@ -31,11 +32,7 @@ import { searchDocuments } from "@/lib/nexus";
 import { ventureKnowledge } from "@/lib/server/venture-store";
 import { businessKnowledge } from "@/lib/server/business-knowledge";
 import { parseHistory } from "@/lib/conversation";
-import {
-  memoryContext,
-  createTask,
-  listConversationTasks,
-} from "@/lib/server/foundation/store";
+import { memoryContext } from "@/lib/server/foundation/store";
 import { scopes } from "@/lib/foundation/contracts";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -76,6 +73,7 @@ export async function POST(request: Request) {
       voiceConversation?: unknown;
       timeZone?: unknown;
       requestId?: unknown;
+      taskContext?: unknown;
       workspaceScope?: unknown;
       query?: unknown;
       mode?: unknown;
@@ -121,45 +119,15 @@ export async function POST(request: Request) {
       throw new SyncError(400, "Choose a supported workspace scope.");
     const intent = taskIntent(body.query);
     if (intent && ["auto", "local"].includes(body.mode as string)) {
-      const workspace = body.workspaceScope || "Personal";
-      if (intent.kind === "create") {
-        const id = createTask({
-          request: intent.request,
-          scope: workspace,
-          mode: "plan",
-          requestId: body.requestId,
-        });
-        return response({
-          engine: "Nexus tasks",
-          answer: `Saved your task in ${workspace}: ${intent.request}. It is recorded for planning; no action has started.`,
-          task: { id, scope: workspace },
-          sources: [],
-          warnings: [],
-          routing: {
-            mode: body.mode,
-            selected: [],
-            reason:
-              "Saved locally in Foundation; no model, external provider or worker was called.",
-          },
-        });
-      }
-      const tasks = listConversationTasks(workspace);
-      return response({
-        engine: "Nexus tasks",
-        sources: [],
-        warnings: [],
-        answer: tasks.length
-          ? `Your latest tasks in ${workspace}: ` +
-            tasks.map((t) => `${t.request} — ${t.state}`).join("; ") +
-            ". These are saved task statuses, not proof of completed actions."
-          : `No saved tasks in ${workspace}. Say “Create a task to” followed by what you want to record.`,
-        routing: {
-          mode: body.mode,
-          selected: [],
-          reason:
-            "Up to ten latest tasks in the selected workspace. Manage tasks in Foundation.",
-        },
-      });
+      return response(
+        conversationTask(
+          intent,
+          (body.workspaceScope as string) || "Personal",
+          body.mode as string,
+          body.requestId,
+          body.taskContext,
+        ),
+      );
     }
     const clock = clockContext(body.timeZone);
     const clockAnswer = directClockAnswer(body.query, clock);
