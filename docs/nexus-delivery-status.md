@@ -101,3 +101,9 @@ Added per-device Normal room / High noise conversation sensitivity. High noise r
 ## Pairing reset reliability — November 19, 2026
 
 Supported pairing-code rotation now retains an independent Google encryption root while replacing the session-signing secret and pairing-code hash. For legacy installations the first rotation retains the old signing secret solely as the Google encryption root; encrypted Google tokens are not rewritten or exposed. Fresh setup creates independent roots. Malformed configuration fails closed instead of being replaced. This prevents future resets from invalidating otherwise readable Google credentials; it cannot unlock files already orphaned by an earlier reset. No operator reset or reconnect is needed to install the fix. These changes do not implement encryption-key compromise recovery; replacing the encryption root remains separate work.
+
+## Conversational task capture — November 19, 2026
+
+Saved the deferred Haudio/Lightcomm CVD1662 vehicle reference in `docs/devices/haudio-cvd1662.md`, based on owner-supplied manual screenshots. Android 12, APK support, Wi-Fi/hotspot and memory/display specifications are documented; actual stereo/browser/microphone acceptance remains pending installation.
+
+Auto/Local assistant conversations now recognize explicit task creation and task-list requests using the existing Foundation store. Records are planning-only, accepted, scoped, durable and referenceable; matching request retries reuse the same ID. They do not dispatch a worker or execute the objective. Build, 30 Foundation/assistant regression checks and six focused command/UI checks passed using synthetic records. Real laptop/phone voice task acceptance is pending installation. This is an initial milestone-2 slice; general task steering and execution remain separate work.

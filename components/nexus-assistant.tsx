@@ -14,6 +14,7 @@ const AssistantContext = createContext({
 export const useNexusAssistant = () => useContext(AssistantContext);
 type Answer = {
   engine: string;
+  task?: { id: string; scope: string };
   answer: string;
   sources: KnowledgeDocument[];
   warnings?: string[];
@@ -97,6 +98,7 @@ export default function NexusAssistant({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: text,
+          requestId: globalThis.crypto?.randomUUID?.(),
           voiceConversation: Boolean(signal),
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           workspaceScope,
@@ -266,6 +268,12 @@ export default function NexusAssistant({
             <article className="nexus-answer">
               <h3>{answer.engine}</h3>
               <p>{answer.answer}</p>
+              {answer.task && (
+                <p>
+                  Task reference: {answer.task.id}. Manage it under Nexus →
+                  Foundation.
+                </p>
+              )}
               {answer.agents?.length ? (
                 <p className="nexus-router-note">
                   Answered by:{" "}

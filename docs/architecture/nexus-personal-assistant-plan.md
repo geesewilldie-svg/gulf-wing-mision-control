@@ -287,3 +287,9 @@ The owner further requires a central assistant across any chosen connected devic
 ### Android first delivery — November 18, 2026
 
 The owner selected Android. The initial installable web app and `/phone` setup flow reuse the current host and controller pairing; native Android services and car/device adapters remain later milestones. See `docs/nexus-android-app.md` for HTTPS prerequisites, always-on migration acceptance and explicit capability limits.
+
+### Conversation-to-task capture and deferred stereo reference — November 19, 2026
+
+The owner asked to retain stereo information until installation. Confirmed manual/photo evidence and the pending real-device checklist are saved at `docs/devices/haudio-cvd1662.md`. Do not treat direct APK, microphone or Android Auto compatibility as tested.
+
+The next milestone-2 slice connects explicit conversation commands to the existing planning task store. “Create a task to…” records accepted work; “Show my tasks” retrieves the selected workspace's latest records. Execution, queueing and steering still use existing Foundation controls. See `docs/nexus-conversation-tasks.md` for limits, retry behavior and acceptance.

@@ -246,13 +246,49 @@ function policy(db: DatabaseSync) {
     planningEnabled: !!p.planning_enabled,
   };
 }
+export function listConversationTasks(workspace: unknown) {
+  const selected = scope(workspace);
+  return withStore((db) =>
+    db
+      .prepare(
+        "SELECT * FROM tasks WHERE scope=? ORDER BY created_at DESC,rowid DESC LIMIT 10",
+      )
+      .all(selected)
+      .map(task),
+  );
+}
 export function createTask(input: any) {
   const request = text(input.request, 2000),
     workspace = scope(input.scope);
+  if (
+    input.requestId !== undefined &&
+    (typeof input.requestId !== "string" ||
+      !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(
+        input.requestId,
+      ))
+  )
+    throw new SyncError(400, "Invalid task request identifier.");
   if (!["plan", "development"].includes(input.mode))
     throw new SyncError(400, "Choose planning or a development handoff.");
   return withStore((db) =>
     transaction(db, () => {
+      if (input.requestId) {
+        const existing = db
+          .prepare("SELECT * FROM tasks WHERE id=?")
+          .get(input.requestId) as any;
+        if (existing) {
+          if (
+            existing.request !== request ||
+            existing.scope !== workspace ||
+            existing.mode !== input.mode
+          )
+            throw new SyncError(
+              409,
+              "This request identifier belongs to different task details.",
+            );
+          return existing.id as string;
+        }
+      }
       if (
         Number((db.prepare("SELECT count(*) n FROM tasks").get() as any).n) >=
         1000
@@ -261,7 +297,7 @@ export function createTask(input: any) {
           409,
           "Task storage limit reached. Export/archive tasks before adding more.",
         );
-      const id = randomUUID(),
+      const id = input.requestId || randomUUID(),
         now = new Date().toISOString();
       db.prepare(
         "INSERT INTO tasks VALUES(?,0,?,?,?,'accepted','Ready to queue','',?,?,?)",
