@@ -298,3 +298,7 @@ The next milestone-2 slice connects explicit conversation commands to the existi
 ### Milestone 2 conversational steering — November 19, 2026
 
 Added scoped task selection, saved status/output retrieval, revision-aware pause/cancel/objective correction and planning-only resume through the existing Foundation state machine. Ambiguity produces choices rather than a guessed mutation; page-session references do not survive reloads, but stable task IDs/state do. Development worker consent is not granted through resume. See `docs/nexus-conversation-tasks.md` for tested boundaries. General composed-task execution and broader effect recovery remain unfinished portions of the architecture; these controls do not claim milestone 2 as universally complete.
+
+### Planning artifact quality repair — November 19, 2026
+
+Native acceptance exposed that saved/read-back planning text could be factually wrong and token-truncated. Added implemented Nexus context, a distinct bounded planning generation budget and explicit incomplete-draft retention/limited quality checks. Storage integrity is not semantic verification. See `docs/nexus-planning-quality.md`; the original poor artifact remains historical evidence, and live usefulness acceptance is still required.

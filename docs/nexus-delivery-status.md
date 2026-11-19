@@ -117,3 +117,7 @@ The assistant now supports task selection, status, pause, cancellation, objectiv
 ## Task feedback repair — November 19, 2026
 
 The owner's screenshot confirmed that the stereo task was already paused; the generic rejection and bottom-of-panel error placement obscured the successful result. Conversational task feedback now reports already-satisfied/inapplicable states without mutation, offers scoped choices after unresolved references, and reports current state on creation retries. The assistant displays the submitted request and errors above voice controls with typed-feedback scrolling. New checks cover unchanged state revisions and viewport-visible feedback. Existing Foundation transitions, revision checks and worker-consent boundaries remain in place.
+
+## Planning quality repair — November 19, 2026
+
+The owner's phone-checklist artifact incorrectly described Nexus as fictional and was cut off. The planner now receives factual implemented-app context, asks for concise complete steps, and has a separate bounded output budget. Unconfirmed/limited completion and known-invalid drafts are retained as waiting review artifacts without skill promotion. Existing cancellation/revision checks apply. Build and fixture regressions passed; native output quality acceptance remains pending. Stored hashes/read-back do not establish factual quality.

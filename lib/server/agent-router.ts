@@ -1,3 +1,4 @@
+import { IncompletePlanError } from "./foundation/planning-quality";
 import { randomUUID, randomBytes } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -164,6 +165,7 @@ async function callProvider(
   system: string,
   history: ConversationTurn[],
   signal: AbortSignal,
+  options?: { purpose: "planning" },
 ): Promise<string> {
   const timeout = AbortSignal.any([
     signal,
@@ -185,7 +187,10 @@ async function callProvider(
       model,
       stream: false,
       keep_alive: "5m",
-      options: { num_ctx: 4096, num_predict: 256 },
+      options: {
+        num_ctx: 4096,
+        num_predict: options?.purpose === "planning" ? 768 : 256,
+      },
       messages,
     };
   } else {
@@ -256,6 +261,19 @@ async function callProvider(
               .join("\n");
   if (typeof answer !== "string" || !answer.trim())
     throw Error("Provider returned no text.");
+  if (
+    id === "local" &&
+    options?.purpose === "planning" &&
+    (result.done_reason !== "stop" ||
+      result.done !== true ||
+      answer.length > 12000)
+  )
+    throw new IncompletePlanError(
+      answer.slice(0, 12000),
+      result.done_reason === "length" || answer.length > 12000
+        ? "Planning response reached its generation limit; the saved draft needs review."
+        : "Planning completion was not confirmed by the model; the saved draft needs review.",
+    );
   return answer.slice(0, 12000);
 }
 
@@ -269,13 +287,15 @@ export async function askProvider(
   system: string,
   history: ConversationTurn[],
   signal: AbortSignal,
+  options?: { purpose: "planning" },
 ): Promise<string> {
   if (id === "gemini" && (await hasPublicGeminiPolicy()))
     throw new SyncError(
       403,
       "This Gemini setup is public-only. Use the dedicated Gemini Public tab; private context is blocked.",
     );
-  if (id !== "local") return callProvider(id, query, system, history, signal);
+  if (id !== "local")
+    return callProvider(id, query, system, history, signal, options);
   if (localInference.nexusLocalInferenceBusy)
     throw new SyncError(
       429,
@@ -283,7 +303,7 @@ export async function askProvider(
     );
   localInference.nexusLocalInferenceBusy = true;
   try {
-    return await callProvider(id, query, system, history, signal);
+    return await callProvider(id, query, system, history, signal, options);
   } finally {
     localInference.nexusLocalInferenceBusy = false;
   }

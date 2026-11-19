@@ -595,6 +595,7 @@ export function finishTask(
   output: string,
   waiting = false,
   candidateReady = false,
+  planningReview?: string,
 ) {
   return withStore((db) =>
     transaction(db, () => {
@@ -609,6 +610,11 @@ export function finishTask(
           409,
           "Task/policy changed during execution; stale result was not applied.",
         );
+      if (
+        planningReview &&
+        (t.mode !== "plan" || !waiting || planningReview.length > 1000)
+      )
+        throw new SyncError(400, "Invalid planning review result.");
       if (!output.trim() || output.length > 40000)
         throw new SyncError(502, "Worker output failed artifact validation.");
       event(
@@ -621,11 +627,13 @@ export function finishTask(
         "UPDATE tasks SET state=?,reason=?,output=?,revision=revision+1,updated_at=? WHERE id=?",
       ).run(
         waiting ? "waiting" : "completed",
-        waiting
-          ? candidateReady
-            ? "Codex candidate ready; independent tests and promotion are not performed"
-            : "Development handoff ready; live worker was not authorized for this attempt"
-          : "Planning artifact saved and read back; no external task was executed",
+        planningReview
+          ? "Planning draft needs review: " + planningReview
+          : waiting
+            ? candidateReady
+              ? "Codex candidate ready; independent tests and promotion are not performed"
+              : "Development handoff ready; live worker was not authorized for this attempt"
+            : "Planning artifact saved and read back; no external task was executed",
         output,
         new Date().toISOString(),
         t.id,
@@ -638,7 +646,7 @@ export function finishTask(
         saved.state !== (waiting ? "waiting" : "completed")
       )
         throw new SyncError(503, "Artifact read-back verification failed.");
-      if (waiting)
+      if (waiting && !planningReview)
         db.prepare("INSERT OR REPLACE INTO skills VALUES(?,?,?,'draft')").run(
           "draft-" + t.id,
           t.id,
@@ -648,11 +656,13 @@ export function finishTask(
         db,
         t.id,
         waiting ? "task.waiting" : "task.completed",
-        waiting
-          ? candidateReady
-            ? "Structurally checked code candidate and unvalidated draft saved. Tests/code execution were not performed."
-            : "Handoff and unvalidated skill draft saved."
-          : "Plan artifact verified in local storage, not real-world effects.",
+        planningReview
+          ? "Planning draft retained for review; it was not accepted as complete."
+          : waiting
+            ? candidateReady
+              ? "Structurally checked code candidate and unvalidated draft saved. Tests/code execution were not performed."
+              : "Handoff and unvalidated skill draft saved."
+            : "Plan artifact verified in local storage, not real-world effects.",
       );
     }),
   );
