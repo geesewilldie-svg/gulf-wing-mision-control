@@ -14,6 +14,14 @@ const AssistantContext = createContext({
 export const useNexusAssistant = () => useContext(AssistantContext);
 type Answer = {
   engine: string;
+  memory?: { id: string; revision: number; scope: string };
+  memoryChoices?: {
+    id: string;
+    revision: number;
+    scope: string;
+    kind: string;
+    content: string;
+  }[];
   task?: { id: string; scope: string; revision: number };
   taskChoices?: {
     id: string;
@@ -55,8 +63,11 @@ export default function NexusAssistant({
   const [busy, setBusy] = useState(false);
   const pendingAnswer = useRef<AbortController | null>(null);
   const taskContext = useRef<Answer["task"]>(undefined);
+  const memoryReference = useRef<Answer["memory"]>(undefined);
+  const contextRevision = useRef<number | undefined>(undefined);
   useEffect(() => {
     taskContext.current = undefined;
+    memoryReference.current = undefined;
   }, [workspaceScope]);
   useEffect(() => () => pendingAnswer.current?.abort(), []);
   const [conversationActive, setConversationActive] = useState(false);
@@ -98,6 +109,8 @@ export default function NexusAssistant({
       pendingAnswer.current?.abort();
       setAnswer(null);
       taskContext.current = undefined;
+      memoryReference.current = undefined;
+      contextRevision.current = undefined;
       setQuery("");
       setLastQuestion("");
       setMessage("");
@@ -127,6 +140,8 @@ export default function NexusAssistant({
           query: text,
           requestId: globalThis.crypto?.randomUUID?.(),
           taskContext: taskContext.current,
+          memoryReference: memoryReference.current,
+          contextRevision: contextRevision.current,
           voiceConversation: Boolean(signal),
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           workspaceScope,
@@ -141,6 +156,13 @@ export default function NexusAssistant({
       if (!r.ok) throw new Error(data.error);
       if (requestSignal.aborted)
         throw new DOMException("Stopped", "AbortError");
+      if (Number.isSafeInteger(data.contextRevision))
+        contextRevision.current = data.contextRevision;
+      if (data.resetHistory)
+        window.dispatchEvent(new Event("nexus:context-reset"));
+      if (data.memoryChoices || data.memoryCleared)
+        memoryReference.current = undefined;
+      if (data.memory) memoryReference.current = data.memory;
       if (data.taskChoices) taskContext.current = undefined;
       if (data.task) taskContext.current = data.task;
       setAnswer(data);
@@ -305,6 +327,31 @@ export default function NexusAssistant({
               <article className="nexus-answer">
                 <h3>{answer.engine}</h3>
                 <p>{answer.answer}</p>
+                {answer.memoryChoices?.map((memory) => (
+                  <button
+                    key={memory.id}
+                    disabled={disabled || busy}
+                    onClick={() => {
+                      memoryReference.current = {
+                        id: memory.id,
+                        revision: memory.revision,
+                        scope: memory.scope,
+                      };
+                      setMessage(
+                        `Selected memory: ${memory.content}. Say “Correct that memory to…” or “Forget that memory”.`,
+                      );
+                    }}
+                  >
+                    Select memory: {memory.kind} · {memory.content} ·{" "}
+                    {memory.id.slice(0, 8)}
+                  </button>
+                ))}
+                {answer.memory && (
+                  <p>
+                    Memory reference: {answer.memory.id}. Review saved memory in
+                    Foundation.
+                  </p>
+                )}
                 {!!answer.taskChoices?.length && (
                   <p>Select a task below before saying “that task”.</p>
                 )}

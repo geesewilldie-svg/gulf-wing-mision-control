@@ -443,6 +443,24 @@ export function setPolicy(input: any) {
     }),
   );
 }
+export function ownerContextRevision() {
+  return withStore((db) => policy(db).revision);
+}
+export function listConversationMemory(workspace: unknown): MemoryRecord[] {
+  const selected = scope(workspace);
+  return withStore((db) =>
+    db
+      .prepare(
+        "SELECT id,revision,kind,scope,content,updated_at AS updatedAt FROM memory WHERE scope=? ORDER BY updated_at DESC,rowid DESC LIMIT 500",
+      )
+      .all(selected)
+      .map((row: any) => ({
+        ...row,
+        source: "owner" as const,
+        localOnly: true as const,
+      })),
+  );
+}
 export function saveMemory(input: any) {
   const content = text(input.content, 1000),
     workspace = scope(input.scope);

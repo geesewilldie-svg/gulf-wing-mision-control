@@ -1,3 +1,5 @@
+import { memoryIntent } from "@/lib/memory-intent";
+import { conversationMemory } from "@/lib/server/conversation-memory";
 import { conversationTask } from "@/lib/server/conversation-tasks";
 import { taskIntent } from "@/lib/task-intent";
 import { clockContext, directClockAnswer } from "@/lib/server/nexus-clock";
@@ -32,7 +34,10 @@ import { searchDocuments } from "@/lib/nexus";
 import { ventureKnowledge } from "@/lib/server/venture-store";
 import { businessKnowledge } from "@/lib/server/business-knowledge";
 import { parseHistory } from "@/lib/conversation";
-import { memoryContext } from "@/lib/server/foundation/store";
+import {
+  memoryContext,
+  ownerContextRevision,
+} from "@/lib/server/foundation/store";
 import { scopes } from "@/lib/foundation/contracts";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -74,6 +79,8 @@ export async function POST(request: Request) {
       timeZone?: unknown;
       requestId?: unknown;
       taskContext?: unknown;
+      memoryReference?: unknown;
+      contextRevision?: unknown;
       workspaceScope?: unknown;
       query?: unknown;
       mode?: unknown;
@@ -103,7 +110,7 @@ export async function POST(request: Request) {
         400,
         "Enter a question of up to 2,000 characters and choose a supported mode.",
       );
-    let history;
+    let history: ReturnType<typeof parseHistory>;
     try {
       history = parseHistory(body.history);
     } catch {
@@ -117,9 +124,48 @@ export async function POST(request: Request) {
       !scopes.includes(body.workspaceScope as any)
     )
       throw new SyncError(400, "Choose a supported workspace scope.");
+    if (
+      body.contextRevision !== undefined &&
+      (!Number.isSafeInteger(body.contextRevision) ||
+        (body.contextRevision as number) < 0)
+    )
+      throw new SyncError(400, "Invalid conversation context revision.");
+    const contextRevision = ownerContextRevision();
+    const contextReset =
+      body.contextRevision !== undefined &&
+      body.contextRevision !== contextRevision;
+    if (contextReset) history = [];
+    const reply = (data: any) => {
+      const latestRevision = ownerContextRevision();
+      return response({
+        ...data,
+        contextRevision: latestRevision,
+        resetHistory:
+          contextReset ||
+          latestRevision !== contextRevision ||
+          data.resetHistory === true,
+      });
+    };
+    const memoryCommand = memoryIntent(body.query);
+    if (memoryCommand) {
+      if (!["auto", "local"].includes(body.mode as string))
+        throw new SyncError(
+          403,
+          "Memory commands are local-only. Choose Auto or local mode.",
+        );
+      const saved = conversationMemory(
+        memoryCommand,
+        (body.workspaceScope as string) || "Personal",
+        body.memoryReference,
+      );
+      return reply({
+        ...saved,
+        resetHistory: "memoryChanged" in saved && saved.memoryChanged === true,
+      });
+    }
     const intent = taskIntent(body.query);
     if (intent && ["auto", "local"].includes(body.mode as string)) {
-      return response(
+      return reply(
         conversationTask(
           intent,
           (body.workspaceScope as string) || "Personal",
@@ -132,7 +178,7 @@ export async function POST(request: Request) {
     const clock = clockContext(body.timeZone);
     const clockAnswer = directClockAnswer(body.query, clock);
     if (clockAnswer && ["auto", "local"].includes(body.mode as string))
-      return response({
+      return reply({
         engine: "Nexus clock",
         answer: clockAnswer,
         sources: [],
@@ -150,7 +196,11 @@ export async function POST(request: Request) {
         "Nexus is answering another request. Try again shortly.",
       );
     generating = ownsSlot = true;
-    const warnings: string[] = [];
+    const warnings: string[] = contextReset
+      ? [
+          "Earlier conversation was omitted because owner memory or policy changed.",
+        ]
+      : [];
     const vault = process.env.GW_NEXUS_OBSIDIAN_VAULT
       ? await trackAgent("obsidian", () => obsidianDocuments(), request.signal)
       : {
@@ -249,7 +299,7 @@ export async function POST(request: Request) {
         "Selected agent is unavailable or external sharing is not permitted. Check Connections; no fallback was used.",
       );
     if (!selected.length)
-      return response({
+      return reply({
         engine: "Local document search",
         answer: sources.length
           ? "Relevant source excerpts are below. These are retrieved passages, not a generated AI answer."
@@ -374,10 +424,15 @@ export async function POST(request: Request) {
       }
     }
     const legacyModel = selected.length === 1 && selected[0] === "local";
-    return response({
-      engine: legacyModel
-        ? "Local model: " + (await configuredLocalModel())
-        : "Nexus agent router",
+    const modelName = legacyModel ? await configuredLocalModel() : null;
+    // Check after the final asynchronous read; do not yield again before reply.
+    if (ownerContextRevision() !== contextRevision)
+      throw new SyncError(
+        409,
+        "Owner memory changed while this answer was being prepared. Ask again with fresh context.",
+      );
+    return reply({
+      engine: legacyModel ? "Local model: " + modelName : "Nexus agent router",
       answer,
       sources,
       warnings,

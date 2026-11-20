@@ -121,3 +121,9 @@ The owner's screenshot confirmed that the stereo task was already paused; the ge
 ## Planning quality repair — November 19, 2026
 
 The owner's phone-checklist artifact incorrectly described Nexus as fictional and was cut off. The planner now receives factual implemented-app context, asks for concise complete steps, and has a separate bounded output budget. Unconfirmed/limited completion and known-invalid drafts are retained as waiting review artifacts without skill promotion. Existing cancellation/revision checks apply. Build and fixture regressions passed; native output quality acceptance remains pending. Stored hashes/read-back do not establish factual quality.
+
+## Conversational owner memory
+
+Milestone 3 now supports explicit local memory capture, scoped listing, revisioned correction and forgetting through the assistant. Duplicate saves reuse existing records; ambiguous requests offer choices. Memory changes reset recent conversation context, and answers generated across a context change are rejected. Existing instructions and relevance-based local retrieval remain the context source. See `docs/nexus-conversation-memory.md` for commands and boundaries.
+
+Production build and TypeScript passed. Full regression: 526 passed, eight intentional duplicate skips, zero failures. After the final answer-context guard refinement, all 26 focused memory/router checks passed, including two route-level stale-context checks. Twenty Node setup/launcher checks, ten Python worker checks, one audio compatibility check and synthetic local setup/runtime checks also passed. Tests use isolated records and synthetic providers; real model recall and microphone accuracy are not established by these results.

@@ -704,21 +704,26 @@ test("morning voice brief uses the conversation player before capture and speaks
 });
 
 test("saved noise sensitivity is restored on this device", async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem("gulf-wing.nexus-noise-mode.v1", "noisy"));
+  await page.addInitScript(() =>
+    localStorage.setItem("gulf-wing.nexus-noise-mode.v1", "noisy"),
+  );
   await page.goto("/nexus");
   await openAssistant(page);
   await page.getByText("Nexus voice · Push to talk", { exact: true }).click();
   const panel = page.getByRole("region", { name: "Hands-free conversation" });
   await panel.getByText("Listening preferences", { exact: true }).click();
-  await expect(panel.getByLabel("Background noise", { exact: true })).toHaveValue("noisy");
+  await expect(
+    panel.getByLabel("Background noise", { exact: true }),
+  ).toHaveValue("noisy");
 });
 
-for (const { automatic, noisy } of [
-  { automatic: false, noisy: false },
-  { automatic: true, noisy: false },
-  { automatic: true, noisy: true },
+for (const { automatic, noisy, resetContext } of [
+  { automatic: false, noisy: false, resetContext: false },
+  { automatic: true, noisy: false, resetContext: false },
+  { automatic: true, noisy: true, resetContext: false },
+  { automatic: true, noisy: false, resetContext: true },
 ]) {
-  test(`reply interruption ${automatic ? "by voice" : "by button"}${noisy ? " in high noise" : ""} keeps the session and releases resources`, async ({
+  test(`reply interruption ${automatic ? "by voice" : "by button"}${noisy ? " in high noise" : ""}${resetContext ? " after owner context reset" : ""} keeps the session and releases resources`, async ({
     page,
   }) => {
     await page.addInitScript(() => {
@@ -822,6 +827,8 @@ for (const { automatic, noisy } of [
           engine: "Synthetic test model",
           answer: "Fixture answer",
           sources: [],
+          resetHistory: resetContext && requests.length === 1,
+          contextRevision: 1,
         },
       });
     });
@@ -876,9 +883,11 @@ for (const { automatic, noisy } of [
       await page.evaluate(() => ((window as any).level = 0));
       await expect.poll(() => requests.length).toBe(2);
       expect(requests[1].query).toBe("What about cleaning?");
-      expect(requests[1].history[0].content).toBe(
-        "What services are available?",
-      );
+      if (resetContext) expect(requests[1].history).toEqual([]);
+      else
+        expect(requests[1].history[0].content).toBe(
+          "What services are available?",
+        );
     } else {
       await panel
         .getByRole("button", { name: "Interrupt and speak", exact: true })

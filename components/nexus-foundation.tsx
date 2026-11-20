@@ -78,6 +78,11 @@ export default function NexusFoundation({ disabled }: { disabled: boolean }) {
       });
       const d = await r.json();
       if (!r.ok) throw Error(d.error);
+      if (
+        typeof (body as any)?.op === "string" &&
+        ["memory.save", "memory.delete"].includes((body as any).op)
+      )
+        window.dispatchEvent(new Event("nexus:context-reset"));
       if (d.schemaVersion) setData(d);
       setMessage(
         d.filename

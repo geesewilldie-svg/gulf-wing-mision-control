@@ -99,6 +99,14 @@ export default function NexusConversation({
   const [background, setBackground] = useState(false);
   const backgroundRef = useRef(false);
   const previousSection = useRef(section);
+  const contextVersion = useRef(0);
+  useEffect(() => {
+    const reset = () => {
+      contextVersion.current++;
+    };
+    window.addEventListener("nexus:context-reset", reset);
+    return () => window.removeEventListener("nexus:context-reset", reset);
+  }, []);
   const [active, setActive] = useState(false);
   const [phase, setPhase] = useState("Microphone off");
   const [message, setMessage] = useState("");
@@ -691,6 +699,7 @@ export default function NexusConversation({
     setMessage("");
     setHeard("");
     const history: ConversationTurn[] = [];
+    let historyVersion = contextVersion.current;
     let pendingAudio: Blob | null = null;
     try {
       // Use one conversation player for the brief and replies; interruption
@@ -772,6 +781,11 @@ export default function NexusConversation({
           muteRef.current();
           break;
         }
+        if (historyVersion !== contextVersion.current) {
+          history.length = 0;
+          historyVersion = contextVersion.current;
+        }
+        const requestVersion = contextVersion.current;
         setPhase("Thinking");
         const answer = await handlers.current.onAsk(
           text,
@@ -779,10 +793,14 @@ export default function NexusConversation({
           controller.signal,
         );
         if (controller.signal.aborted) break;
-        history.push(
-          { role: "user", content: text.slice(0, 800) },
-          { role: "assistant", content: answer.slice(0, 800) },
-        );
+        if (requestVersion !== contextVersion.current) {
+          history.length = 0;
+          historyVersion = contextVersion.current;
+        } else
+          history.push(
+            { role: "user", content: text.slice(0, 800) },
+            { role: "assistant", content: answer.slice(0, 800) },
+          );
         if (history.length > 4) history.splice(0, history.length - 4);
         pendingAudio = await reply(answer, controller.signal);
         setPhase("Getting ready to listen");

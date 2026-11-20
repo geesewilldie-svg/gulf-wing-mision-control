@@ -302,3 +302,7 @@ Added scoped task selection, saved status/output retrieval, revision-aware pause
 ### Planning artifact quality repair — November 19, 2026
 
 Native acceptance exposed that saved/read-back planning text could be factually wrong and token-truncated. Added implemented Nexus context, a distinct bounded planning generation budget and explicit incomplete-draft retention/limited quality checks. Storage integrity is not semantic verification. See `docs/nexus-planning-quality.md`; the original poor artifact remains historical evidence, and live usefulness acceptance is still required.
+
+### Conversational memory integration
+
+Milestone 3 now has a conversational interface to the existing owner memory store: explicit save/list/correct/forget commands with scoped selection, revision checking and local-only handling. Memory/context revisions prevent old conversation history and in-flight answers from reusing superseded context; the existing coordinator invalidates stale active plans. This does not create new action grants or claim every fact/preference is mandatory model context. See `docs/nexus-conversation-memory.md` for the supported boundaries and deletion semantics.
