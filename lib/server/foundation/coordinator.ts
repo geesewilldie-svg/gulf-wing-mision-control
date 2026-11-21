@@ -23,11 +23,20 @@ const state = globalThis as typeof globalThis & {
   nexusFoundationBusy?: boolean;
   nexusFoundationTimer?: ReturnType<typeof setInterval>;
 };
-async function generate(t: NexusTask, signal: AbortSignal) {
+export async function generatePlan(
+  t: NexusTask,
+  signal: AbortSignal,
+  loadKnowledge: typeof readKnowledge = readKnowledge,
+) {
   const memory = memoryContext(t.scope, t.request);
-  const sources = searchDocuments(await readKnowledge(), t.request)
+  const sources = searchDocuments(await loadKnowledge(), t.request)
     .slice(0, 3)
     .map((d) => ({ id: d.id, source: d.source, text: d.text.slice(0, 1000) }));
+  // Source reads yield control: owner corrections or cancellation can invalidate
+  // the captured memory while they are in progress. Recheck before dispatch.
+  signal.throwIfAborted();
+  if (!stillCurrent(t))
+    throw new Error("Task or owner context changed before planning dispatch.");
   return askProvider(
     "local",
     t.request,
@@ -45,7 +54,7 @@ async function generate(t: NexusTask, signal: AbortSignal) {
   );
 }
 export async function coordinatorTick(
-  worker: (t: NexusTask, signal: AbortSignal) => Promise<string> = generate,
+  worker: (t: NexusTask, signal: AbortSignal) => Promise<string> = generatePlan,
 ) {
   if (state.nexusFoundationBusy) return;
   state.nexusFoundationBusy = true;
@@ -154,7 +163,10 @@ export async function coordinatorTick(
           error.message,
         );
       } catch {
-        failTask(task, "Incomplete planning draft could not be saved; no completed result was accepted.");
+        failTask(
+          task,
+          "Incomplete planning draft could not be saved; no completed result was accepted.",
+        );
       }
     } else if (task)
       failTask(

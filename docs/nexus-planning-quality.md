@@ -15,3 +15,7 @@ Previously saved artifacts are retained unchanged. Do not treat this patch as re
 ## Verification
 
 Production build and 56 planner/Foundation/provider/steering regression checks passed using synthetic responses. Eight focused checks then passed for the final positive-completion-signal gate, request context/budgets, retained invalid/incomplete drafts, and cancellation safety. No real model inference or account access was used by these fixtures. A fresh useful checklist on the owner's laptop remains an acceptance step.
+
+## Pre-dispatch context check
+
+Source loading is asynchronous. The planner rechecks the claimed task revision, current planning policy/context revision and abort signal after loading sources and before calling the model adapter. Owner memory changes, task cancellation and disabled planning during that read prevent dispatch with the captured context. Existing periodic cancellation and final-result revision checks still protect work already in progress. Regression fixtures change each of those states inside the source loader and verify that no provider request or output is produced; the normal actual-planner fixture still exercises successful dispatch.

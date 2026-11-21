@@ -6,8 +6,14 @@ import {
   createTask,
   changeTask,
   snapshot,
+  claimNext,
+  saveMemory,
+  setPolicy,
 } from "../lib/server/foundation/store";
-import { coordinatorTick } from "../lib/server/foundation/coordinator";
+import {
+  coordinatorTick,
+  generatePlan,
+} from "../lib/server/foundation/coordinator";
 import {
   IncompletePlanError,
   planningIssues,
@@ -31,6 +37,48 @@ function queue(request = "Prepare a checklist for testing Nexus on my phone") {
   changeTask({ id, revision: 0, action: "queue" });
   return id;
 }
+test("planning does not dispatch stale context after asynchronous source reads", async () =>
+  isolated(async () => {
+    const original = globalThis.fetch;
+    let calls = 0;
+    globalThis.fetch = (async () => {
+      calls++;
+      throw new Error("No provider should be contacted");
+    }) as typeof fetch;
+    try {
+      for (const change of ["memory", "cancel", "abort", "policy"] as const) {
+        const id = queue();
+        const task = claimNext()!;
+        expect(task.id).toBe(id);
+        const controller = new AbortController();
+        await expect(
+          generatePlan(task, controller.signal, async () => {
+            if (change === "memory")
+              saveMemory({
+                kind: "instruction",
+                scope: "Personal",
+                content: "Use corrected context.",
+              });
+            if (change === "cancel")
+              changeTask({ id, revision: task.revision, action: "cancel" });
+            if (change === "abort") controller.abort();
+            if (change === "policy")
+              setPolicy({
+                revision: snapshot().policy.revision,
+                enabled: false,
+              });
+            return [];
+          }),
+        ).rejects.toThrow();
+        if (change === "abort")
+          changeTask({ id, revision: task.revision, action: "cancel" });
+      }
+      expect(calls).toBe(0);
+      expect(snapshot().tasks.every((t) => !t.output)).toBe(true);
+    } finally {
+      globalThis.fetch = original;
+    }
+  }));
 test("known invalid product claims are distinguished from correct descriptions", () => {
   expect(
     planningIssues(
