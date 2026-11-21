@@ -1,4 +1,6 @@
 import { memoryIntent } from "@/lib/memory-intent";
+import { fileIntent } from "@/lib/file-intent";
+import { conversationFiles } from "@/lib/server/conversation-files";
 import { maintenanceIntent } from "@/lib/maintenance-intent";
 import { conversationMaintenance } from "@/lib/server/conversation-maintenance";
 import { conversationMemory } from "@/lib/server/conversation-memory";
@@ -148,6 +150,15 @@ export async function POST(request: Request) {
           data.resetHistory === true,
       });
     };
+    const fileCommand = fileIntent(body.query);
+    if (fileCommand) {
+      if (!["auto", "local"].includes(body.mode as string))
+        throw new SyncError(
+          403,
+          "Laptop file commands are local-only. Choose Auto or local mode.",
+        );
+      return reply(await conversationFiles(fileCommand, request.signal));
+    }
     const maintenanceCommand = maintenanceIntent(body.query);
     if (maintenanceCommand) {
       if (!["auto", "local"].includes(body.mode as string))

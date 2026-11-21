@@ -310,3 +310,7 @@ Milestone 3 now has a conversational interface to the existing owner memory stor
 ### Initial conversational Windows maintenance slice
 
 The existing locally enabled maintenance adapter is now reachable through whole-request commands “Check laptop services” and “Start missing Nexus services” in Auto/Local mode. It retains controller authorization, Windows-host checks, a fixed script allowlist, shell-free execution, one active maintenance operation and private audit references. Permission is rechecked after audit I/O before child-process dispatch. This is an initial milestone-4 integration slice, not the general execution broker, arbitrary terminal, file mutation or browser helper. Both Copilot products remain separate retained connection targets; see the connections roadmap.
+
+### Conversational selected-folder access
+
+The next milestone-4 slice exposes existing bounded selected-folder status, index refresh and lexical search through Auto/Local conversation. It retains local folder selection, freshness/path checks, exclusions and controller authorization. Literal passages do not invoke models or execution tools. See `docs/nexus-conversation-files.md`. General file writes, process control and browser/helper contracts remain pending rather than being implied by this read-only integration.

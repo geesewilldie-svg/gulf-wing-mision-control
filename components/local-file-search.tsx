@@ -86,6 +86,11 @@ export default function LocalFileSearch({ disabled }: { disabled: boolean }) {
     <section className="nexus-card" aria-label="Laptop files and Obsidian">
       <h3>Laptop files and Obsidian</h3>
       <p>
+        In Auto or Local mode, ask “Show my connected folders”, “Refresh my
+        laptop file index”, or “Find laptop files about…” followed by your
+        search terms.
+      </p>
+      <p>
         Select a folder on the Windows laptop with{" "}
         <code>Setup-Nexus-Folders.cmd</code>. Choose up to four business folders
         or Obsidian vaults. All paired controllers can search and preview these
