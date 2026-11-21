@@ -1,0 +1,9 @@
+# Conversational laptop maintenance
+
+In Auto or Local mode, type or say “Check laptop services” or “Start missing Nexus services”. These commands call the same adapter as Connections → Device access → Laptop maintenance. They require an authenticated paired controller, a Windows host and the existing local maintenance setting. They do not enable that setting or add permissions. Optional “Nexus” and “please” prefixes are accepted; compound commands and shell arguments are not interpreted as maintenance operations. Other questions continue through normal assistant routing without gaining execution tools.
+
+The check runs the fixed connection diagnostic; start runs the existing launcher with `--no-browser`. No installation, updates, process termination, administrator commands, arbitrary PowerShell, file edits or browser automation are added. Cloud, Compare and Knowledge-only modes reject recognized maintenance requests before provider use. The Android client requests work on its paired Windows host, not on Android itself.
+
+Responses show the operation reference and observed adapter outcome. A successful child exit means the operation returned successfully, not proof that every model, microphone or account is ready. Needs-attention/timeout does not establish readiness; inspect private laptop logs. Retrying start reuses the existing launcher's service checks; this is not a durable exactly-once broker. Closing or muting the browser after dispatch does not guarantee cancellation of the maintenance process. Pending conversational requests check cancellation before dispatch.
+
+Private audit records retain action/reference/state/time without recording the conversation or child output. A local permission revocation during the initial audit write prevents dispatch. Native Windows execution, service availability and voice transcription need laptop acceptance; Linux tests use synthetic host conditions without starting Windows services.

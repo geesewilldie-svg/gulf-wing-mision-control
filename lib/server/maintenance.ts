@@ -58,7 +58,11 @@ export function maintenancePlan(action: MaintenanceAction) {
 const globalState = globalThis as typeof globalThis & {
   nexusMaintenanceBusy?: boolean;
 };
-export async function runMaintenance(action: MaintenanceAction) {
+export async function runMaintenance(
+  action: MaintenanceAction,
+  signal?: AbortSignal,
+) {
+  signal?.throwIfAborted();
   if (process.platform !== "win32")
     throw new SyncError(
       409,
@@ -81,6 +85,16 @@ export async function runMaintenance(action: MaintenanceAction) {
   try {
     await audit("started");
     const plan = maintenancePlan(action);
+    // Audit I/O yields control. A local revocation during that write must
+    // prevent a new child process, rather than relying on the earlier check.
+    if (!(await maintenanceEnabled())) {
+      await audit("permission-revoked");
+      throw new SyncError(
+        403,
+        "Maintenance was disabled before dispatch. No operation was started.",
+      );
+    }
+    signal?.throwIfAborted();
     const outcome = await new Promise<"complete" | "needs-attention">(
       (resolve) => {
         execFile(

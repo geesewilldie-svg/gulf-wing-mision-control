@@ -306,3 +306,7 @@ Native acceptance exposed that saved/read-back planning text could be factually 
 ### Conversational memory integration
 
 Milestone 3 now has a conversational interface to the existing owner memory store: explicit save/list/correct/forget commands with scoped selection, revision checking and local-only handling. Memory/context revisions prevent old conversation history and in-flight answers from reusing superseded context; the existing coordinator invalidates stale active plans. This does not create new action grants or claim every fact/preference is mandatory model context. See `docs/nexus-conversation-memory.md` for the supported boundaries and deletion semantics.
+
+### Initial conversational Windows maintenance slice
+
+The existing locally enabled maintenance adapter is now reachable through whole-request commands “Check laptop services” and “Start missing Nexus services” in Auto/Local mode. It retains controller authorization, Windows-host checks, a fixed script allowlist, shell-free execution, one active maintenance operation and private audit references. Permission is rechecked after audit I/O before child-process dispatch. This is an initial milestone-4 integration slice, not the general execution broker, arbitrary terminal, file mutation or browser helper. Both Copilot products remain separate retained connection targets; see the connections roadmap.

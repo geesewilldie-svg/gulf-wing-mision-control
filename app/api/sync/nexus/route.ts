@@ -1,4 +1,6 @@
 import { memoryIntent } from "@/lib/memory-intent";
+import { maintenanceIntent } from "@/lib/maintenance-intent";
+import { conversationMaintenance } from "@/lib/server/conversation-maintenance";
 import { conversationMemory } from "@/lib/server/conversation-memory";
 import { conversationTask } from "@/lib/server/conversation-tasks";
 import { taskIntent } from "@/lib/task-intent";
@@ -146,6 +148,18 @@ export async function POST(request: Request) {
           data.resetHistory === true,
       });
     };
+    const maintenanceCommand = maintenanceIntent(body.query);
+    if (maintenanceCommand) {
+      if (!["auto", "local"].includes(body.mode as string))
+        throw new SyncError(
+          403,
+          "Laptop maintenance commands are local-only. Choose Auto or local mode.",
+        );
+      request.signal.throwIfAborted();
+      return reply(
+        await conversationMaintenance(maintenanceCommand, request.signal),
+      );
+    }
     const memoryCommand = memoryIntent(body.query);
     if (memoryCommand) {
       if (!["auto", "local"].includes(body.mode as string))

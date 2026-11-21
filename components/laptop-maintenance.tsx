@@ -44,6 +44,11 @@ export default function LaptopMaintenance({ disabled }: { disabled: boolean }) {
     <section className="nexus-card" aria-label="Laptop maintenance">
       <h3>Laptop maintenance</h3>
       <p>
+        In Auto or Local conversation mode, say “Check laptop services” or
+        “Start missing Nexus services”. The same local permission setting
+        applies.
+      </p>
+      <p>
         Run approved local service operations without copying PowerShell
         commands. Paired controllers share this access; external contractor
         accounts are not supported.
