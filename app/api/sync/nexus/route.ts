@@ -1,8 +1,14 @@
 import { memoryIntent } from "@/lib/memory-intent";
 import { fileIntent } from "@/lib/file-intent";
 import { conversationFiles } from "@/lib/server/conversation-files";
-import { maintenanceIntent } from "@/lib/maintenance-intent";
-import { conversationMaintenance } from "@/lib/server/conversation-maintenance";
+import {
+  maintenanceIntent,
+  operationStatusIntent,
+} from "@/lib/maintenance-intent";
+import {
+  conversationMaintenance,
+  conversationOperation,
+} from "@/lib/server/conversation-maintenance";
 import { conversationMemory } from "@/lib/server/conversation-memory";
 import { conversationTask } from "@/lib/server/conversation-tasks";
 import { taskIntent } from "@/lib/task-intent";
@@ -160,7 +166,8 @@ export async function POST(request: Request) {
       return reply(await conversationFiles(fileCommand, request.signal));
     }
     const maintenanceCommand = maintenanceIntent(body.query);
-    if (maintenanceCommand) {
+    const operationReference = operationStatusIntent(body.query);
+    if (maintenanceCommand || operationReference) {
       if (!["auto", "local"].includes(body.mode as string))
         throw new SyncError(
           403,
@@ -168,7 +175,13 @@ export async function POST(request: Request) {
         );
       request.signal.throwIfAborted();
       return reply(
-        await conversationMaintenance(maintenanceCommand, request.signal),
+        operationReference
+          ? conversationOperation(operationReference)
+          : await conversationMaintenance(
+              maintenanceCommand!,
+              request.signal,
+              body.requestId,
+            ),
       );
     }
     const memoryCommand = memoryIntent(body.query);

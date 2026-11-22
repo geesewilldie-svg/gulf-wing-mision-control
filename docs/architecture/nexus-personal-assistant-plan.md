@@ -318,3 +318,7 @@ The next milestone-4 slice exposes existing bounded selected-folder status, inde
 ### Version-bound indexed-file reading
 
 Conversational selected-folder search now provides direct file-reading controls with bounded parts and source locations. Part continuation is pinned to the selected content hash and revalidates current selected-folder access. Duplicate names require explicit selection; stale versions are rejected. This extends the milestone-4 read-only slice and does not claim full original-file extraction, native application opening, arbitrary paths or file mutation.
+
+### Durable bounded laptop operation records
+
+The two named maintenance actions now use transactional SQLite invocation claims, request-ID deduplication, active-operation exclusion, terminal receipts and explicit unknown status for expired unconfirmed work. Saved status is queryable from trusted controllers without re-executing the operation. The fixed maintenance enablement and script allowlist still govern dispatch. See `docs/nexus-laptop-maintenance-conversation.md`; broad resource leases, arbitrary-effect reconciliation and general Windows helper execution remain separate milestones.

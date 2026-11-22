@@ -1,7 +1,10 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { execFile } from "node:child_process";
-import { randomBytes } from "node:crypto";
+import {
+  claimLaptopOperation,
+  finishLaptopOperation,
+} from "./laptop-operations";
 import { SyncError } from "./sync-store";
 const root = () =>
   path.resolve(
@@ -55,12 +58,10 @@ export function maintenancePlan(action: MaintenanceAction) {
       throw new SyncError(400, "Unsupported maintenance action.");
   }
 }
-const globalState = globalThis as typeof globalThis & {
-  nexusMaintenanceBusy?: boolean;
-};
 export async function runMaintenance(
   action: MaintenanceAction,
   signal?: AbortSignal,
+  requestId?: unknown,
 ) {
   signal?.throwIfAborted();
   if (process.platform !== "win32")
@@ -70,10 +71,11 @@ export async function runMaintenance(
     );
   if (!(await maintenanceEnabled()))
     throw new SyncError(403, "Enable maintenance locally on the laptop first.");
-  if (globalState.nexusMaintenanceBusy)
-    throw new SyncError(409, "A maintenance action is already running.");
-  globalState.nexusMaintenanceBusy = true;
-  const id = randomBytes(12).toString("hex");
+  const plan = maintenancePlan(action);
+  const claimed = claimLaptopOperation(action, requestId, plan.timeout);
+  if (!claimed.execute) return claimed.receipt;
+  const id = claimed.receipt.id;
+  let dispatched = false;
   const audit = async (state: string) => {
     await fs.appendFile(
       path.join(root(), "maintenance-audit.jsonl"),
@@ -84,7 +86,6 @@ export async function runMaintenance(
   };
   try {
     await audit("started");
-    const plan = maintenancePlan(action);
     // Audit I/O yields control. A local revocation during that write must
     // prevent a new child process, rather than relying on the earlier check.
     if (!(await maintenanceEnabled())) {
@@ -95,6 +96,7 @@ export async function runMaintenance(
       );
     }
     signal?.throwIfAborted();
+    dispatched = true;
     const outcome = await new Promise<"complete" | "needs-attention">(
       (resolve) => {
         execFile(
@@ -111,17 +113,25 @@ export async function runMaintenance(
         );
       },
     );
-    await audit(outcome);
-    return {
+    const result = finishLaptopOperation(
       id,
-      action,
       outcome,
-      message:
-        outcome === "complete"
-          ? "Operation completed. Check connection status to confirm readiness."
-          : "Operation needs attention or timed out. Check the private launcher logs on the laptop; retrying does not stop existing services.",
-    };
-  } finally {
-    globalState.nexusMaintenanceBusy = false;
+      outcome === "complete"
+        ? "Operation completed. Check connection status to confirm readiness."
+        : "Operation needs attention or timed out. Check the private launcher logs on the laptop; retrying does not stop existing services.",
+    );
+    await audit(outcome);
+    return result;
+  } catch (error) {
+    try {
+      finishLaptopOperation(
+        id,
+        dispatched ? "unknown" : "not-started",
+        dispatched
+          ? "The final outcome could not be confirmed. Check laptop logs and current service status before a new request."
+          : "The operation did not start. Check local maintenance permission or request cancellation.",
+      );
+    } catch {}
+    throw error;
   }
 }

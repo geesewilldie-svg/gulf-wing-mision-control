@@ -26,7 +26,7 @@ export function withStore<T>(fn: (db: DatabaseSync) => T): T {
     const version = Number(
       (db.prepare("PRAGMA user_version").get() as any).user_version,
     );
-    if (version > 6)
+    if (version > 7)
       throw new SyncError(
         503,
         "Foundation database is newer than this application. No downgrade was attempted.",
@@ -119,6 +119,22 @@ export function withStore<T>(fn: (db: DatabaseSync) => T): T {
       CREATE TABLE utility_binding_history(id TEXT PRIMARY KEY,scope TEXT NOT NULL,profile_id TEXT NOT NULL,binding_revision INTEGER NOT NULL,from_package_id TEXT,to_package_id TEXT,kind TEXT NOT NULL,at TEXT NOT NULL);
       CREATE TABLE utility_runs(id TEXT PRIMARY KEY,scope TEXT NOT NULL,profile_id TEXT NOT NULL,binding_revision INTEGER NOT NULL,package_id TEXT,state TEXT NOT NULL,report TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL);
       PRAGMA user_version=6;COMMIT;`);
+    }
+    if (version < 7) {
+      if (version === 6) {
+        const dir = path.join(root, "foundation-backups");
+        mkdirSync(dir, { recursive: true, mode: 0o700 });
+        const backup = path.join(
+          dir,
+          "before-schema-7-" + Date.now() + "-" + randomUUID() + ".sqlite",
+        );
+        db.prepare("VACUUM INTO ?").run(backup);
+        if (process.platform !== "win32") chmodSync(backup, 0o600);
+      }
+      db.exec(`BEGIN IMMEDIATE;
+      CREATE TABLE laptop_operations(id TEXT PRIMARY KEY,request_id TEXT UNIQUE NOT NULL,action TEXT NOT NULL,state TEXT NOT NULL,message TEXT NOT NULL,started_at TEXT NOT NULL,updated_at TEXT NOT NULL,expires INTEGER NOT NULL);
+      CREATE UNIQUE INDEX laptop_operation_running ON laptop_operations(state) WHERE state='running';
+      PRAGMA user_version=7;COMMIT;`);
     }
     return fn(db);
   } finally {

@@ -13,3 +13,12 @@ export function maintenanceIntent(query: string): MaintenanceAction | null {
     return "start-services";
   return null;
 }
+export function operationStatusIntent(query: string): string | null {
+  if (/^show (?:my )?laptop operations[.!?]*$/i.test(query.trim()))
+    return "recent";
+  return (
+    /^(?:show|check) laptop operation ([a-f0-9]{24})[.!?]*$/i.exec(
+      query.trim(),
+    )?.[1] || null
+  );
+}

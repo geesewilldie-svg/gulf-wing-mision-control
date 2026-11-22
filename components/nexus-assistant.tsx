@@ -14,6 +14,8 @@ const AssistantContext = createContext({
 export const useNexusAssistant = () => useContext(AssistantContext);
 type Answer = {
   engine: string;
+  operationId?: string;
+  operationChoices?: { id: string; label: string }[];
   fileChoices?: { id: string; hash: string; name: string }[];
   fileRead?: {
     id: string;
@@ -335,6 +337,31 @@ export default function NexusAssistant({
               <article className="nexus-answer">
                 <h3>{answer.engine}</h3>
                 <p>{answer.answer}</p>
+                {answer.operationChoices?.map((operation) => (
+                  <button
+                    key={operation.id}
+                    disabled={disabled || busy}
+                    onClick={() =>
+                      void ask(`Show laptop operation ${operation.id}`).catch(
+                        () => {},
+                      )
+                    }
+                  >
+                    Operation: {operation.label}
+                  </button>
+                ))}
+                {answer.operationId && (
+                  <button
+                    disabled={disabled || busy}
+                    onClick={() =>
+                      void ask(
+                        `Show laptop operation ${answer.operationId}`,
+                      ).catch(() => {})
+                    }
+                  >
+                    View saved operation status
+                  </button>
+                )}
                 {answer.fileChoices?.map((file) => (
                   <button
                     key={file.id}
