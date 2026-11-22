@@ -86,6 +86,11 @@ export default function LocalFileSearch({ disabled }: { disabled: boolean }) {
     <section className="nexus-card" aria-label="Laptop files and Obsidian">
       <h3>Laptop files and Obsidian</h3>
       <p>
+        Use Read file on an assistant search result to view more indexed text,
+        then Next part for longer files. You can also ask “Read laptop file”
+        followed by an exact file name.
+      </p>
+      <p>
         In Auto or Local mode, ask “Show my connected folders”, “Refresh my
         laptop file index”, or “Find laptop files about…” followed by your
         search terms.

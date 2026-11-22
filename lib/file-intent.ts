@@ -1,5 +1,6 @@
 export type FileIntent =
   | { kind: "status" | "refresh" }
+  | { kind: "read"; target: string; part: number }
   | { kind: "search"; query: string };
 
 export function fileIntent(query: string): FileIntent | null {
@@ -11,6 +12,13 @@ export function fileIntent(query: string): FileIntent | null {
   if (/^show (?:my )?connected folders$/i.test(text)) return { kind: "status" };
   if (/^refresh (?:my )?laptop file index$/i.test(text))
     return { kind: "refresh" };
+  const read = /^read laptop file (.+?)(?: part ([0-9]+))?$/i.exec(text);
+  if (read)
+    return {
+      kind: "read",
+      target: read[1].trim(),
+      part: read[2] ? Number(read[2]) : 1,
+    };
   const match = /^find (?:my )?laptop files (?:about|containing) (.+)$/i.exec(
     text,
   );

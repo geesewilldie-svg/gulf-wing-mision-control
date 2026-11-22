@@ -1,6 +1,7 @@
 import type { FileIntent } from "../file-intent";
 import { searchDocuments } from "../nexus";
 import { fileSnapshot, refreshFiles } from "./local-files";
+import { readIndexedFile } from "./read-indexed-file";
 
 export async function conversationFiles(
   intent: FileIntent,
@@ -17,6 +18,7 @@ export async function conversationFiles(
       .filter((scan) => scan.partial)
       .map((scan) => `${scan.label}: partial index. ${scan.issues.join(" ")}`),
   ].filter((warning): warning is string => Boolean(warning));
+  if (intent.kind === "read") return readIndexedFile(intent, files, warnings);
   const sources =
     intent.kind === "search"
       ? searchDocuments(
@@ -50,6 +52,21 @@ export async function conversationFiles(
     engine: "Nexus laptop files",
     answer,
     sources,
+    fileChoices:
+      intent.kind === "search"
+        ? files
+            .filter((file) =>
+              file.documents.some((document) =>
+                sources.some((source) => source.id === document.id),
+              ),
+            )
+            .map((file) => ({
+              id: file.id,
+              hash: file.hash,
+              name: file.documents[0]?.source || file.name,
+            }))
+        : [],
+    fileRead: null,
     warnings,
     routing: {
       mode: "local",

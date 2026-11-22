@@ -314,3 +314,7 @@ The existing locally enabled maintenance adapter is now reachable through whole-
 ### Conversational selected-folder access
 
 The next milestone-4 slice exposes existing bounded selected-folder status, index refresh and lexical search through Auto/Local conversation. It retains local folder selection, freshness/path checks, exclusions and controller authorization. Literal passages do not invoke models or execution tools. See `docs/nexus-conversation-files.md`. General file writes, process control and browser/helper contracts remain pending rather than being implied by this read-only integration.
+
+### Version-bound indexed-file reading
+
+Conversational selected-folder search now provides direct file-reading controls with bounded parts and source locations. Part continuation is pinned to the selected content hash and revalidates current selected-folder access. Duplicate names require explicit selection; stale versions are rejected. This extends the milestone-4 read-only slice and does not claim full original-file extraction, native application opening, arbitrary paths or file mutation.

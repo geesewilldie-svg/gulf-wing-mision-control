@@ -147,3 +147,9 @@ Production build, TypeScript and 50 desktop/mobile maintenance, routing, memory 
 The owner installed `df65d2a` and reported complete outcomes with operation references for both conversational maintenance commands. This establishes native command/adapter execution, not independent proof of every model, microphone or account's readiness.
 
 The next milestone-4 slice adds “Show my connected folders”, “Refresh my laptop file index” and “Find laptop files about …” through existing selected-folder permissions. Results are direct bounded passages, with current-source validation, partial/stale warnings and no model calls. Folder selection and file mutation permissions are not expanded. See `docs/nexus-conversation-files.md`. Production build, TypeScript and all 48 desktop/mobile selected-folder, conversational-file, maintenance and memory checks passed using isolated synthetic files. Native conversational file acceptance remains pending installation.
+
+## Native folder acceptance and indexed reading
+
+The owner reported two selected roots (Gulf Wing Documents and Nexus Knowledge/Obsidian), three current indexed files, a successful refresh and source-located PDF search passages from the installed selected-folder increment. These observations confirm native status/refresh/search, not exhaustive file coverage.
+
+The next read-only increment adds distinct-file Read file buttons and version-bound Next part navigation through indexed text, plus exact-name conversational reading. Current-source checks, duplicate-name selection and content-hash comparison prevent silent cross-file/version continuation. Each part is bounded to 3,000 characters; extraction completeness is not promised. Production build, TypeScript and all 64 focused desktop/mobile file, routing and maintenance checks passed. Native reading acceptance remains pending installation. No new provider, file write, OS application launch or general broker/helper is claimed.

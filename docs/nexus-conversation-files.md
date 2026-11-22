@@ -15,3 +15,11 @@ The existing scanner bounds, file-type exclusions, symlink/junction checks, size
 Results are literal matching source passages with labels/locations, up to eight passages and 1,200 characters per passage. They are evidence, not generated conclusions or executable instructions. The search remains lexical and relevance ranked, not an exhaustive exact-content search. Cancellation before dispatch prevents a refresh; once underway a bounded scan may finish updating the index even if the browser request is closed.
 
 This is an initial read-only file-access integration in architecture milestone 4. Broader file mutation, the general broker/helper, desktop takeover and browser execution remain pending. Tests use isolated synthetic selected folders; Windows path/junction behavior and native voice acceptance remain separate checks.
+
+## Reading beyond a search excerpt
+
+Search results now offer Read file buttons for the distinct matching indexed files. Reading returns up to 3,000 characters from one indexed section at a time, preserving its source location. Next part advances through the remaining extracted text. You can also ask “Read laptop file manual.txt” using an exact indexed relative name, basename or stable file ID. Duplicate names produce choices; Nexus does not guess.
+
+Buttons carry the selected file ID and content hash. Subsequent parts require that version reference, revalidate the current selected-folder snapshot and reject a changed version, even after an index refresh. A missing/deleted/unselected/stale file cannot be read through an old reference. Out-of-range parts are rejected. References are selectors, not authorization: controller/local-mode and selected-folder checks still apply. No caller-supplied path is opened.
+
+This reads extracted indexed text only, not every original PDF image, formula, page or embedded element. Existing partial-index warnings remain visible. “End of indexed text” is explicitly distinct from complete extraction of the original. Literal source text is not interpreted as instructions and no model or external provider is contacted. Reading does not open an OS application or change the source.

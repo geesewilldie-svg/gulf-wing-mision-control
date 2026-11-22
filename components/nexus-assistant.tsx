@@ -14,6 +14,13 @@ const AssistantContext = createContext({
 export const useNexusAssistant = () => useContext(AssistantContext);
 type Answer = {
   engine: string;
+  fileChoices?: { id: string; hash: string; name: string }[];
+  fileRead?: {
+    id: string;
+    hash: string;
+    part: number;
+    totalParts: number;
+  } | null;
   memory?: { id: string; revision: number; scope: string };
   memoryChoices?: {
     id: string;
@@ -122,12 +129,13 @@ export default function NexusAssistant({
     text: string,
     history: ConversationTurn[] = [],
     signal?: AbortSignal,
+    displayText?: string,
   ) => {
     const controller = signal ? null : new AbortController();
     if (controller) pendingAnswer.current = controller;
     const requestSignal = signal || controller!.signal;
     setBusy(true);
-    setLastQuestion(text.trim());
+    setLastQuestion(displayText || text.trim());
     setAnswer(null);
     setMessage("");
     setAllowExternal(false);
@@ -327,6 +335,38 @@ export default function NexusAssistant({
               <article className="nexus-answer">
                 <h3>{answer.engine}</h3>
                 <p>{answer.answer}</p>
+                {answer.fileChoices?.map((file) => (
+                  <button
+                    key={file.id}
+                    disabled={disabled || busy}
+                    onClick={() =>
+                      void ask(
+                        `Read laptop file ${file.id}@${file.hash}`,
+                        [],
+                        undefined,
+                        `Read file: ${file.name}`,
+                      ).catch(() => {})
+                    }
+                  >
+                    Read file: {file.name}
+                  </button>
+                ))}
+                {answer.fileRead &&
+                  answer.fileRead.part < answer.fileRead.totalParts && (
+                    <button
+                      disabled={disabled || busy}
+                      onClick={() =>
+                        void ask(
+                          `Read laptop file ${answer.fileRead!.id}@${answer.fileRead!.hash} part ${answer.fileRead!.part + 1}`,
+                          [],
+                          undefined,
+                          "Read next part",
+                        ).catch(() => {})
+                      }
+                    >
+                      Next part
+                    </button>
+                  )}
                 {answer.memoryChoices?.map((memory) => (
                   <button
                     key={memory.id}
