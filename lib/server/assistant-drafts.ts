@@ -245,7 +245,8 @@ export function downloadAssistantDraft(id: string) {
   return data;
 }
 export function previewAssistantDraft(id: string) {
-  const text = downloadAssistantDraft(id).toString("utf8");
+  const data = downloadAssistantDraft(id),
+    text = data.toString("utf8");
   const metadata = withStore((db) =>
     db
       .prepare(
@@ -253,5 +254,15 @@ export function previewAssistantDraft(id: string) {
       )
       .get(id),
   );
-  return { ...metadata, text };
+  return {
+    ...metadata,
+    text,
+    recordedBytes: metadata?.bytes,
+    bytes: data.length,
+    verifiedBytes: data.length,
+    sizeWarning:
+      metadata?.bytes !== data.length
+        ? "Recorded byte count differs from the verified file. The recorded value was preserved for investigation."
+        : undefined,
+  };
 }

@@ -1,6 +1,12 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-type Draft = { id: string; title: string; bytes: number };
+type Draft = { id: string; title: string; bytes: number; verified?: boolean };
+type ReadBack = Draft & {
+  text: string;
+  verifiedBytes: number;
+  recordedBytes: number;
+  sizeWarning?: string;
+};
 export default function AssistantDrafts({
   text,
   scope,
@@ -24,6 +30,7 @@ export default function AssistantDrafts({
   const [source, setSource] = useState<{ id: string; hash: string } | null>(
     null,
   );
+  const [readBack, setReadBack] = useState<ReadBack | null>(null);
   useEffect(() => {
     if (open) {
       editor.current?.scrollIntoView({ block: "center" });
@@ -35,11 +42,37 @@ export default function AssistantDrafts({
     setBusy(false);
     setOpen(false);
     setContent("");
+    setReadBack(null);
     setSource(null);
     setDrafts([]);
     setMessage("");
     key.current = undefined;
   }, [disabled, scope]);
+  async function inspect(id: string) {
+    const current = version.current;
+    setReadBack(null);
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await fetch(`/api/sync/drafts?id=${id}&preview=1`),
+        data = await response.json();
+      if (!response.ok) throw Error(data.error);
+      if (current === version.current) {
+        setReadBack(data.draft);
+        setDrafts((previous) =>
+          previous.map((draft) =>
+            draft.id === id
+              ? { ...draft, bytes: data.draft.verifiedBytes, verified: true }
+              : draft,
+          ),
+        );
+      }
+    } catch (error) {
+      if (current === version.current) setMessage((error as Error).message);
+    } finally {
+      if (current === version.current) setBusy(false);
+    }
+  }
   async function revise(id: string) {
     const current = version.current;
     setBusy(true);
@@ -82,6 +115,9 @@ export default function AssistantDrafts({
   }
   async function save() {
     const current = version.current;
+    setReadBack(null);
+    const reviewedText = content,
+      reviewedBytes = new TextEncoder().encode(reviewedText).length;
     key.current ||= crypto.randomUUID();
     setBusy(true);
     setMessage("");
@@ -91,7 +127,7 @@ export default function AssistantDrafts({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title,
-          text: content,
+          text: reviewedText,
           scope,
           requestId: key.current,
           confirmed: true,
@@ -100,14 +136,30 @@ export default function AssistantDrafts({
       });
       const data = await response.json();
       if (!response.ok) throw Error(data.error);
+      const verification = await fetch(
+          `/api/sync/drafts?id=${data.draft.id}&preview=1`,
+        ),
+        verified = await verification.json();
+      if (!verification.ok)
+        throw Error(
+          "The save request returned, but the file could not be independently checked. Inspect Saved drafts before retrying.",
+        );
+      if (
+        verified.draft.text !== reviewedText ||
+        verified.draft.verifiedBytes !== reviewedBytes
+      )
+        throw Error(
+          "A file was returned, but its read-back differs from the reviewed text. Nothing else was written. Inspect Saved drafts before retrying.",
+        );
       if (current === version.current) {
         setDrafts((previous) => [
-          data.draft,
+          { ...verified.draft, verified: true },
           ...previous.filter((draft) => draft.id !== data.draft.id),
         ]);
         setMessage(
-          "Draft file saved and read back successfully. Its contents have not been fact-checked.",
+          `Draft file saved and read back successfully: ${reviewedBytes} verified bytes. Its contents have not been fact-checked.`,
         );
+        setReadBack(verified.draft);
         setOpen(false);
       }
     } catch (error) {
@@ -192,13 +244,32 @@ export default function AssistantDrafts({
         </div>
       )}
       {message && <p role="status">{message}</p>}
+      {!disabled && readBack && (
+        <section aria-label="Saved file read-back">
+          <h3>Saved file: {readBack.title}</h3>
+          <p>
+            {readBack.verifiedBytes} verified bytes · recorded size:{" "}
+            {readBack.recordedBytes} bytes
+          </p>
+          {readBack.sizeWarning && <p role="status">{readBack.sizeWarning}</p>}
+          <pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+            {readBack.text}
+          </pre>
+        </section>
+      )}
       {!disabled &&
         drafts.map((draft) => (
           <p key={draft.id}>
             <a href={`/api/sync/drafts?id=${draft.id}`} download>
               Download draft: {draft.title}
             </a>{" "}
-            · {draft.bytes} bytes
+            · {draft.bytes} bytes ({draft.verified ? "verified" : "recorded"})
+            <button
+              disabled={disabled || busy}
+              onClick={() => void inspect(draft.id)}
+            >
+              Inspect saved text: {draft.title}
+            </button>
             <button
               disabled={disabled || busy}
               onClick={() => void revise(draft.id)}
