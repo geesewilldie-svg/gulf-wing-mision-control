@@ -100,15 +100,13 @@ test("a mismatching post-save read-back withholds success and keeps the reviewed
     .getByRole("button", { name: "Ask Nexus", exact: true })
     .click();
   const panel = page.getByRole("region", { name: "Draft files", exact: true });
-  await panel.getByRole("button", { name: "Review answer as draft" }).click();
+  await panel.getByRole("button", { name: "Save this answer" }).click();
   const editor = panel.getByRole("textbox", {
-    name: "Draft text",
+    name: "File text",
     exact: true,
   });
   await editor.fill("This is my revised Nexus draft.");
-  await panel
-    .getByRole("button", { name: "Confirm and save draft file", exact: true })
-    .click();
+  await panel.getByRole("button", { name: "Save file", exact: true }).click();
   await expect(panel.getByRole("status")).toContainText(
     "differs from the reviewed text",
   );
@@ -140,15 +138,16 @@ test("saved file inspection displays actual text and verified size", async ({
   await openAssistant(page);
   const panel = page.getByRole("region", { name: "Draft files", exact: true });
   await panel
-    .getByRole("button", { name: "Saved drafts", exact: true })
+    .getByRole("button", { name: "Show saved files", exact: true })
     .click();
   await panel
-    .getByRole("button", { name: `Inspect saved text: ${title}`, exact: true })
+    .getByRole("article", { name: title, exact: true })
+    .getByRole("button", { name: "View text", exact: true })
     .click();
   const readback = panel.getByRole("region", {
     name: "Saved file read-back",
     exact: true,
   });
-  await expect(readback).toContainText("31 verified bytes");
+  await expect(readback).toContainText("Checked file size: 31 bytes");
   await expect(readback.locator("pre")).toHaveText(text);
 });

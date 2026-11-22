@@ -173,37 +173,38 @@ test("answer draft review can be cancelled, edited, saved and retrieved after re
     .click();
   const panel = page.getByRole("region", { name: "Draft files", exact: true });
   await expect(
-    panel.getByRole("button", { name: "Review answer as draft" }),
+    panel.getByRole("button", { name: "Save this answer" }),
   ).toBeEnabled();
-  await panel.getByRole("button", { name: "Review answer as draft" }).click();
+  await panel.getByRole("button", { name: "Save this answer" }).click();
   await panel
-    .getByRole("button", { name: "Cancel draft", exact: true })
+    .getByRole("button", { name: "Cancel editing", exact: true })
     .click();
   expect(writes).toBe(0);
-  await panel.getByRole("button", { name: "Review answer as draft" }).click();
+  await panel.getByRole("button", { name: "Save this answer" }).click();
   const title = "Reviewed draft " + randomUUID(),
     text = "# Reviewed owner text\nNo external action performed.\n";
   await panel
-    .getByRole("textbox", { name: "Draft title", exact: true })
+    .getByRole("textbox", { name: "File title", exact: true })
     .fill(title);
   await panel
-    .getByRole("textbox", { name: "Draft text", exact: true })
+    .getByRole("textbox", { name: "File text", exact: true })
     .fill(text);
-  await panel
-    .getByRole("button", { name: "Confirm and save draft file", exact: true })
-    .click();
-  await expect(panel.getByRole("status")).toContainText("saved and read back");
+  await panel.getByRole("button", { name: "Save file", exact: true }).click();
+  await expect(panel.getByRole("status")).toContainText("File saved.");
   const href = await panel
-    .getByRole("link", { name: `Download draft: ${title}` })
+    .getByRole("article", { name: title, exact: true })
+    .getByRole("link", { name: "Download", exact: true })
     .getAttribute("href");
   expect(await (await page.request.get(href!)).text()).toBe(text);
   expect(writes).toBe(1);
   await page.reload();
   await openAssistant(page);
   await panel
-    .getByRole("button", { name: "Saved drafts", exact: true })
+    .getByRole("button", { name: "Show saved files", exact: true })
     .click();
   await expect(
-    panel.getByRole("link", { name: `Download draft: ${title}` }),
+    panel
+      .getByRole("article", { name: title, exact: true })
+      .getByRole("link", { name: "Download", exact: true }),
   ).toBeVisible();
 });

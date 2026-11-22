@@ -183,3 +183,11 @@ The owner reported revised text present in a downloaded copy, but pasted feedbac
 The earlier operator instruction also contained a counting error: “This is my revised Nexus draft.” is 31 UTF-8 bytes with the final period, or 30 without it. Fixture verification caught the incorrect expected value. The count was corrected in tests; this does not explain the separate 65-byte entry or establish a storage defect.
 
 Verification: production build, TypeScript and all thirty focused desktop/mobile draft, copy, read-back, continuity and assistant-shell checks passed. Synthetic inconsistent metadata preserves its recorded 65-byte value while independently reporting the verified 31-byte punctuated text; a separate assertion confirms 30 without the period and six UTF-8 bytes for “é🙂”. A mismatching post-save read-back withholds success, retains reviewed text and issues only one write. Existing draft/copy/shell checks passed. The original Windows discrepancy remains pending inspection with the new controls.
+
+## Saved-file readability repair — November 22, 2026
+
+Native inspection confirmed that the examined revised file contained the clock answer and that recorded/verified counts both equaled 65 bytes. That file did not contain the intended replacement sentence; a storage/display size disagreement was not established. The owner then reported crowded adjacent controls and repeated labels in the assistant window.
+
+Saved files now use separate cards with one wrapping title, a size line, and spaced View text, Download and Edit a copy actions. The Your files toolbar, read-only preview and highlighted File editor are visually distinct. Editor labels are File title/File text, with Save file/Cancel editing actions and heading-first scroll/focus. The existing navy/cyan style is retained. This changes presentation and wording, not source files, permissions, APIs or database schema.
+
+Production build, TypeScript and all 32 focused desktop/mobile layout, read-back, copy, save, continuity and assistant-shell checks passed. Before/after screenshots were inspected with synthetic long names. Layout checks measure title/action separation, at least eight pixels between action targets, no horizontal overflow and a 320-pixel narrow-screen editor. Browser evidence is local fixture coverage; native owner layout acceptance remains pending installation.

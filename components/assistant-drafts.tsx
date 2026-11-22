@@ -23,7 +23,8 @@ export default function AssistantDrafts({
     [content, setContent] = useState("");
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState(""),
-    [drafts, setDrafts] = useState<Draft[]>([]);
+    [drafts, setDrafts] = useState<Draft[]>([]),
+    [listed, setListed] = useState(false);
   const key = useRef<string | undefined>(undefined),
     version = useRef(0),
     editor = useRef<HTMLTextAreaElement>(null);
@@ -33,8 +34,10 @@ export default function AssistantDrafts({
   const [readBack, setReadBack] = useState<ReadBack | null>(null);
   useEffect(() => {
     if (open) {
-      editor.current?.scrollIntoView({ block: "center" });
-      editor.current?.focus();
+      editor.current
+        ?.closest(".nexus-draft-editor")
+        ?.scrollIntoView({ block: "start" });
+      editor.current?.focus({ preventScroll: true });
     }
   }, [open]);
   useEffect(() => {
@@ -45,6 +48,7 @@ export default function AssistantDrafts({
     setReadBack(null);
     setSource(null);
     setDrafts([]);
+    setListed(false);
     setMessage("");
     key.current = undefined;
   }, [disabled, scope]);
@@ -106,7 +110,10 @@ export default function AssistantDrafts({
         ),
         data = await response.json();
       if (!response.ok) throw Error(data.error);
-      if (current === version.current) setDrafts(data.drafts);
+      if (current === version.current) {
+        setDrafts(data.drafts);
+        setListed(true);
+      }
     } catch (error) {
       if (current === version.current) setMessage((error as Error).message);
     } finally {
@@ -142,23 +149,22 @@ export default function AssistantDrafts({
         verified = await verification.json();
       if (!verification.ok)
         throw Error(
-          "The save request returned, but the file could not be independently checked. Inspect Saved drafts before retrying.",
+          "The file may have been saved, but its text could not be checked. Choose Show saved files, then View text before trying again.",
         );
       if (
         verified.draft.text !== reviewedText ||
         verified.draft.verifiedBytes !== reviewedBytes
       )
         throw Error(
-          "A file was returned, but its read-back differs from the reviewed text. Nothing else was written. Inspect Saved drafts before retrying.",
+          "The saved file differs from the reviewed text. Your edits are still in the editor. Choose Show saved files, then View text before trying again.",
         );
       if (current === version.current) {
+        setListed(true);
         setDrafts((previous) => [
           { ...verified.draft, verified: true },
           ...previous.filter((draft) => draft.id !== data.draft.id),
         ]);
-        setMessage(
-          `Draft file saved and read back successfully: ${reviewedBytes} verified bytes. Its contents have not been fact-checked.`,
-        );
+        setMessage("File saved. The saved text matches what you reviewed.");
         setReadBack(verified.draft);
         setOpen(false);
       }
@@ -169,37 +175,39 @@ export default function AssistantDrafts({
     }
   }
   return (
-    <section aria-label="Draft files">
-      <button
-        disabled={disabled || busy || sourceBusy || !text}
-        onClick={() => {
-          setContent(text);
-          setSource(null);
-          setTitle("Nexus draft");
-          key.current = undefined;
-          setOpen(true);
-          setMessage("");
-        }}
-      >
-        Review answer as draft
-      </button>
-      <button disabled={disabled || busy} onClick={() => void list()}>
-        Saved drafts
-      </button>
+    <section className="nexus-drafts" aria-label="Draft files">
+      <header className="nexus-drafts-heading">
+        <h3>Your files</h3>
+        <p>Save an answer, view a file, or make an edited copy.</p>
+      </header>
+      <div className="nexus-draft-toolbar">
+        <button
+          disabled={disabled || busy || sourceBusy || !text}
+          onClick={() => {
+            setContent(text);
+            setSource(null);
+            setTitle("Nexus draft");
+            key.current = undefined;
+            setOpen(true);
+            setMessage("");
+          }}
+        >
+          Save this answer
+        </button>
+        <button disabled={disabled || busy} onClick={() => void list()}>
+          Show saved files
+        </button>
+      </div>
       {open && !disabled && (
-        <div>
-          <h3>
-            {source
-              ? "Review a revised copy"
-              : "Draft editor — edit file text here"}
-          </h3>
+        <div className="nexus-draft-editor">
+          <p className="nexus-draft-eyebrow">File editor</p>
+          <h3>{source ? "Edit a copy" : "Review your file"}</h3>
           <p>
-            Review the exact text. Confirming creates a new .md file in the
-            laptop’s Nexus output folder, not your selected source folders. No
-            existing file will be overwritten.
+            Edit the title and text below, then choose Save file. A new file
+            will be saved on your laptop. Your original stays saved.
           </p>
           <label>
-            Draft title
+            File title
             <input
               value={title}
               maxLength={80}
@@ -211,7 +219,7 @@ export default function AssistantDrafts({
             />
           </label>
           <label>
-            Draft text
+            File text
             <textarea
               ref={editor}
               value={content}
@@ -223,61 +231,97 @@ export default function AssistantDrafts({
               }}
             />
           </label>
-          <p>
+          <p className="nexus-draft-meta">
             {new TextEncoder().encode(content).length} / 40,000 UTF-8 bytes ·
             workspace: {scope}
           </p>
-          <button
-            disabled={
-              busy ||
-              !title.trim() ||
-              !content.trim() ||
-              new TextEncoder().encode(content).length > 40000
-            }
-            onClick={() => void save()}
-          >
-            Confirm and save draft file
-          </button>
-          <button disabled={busy} onClick={() => setOpen(false)}>
-            Cancel draft
-          </button>
+          <div className="nexus-draft-actions">
+            <button
+              className="nexus-draft-primary"
+              disabled={
+                busy ||
+                !title.trim() ||
+                !content.trim() ||
+                new TextEncoder().encode(content).length > 40000
+              }
+              onClick={() => void save()}
+            >
+              Save file
+            </button>
+            <button disabled={busy} onClick={() => setOpen(false)}>
+              Cancel editing
+            </button>
+          </div>
         </div>
       )}
-      {message && <p role="status">{message}</p>}
+      {message && (
+        <p className="nexus-draft-status" role="status">
+          {message}
+        </p>
+      )}
       {!disabled && readBack && (
-        <section aria-label="Saved file read-back">
-          <h3>Saved file: {readBack.title}</h3>
-          <p>
-            {readBack.verifiedBytes} verified bytes · recorded size:{" "}
-            {readBack.recordedBytes} bytes
+        <section
+          className="nexus-draft-preview"
+          aria-label="Saved file read-back"
+        >
+          <h3>File contents</h3>
+          <h4>{readBack.title}</h4>
+          <p className="nexus-draft-meta">
+            Checked file size: {readBack.verifiedBytes} bytes
           </p>
-          {readBack.sizeWarning && <p role="status">{readBack.sizeWarning}</p>}
-          <pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+          {readBack.sizeWarning && (
+            <p className="nexus-draft-status" role="status">
+              {readBack.sizeWarning}
+            </p>
+          )}
+          <pre tabIndex={0} aria-label="Saved file text">
             {readBack.text}
           </pre>
+          <details>
+            <summary>Size details</summary>
+            <p>
+              Saved record: {readBack.recordedBytes} bytes. Checked file:{" "}
+              {readBack.verifiedBytes} bytes.
+            </p>
+          </details>
         </section>
       )}
-      {!disabled &&
-        drafts.map((draft) => (
-          <p key={draft.id}>
-            <a href={`/api/sync/drafts?id=${draft.id}`} download>
-              Download draft: {draft.title}
-            </a>{" "}
-            · {draft.bytes} bytes ({draft.verified ? "verified" : "recorded"})
-            <button
-              disabled={disabled || busy}
-              onClick={() => void inspect(draft.id)}
+      {!disabled && listed && (
+        <div className="nexus-draft-list">
+          <h3>Saved files</h3>
+          {!drafts.length && <p>No saved files in {scope} yet.</p>}
+          {drafts.map((draft) => (
+            <article
+              className="nexus-draft-file"
+              aria-label={draft.title}
+              key={draft.id}
             >
-              Inspect saved text: {draft.title}
-            </button>
-            <button
-              disabled={disabled || busy}
-              onClick={() => void revise(draft.id)}
-            >
-              Revise copy: {draft.title}
-            </button>
-          </p>
-        ))}
+              <h4>{draft.title}</h4>
+              <p className="nexus-draft-meta">
+                {draft.verified ? "Checked size" : "Saved size"}: {draft.bytes}{" "}
+                bytes
+              </p>
+              <div className="nexus-draft-actions">
+                <button
+                  disabled={disabled || busy}
+                  onClick={() => void inspect(draft.id)}
+                >
+                  View text
+                </button>
+                <a href={`/api/sync/drafts?id=${draft.id}`} download>
+                  Download
+                </a>
+                <button
+                  disabled={disabled || busy}
+                  onClick={() => void revise(draft.id)}
+                >
+                  Edit a copy
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

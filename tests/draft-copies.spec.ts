@@ -116,26 +116,24 @@ test("saved draft copy editor focuses the correct field and saves a separate rev
   await openAssistant(page);
   const panel = page.getByRole("region", { name: "Draft files", exact: true });
   await panel
-    .getByRole("button", { name: "Saved drafts", exact: true })
+    .getByRole("button", { name: "Show saved files", exact: true })
     .click();
   await panel
-    .getByRole("button", { name: `Revise copy: ${title}`, exact: true })
+    .getByRole("article", { name: title, exact: true })
+    .getByRole("button", { name: "Edit a copy", exact: true })
     .click();
   const editor = panel.getByRole("textbox", {
-    name: "Draft text",
+    name: "File text",
     exact: true,
   });
   await expect(editor).toBeFocused();
   await expect(editor).toHaveValue("Original fixture content");
   await editor.fill("Owner reviewed revision");
-  await panel
-    .getByRole("button", { name: "Confirm and save draft file", exact: true })
-    .click();
-  await expect(panel.getByRole("status")).toContainText("saved and read back");
-  const link = panel.getByRole("link", {
-    name: `Download draft: ${title} revised`,
-    exact: true,
-  });
+  await panel.getByRole("button", { name: "Save file", exact: true }).click();
+  await expect(panel.getByRole("status")).toContainText("File saved.");
+  const link = panel
+    .getByRole("article", { name: `${title} revised`, exact: true })
+    .getByRole("link", { name: "Download", exact: true });
   const href = await link.getAttribute("href");
   expect(href).not.toContain(draft.id);
   expect(await (await page.request.get(href!)).text()).toBe(

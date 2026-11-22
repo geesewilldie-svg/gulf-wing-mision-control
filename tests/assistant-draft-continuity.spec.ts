@@ -39,9 +39,9 @@ test("a pending assistant reply preserves an open edited draft", async ({
       name: "Draft files",
       exact: true,
     });
-    await panel.getByRole("button", { name: "Review answer as draft" }).click();
+    await panel.getByRole("button", { name: "Save this answer" }).click();
     const editor = panel.getByRole("textbox", {
-      name: "Draft text",
+      name: "File text",
       exact: true,
     });
     await editor.fill("Owner's unsaved edits must survive a new reply.");
@@ -57,7 +57,7 @@ test("a pending assistant reply preserves an open edited draft", async ({
       "Owner's unsaved edits must survive a new reply.",
     );
     await panel
-      .getByRole("button", { name: "Cancel draft", exact: true })
+      .getByRole("button", { name: "Cancel editing", exact: true })
       .click();
   } finally {
     finishReply!();
