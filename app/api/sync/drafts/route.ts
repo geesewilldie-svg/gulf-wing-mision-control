@@ -9,6 +9,7 @@ import {
   saveAssistantDraft,
   listAssistantDrafts,
   downloadAssistantDraft,
+  previewAssistantDraft,
 } from "@/lib/server/assistant-drafts";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +18,8 @@ export async function GET(request: Request) {
     await authorized(request, true);
     const url = new URL(request.url),
       id = url.searchParams.get("id");
+    if (id && url.searchParams.get("preview") === "1")
+      return response({ draft: previewAssistantDraft(id) });
     if (id)
       return new Response(new Uint8Array(downloadAssistantDraft(id)), {
         headers: {

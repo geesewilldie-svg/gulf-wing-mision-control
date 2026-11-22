@@ -71,7 +71,14 @@ export function saveAssistantDraft(input: unknown) {
   if (
     Object.keys(data).some(
       (key) =>
-        !["requestId", "title", "scope", "text", "confirmed"].includes(key),
+        ![
+          "requestId",
+          "title",
+          "scope",
+          "text",
+          "confirmed",
+          "source",
+        ].includes(key),
     ) ||
     data.confirmed !== true ||
     typeof data.requestId !== "string" ||
@@ -89,6 +96,22 @@ export function saveAssistantDraft(input: unknown) {
     throw new SyncError(
       400,
       "Confirm a title up to 80 characters, a workspace and nonempty draft text up to 40,000 UTF-8 bytes. Paths and overwrite options are not accepted.",
+    );
+  const source = data.source as { id: string; hash: string } | undefined;
+  if (
+    source !== undefined &&
+    (!source ||
+      typeof source !== "object" ||
+      Array.isArray(source) ||
+      Object.keys(source).sort().join(",") !== "hash,id" ||
+      typeof source.id !== "string" ||
+      typeof source.hash !== "string" ||
+      !/^[a-f0-9]{32}$/.test(source.id) ||
+      !/^[a-f0-9]{64}$/.test(source.hash))
+  )
+    throw new SyncError(
+      400,
+      "Choose a current saved draft before revising a copy.",
     );
   const title = data.title.trim(),
     content = Buffer.from(data.text),
@@ -108,6 +131,36 @@ export function saveAssistantDraft(input: unknown) {
           409,
           "That draft request reference already belongs to different content.",
         );
+      if (old) {
+        const event = db
+          .prepare(
+            "SELECT detail FROM events WHERE type='draft.copy' AND CASE WHEN json_valid(detail) THEN json_extract(detail,'$.draftId') END=? LIMIT 1",
+          )
+          .get(id) as { detail: string } | undefined;
+        const previous = event ? JSON.parse(event.detail) : null;
+        if (
+          (previous?.sourceId || undefined) !== source?.id ||
+          (previous?.sourceHash || undefined) !== source?.hash
+        )
+          throw new SyncError(
+            409,
+            "That request reference already belongs to a different draft source.",
+          );
+      } else if (source) {
+        const parent = db
+          .prepare("SELECT hash,scope FROM assistant_drafts WHERE id=?")
+          .get(source.id) as { hash: string; scope: string } | undefined;
+        if (
+          !parent ||
+          parent.scope !== data.scope ||
+          parent.hash !== source.hash ||
+          digest(readFile(source.id)) !== source.hash
+        )
+          throw new SyncError(
+            409,
+            "The source draft changed or is unavailable. Reopen it before reviewing a new copy.",
+          );
+      }
       if (!old) {
         if (
           (db.prepare("SELECT count(*) n FROM assistant_drafts").get() as any)
@@ -140,6 +193,17 @@ export function saveAssistantDraft(input: unknown) {
           hash,
           content.length,
           new Date().toISOString(),
+        );
+      if (!old && source)
+        db.prepare(
+          "INSERT INTO events(task_id,type,at,detail) VALUES(NULL,'draft.copy',?,?)",
+        ).run(
+          new Date().toISOString(),
+          JSON.stringify({
+            draftId: id,
+            sourceId: source.id,
+            sourceHash: source.hash,
+          }),
         );
       const saved = db
         .prepare(
@@ -179,4 +243,15 @@ export function downloadAssistantDraft(id: string) {
       "The saved file changed. Its original content cannot be confirmed.",
     );
   return data;
+}
+export function previewAssistantDraft(id: string) {
+  const text = downloadAssistantDraft(id).toString("utf8");
+  const metadata = withStore((db) =>
+    db
+      .prepare(
+        "SELECT id,title,scope,hash,bytes,created_at FROM assistant_drafts WHERE id=?",
+      )
+      .get(id),
+  );
+  return { ...metadata, text };
 }

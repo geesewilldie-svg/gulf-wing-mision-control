@@ -11,3 +11,11 @@ Files are created exclusively without overwrite and read back before a receipt i
 The managed directory is checked for redirection and file reads reject links/nonregular/oversized artifacts before hash comparison. These checks are not OS isolation from arbitrary same-user code. Markdown is literal saved text; Nexus does not execute it. Files and metadata are local plaintext under existing device access controls. Restoring draft history requires both SQLite metadata and the corresponding artifact directory; a SQLite-only backup is not a complete draft-file backup.
 
 This is the first reviewed create-only artifact action in architecture milestone 4, not permission for arbitrary file mutation, browser automation, general process execution or third-party actions. Cloud tests use synthetic records and temporary directories. Windows directory/ACL behavior and owner download acceptance require native verification.
+
+## Reopening and revising saved drafts
+
+Saved drafts now offers Revise copy for each record. Reopening reads the verified managed file into the editor; the text area is brought into view and focused. A visible editor heading distinguishes file editing from the assistant question box. Review answer as draft uses the same focused editor.
+
+Confirmation creates a separate file and metadata record in the same workspace, preserving the source. The selected source ID/content hash is checked against both metadata and disk before a new copy is created. A changed/missing source requires reopening before a new review. Source/child references are recorded in the existing Foundation event log; there is no schema change. Repeating an already completed copy request returns that verified child without repeating the write or adding duplicate relationship events, even if its source later changes.
+
+Source selection is part of request identity: changing/removing it under a completed request ID is rejected. Copies cannot silently cross workspace labels. These labels remain organizational boundaries for trusted owner devices, not customer identity isolation. This does not add overwrite, deletion, selected-folder editing or general application execution.

@@ -19,16 +19,50 @@ export default function AssistantDrafts({
     [message, setMessage] = useState(""),
     [drafts, setDrafts] = useState<Draft[]>([]);
   const key = useRef<string | undefined>(undefined),
-    version = useRef(0);
+    version = useRef(0),
+    editor = useRef<HTMLTextAreaElement>(null);
+  const [source, setSource] = useState<{ id: string; hash: string } | null>(
+    null,
+  );
+  useEffect(() => {
+    if (open) {
+      editor.current?.scrollIntoView({ block: "center" });
+      editor.current?.focus();
+    }
+  }, [open]);
   useEffect(() => {
     version.current++;
     setBusy(false);
     setOpen(false);
     setContent("");
+    setSource(null);
     setDrafts([]);
     setMessage("");
     key.current = undefined;
   }, [disabled, scope]);
+  async function revise(id: string) {
+    const current = version.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await fetch(`/api/sync/drafts?id=${id}&preview=1`),
+        data = await response.json();
+      if (!response.ok) throw Error(data.error);
+      if (current === version.current) {
+        if (data.draft.scope !== scope)
+          throw Error("Choose a draft from the current workspace.");
+        setTitle(data.draft.title.slice(0, 72) + " revised");
+        setContent(data.draft.text);
+        setSource({ id: data.draft.id, hash: data.draft.hash });
+        key.current = undefined;
+        setOpen(true);
+      }
+    } catch (error) {
+      if (current === version.current) setMessage((error as Error).message);
+    } finally {
+      if (current === version.current) setBusy(false);
+    }
+  }
   async function list() {
     const current = version.current;
     setBusy(true);
@@ -61,6 +95,7 @@ export default function AssistantDrafts({
           scope,
           requestId: key.current,
           confirmed: true,
+          source: source || undefined,
         }),
       });
       const data = await response.json();
@@ -87,6 +122,7 @@ export default function AssistantDrafts({
         disabled={disabled || busy || sourceBusy || !text}
         onClick={() => {
           setContent(text);
+          setSource(null);
           setTitle("Nexus draft");
           key.current = undefined;
           setOpen(true);
@@ -100,6 +136,11 @@ export default function AssistantDrafts({
       </button>
       {open && !disabled && (
         <div>
+          <h3>
+            {source
+              ? "Review a revised copy"
+              : "Draft editor — edit file text here"}
+          </h3>
           <p>
             Review the exact text. Confirming creates a new .md file in the
             laptop’s Nexus output folder, not your selected source folders. No
@@ -120,6 +161,7 @@ export default function AssistantDrafts({
           <label>
             Draft text
             <textarea
+              ref={editor}
               value={content}
               maxLength={40000}
               disabled={busy}
@@ -157,6 +199,12 @@ export default function AssistantDrafts({
               Download draft: {draft.title}
             </a>{" "}
             · {draft.bytes} bytes
+            <button
+              disabled={disabled || busy}
+              onClick={() => void revise(draft.id)}
+            >
+              Revise copy: {draft.title}
+            </button>
           </p>
         ))}
     </section>

@@ -326,3 +326,7 @@ The two named maintenance actions now use transactional SQLite invocation claims
 ### Reviewed managed draft creation
 
 The first create-only file action lets the owner review/edit an answer, then explicitly save a new Markdown artifact in the host's managed output directory. Exclusive creation, read-back hashes and transactional metadata receipts prevent silent overwrite and support exact-request reconciliation. Selected source folders and task execution permissions are unchanged. See `docs/nexus-assistant-drafts.md`; arbitrary paths, edits/deletes and general Windows helper execution remain pending.
+
+### Reviewed copies of managed drafts
+
+Saved managed drafts can be reopened after content verification and revised into a separate create-only artifact. Source hashes are checked before new dispatch and source/child references are retained in the existing event log. Completed requests remain deduplicated; originals are preserved. The editor now scrolls into view and focuses its text field, addressing the owner walkthrough's question-box/editor confusion. No database migration or broader filesystem permission is added.
