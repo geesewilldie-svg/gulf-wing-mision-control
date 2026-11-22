@@ -7,6 +7,7 @@ import type { ProviderStatus, AgentResult } from "@/lib/agent-router";
 import type { ConversationTurn } from "@/lib/conversation";
 import { scopes, type Scope } from "@/lib/foundation/contracts";
 import NexusVoice from "./nexus-voice";
+import AssistantDrafts from "./assistant-drafts";
 const AssistantContext = createContext({
   conversationActive: false,
   openAssistant: () => {},
@@ -507,6 +508,12 @@ export default function NexusAssistant({
                 ))}
               </article>
             )}
+            <AssistantDrafts
+              text={answer?.answer || ""}
+              scope={workspaceScope}
+              disabled={disabled}
+              sourceBusy={busy}
+            />
           </div>
           <NexusVoice
             disabled={disabled}

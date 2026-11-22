@@ -322,3 +322,7 @@ Conversational selected-folder search now provides direct file-reading controls 
 ### Durable bounded laptop operation records
 
 The two named maintenance actions now use transactional SQLite invocation claims, request-ID deduplication, active-operation exclusion, terminal receipts and explicit unknown status for expired unconfirmed work. Saved status is queryable from trusted controllers without re-executing the operation. The fixed maintenance enablement and script allowlist still govern dispatch. See `docs/nexus-laptop-maintenance-conversation.md`; broad resource leases, arbitrary-effect reconciliation and general Windows helper execution remain separate milestones.
+
+### Reviewed managed draft creation
+
+The first create-only file action lets the owner review/edit an answer, then explicitly save a new Markdown artifact in the host's managed output directory. Exclusive creation, read-back hashes and transactional metadata receipts prevent silent overwrite and support exact-request reconciliation. Selected source folders and task execution permissions are unchanged. See `docs/nexus-assistant-drafts.md`; arbitrary paths, edits/deletes and general Windows helper execution remain pending.

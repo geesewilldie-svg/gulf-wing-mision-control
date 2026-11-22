@@ -337,7 +337,7 @@ test("schema-5 migration preserves archives without activating; restart keeps bi
     const pkg = await staged();
     withStore((db) =>
       db.exec(
-        "DROP TABLE laptop_operations; DROP TABLE utility_bindings;DROP TABLE utility_binding_history;DROP TABLE utility_runs;PRAGMA user_version=5;",
+        "DROP TABLE assistant_drafts; DROP TABLE laptop_operations; DROP TABLE utility_bindings;DROP TABLE utility_binding_history;DROP TABLE utility_runs;PRAGMA user_version=5;",
       ),
     );
     expect(snapshot().candidatePackages![0].id).toBe(pkg.id);

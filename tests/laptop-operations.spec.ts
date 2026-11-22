@@ -102,7 +102,7 @@ test("schema seven backs up version six and preserves existing memory", async ()
       content: "Retained owner fact",
     });
     withStore((db) =>
-      db.exec("DROP TABLE laptop_operations; PRAGMA user_version=6;"),
+      db.exec("DROP TABLE assistant_drafts; DROP TABLE laptop_operations; PRAGMA user_version=6;"),
     );
     expect(snapshot().memory[0].content).toBe("Retained owner fact");
     expect(
