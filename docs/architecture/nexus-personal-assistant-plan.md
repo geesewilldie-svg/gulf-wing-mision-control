@@ -358,3 +358,7 @@ After native explicit-note-link acceptance, connection setup inspection distingu
 ### Copilot discovery and prerequisite gate — November 23, 2026
 
 Following native connection inventory acceptance, official source documentation identifies a programmable GitHub coding SDK/CLI path and a separate Microsoft 365 Chat API. Proceed with read-only local prerequisite/account discovery before implementing a bounded adapter. New provider execution must retain explicit sharing, allowance checks, deny-by-default tools, durable uncertain-effect receipts and independent result verification. Existing grants do not imply new account rights or Microsoft 365 consent.
+
+### Pinned Copilot profile preparation — November 23, 2026
+
+Native prerequisites and normal-profile login are reported. The staged GitHub coding adapter now has separate Windows profile/cache/work directories and pinned-package validation. Version checking and explicit OAuth are the only subprocess actions; model execution and delegation remain unimplemented. Next acceptance is isolated-profile setup/sign-in, followed by a denied-tools synthetic-prompt prototype with explicit external sharing and durable quota/uncertain-result handling. Existing workshop authority is not transferred.

@@ -1,3 +1,4 @@
+import { copilotPreparation } from "./copilot-preparation";
 import { providerStatus } from "./agent-router";
 import { publicGeminiStatus } from "./gemini-public";
 import { googleStatus } from "./google-accounts";
@@ -10,15 +11,21 @@ const probes = {
   google: googleStatus,
   folders: fileRoots,
   codex: codexWorkerEnabled,
+  copilot: copilotPreparation,
 };
-export async function connectionInventory(read = probes) {
-  const [providers, publicGemini, google, folders, codex] =
+export async function connectionInventory(
+  read: Omit<typeof probes, "copilot"> & {
+    copilot?: typeof copilotPreparation;
+  } = probes,
+) {
+  const [providers, publicGemini, google, folders, codex, copilot] =
     await Promise.allSettled([
       read.providers(),
       read.publicGemini(),
       read.google(),
       read.folders(),
       read.codex(),
+      (read.copilot || copilotPreparation)(),
     ]);
   const cards: {
     id: string;
@@ -143,6 +150,18 @@ export async function connectionInventory(read = probes) {
       authorization:
         "No Nexus adapter, account access or unattended execution is supplied. Microsoft Graph access alone would not constitute a Copilot connection.",
     });
+  const githubCard = cards.find((card) => card.id === "github-copilot")!;
+  const preparation = copilot.status === "fulfilled" ? copilot.value : null;
+  if (!preparation || preparation.warning) {
+    githubCard.status = "Preparation settings unavailable";
+    githubCard.detail =
+      "Existing Copilot setup was preserved. No model access is verified.";
+  } else if (preparation.prepared) {
+    githubCard.status = "Profile prepared — model adapter pending";
+    githubCard.detail = `Pinned CLI ${preparation.version} found. Separate-profile sign-in, model access and restricted prompt execution remain unverified.`;
+  }
+  githubCard.authorization =
+    "Preparation only. No automatic delegation, model prompt, private-context sharing or account-plan change is enabled.";
   return {
     engine: "Nexus connection setup",
     answer:

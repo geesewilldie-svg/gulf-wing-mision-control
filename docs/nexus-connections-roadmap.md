@@ -49,3 +49,5 @@ The owner verified explicit linked-note navigation on the selected Windows vault
 ## Copilot supported-interface discovery — November 23, 2026
 
 See [official-source findings](copilot-integration-discovery.md). Evaluate the GitHub coding SDK/CLI path first after read-only Windows prerequisites and account entitlement checks. SDK naming is transitioning, so choose an immutable supported release before implementation. Microsoft 365 Chat API is a separate licensed work/school preview surface with delegated scopes and text-only results; consumer Copilot is not thereby connected. The owner requested local checking first, with no known account plan. Both integrations remain unbuilt.
+
+The owner installed CLI 1.0.114 and reported normal-profile OAuth completed on a GitHub Copilot Free account. Separate-profile preparation is implemented; Setup-Nexus-Copilot.cmd validates local package metadata and Sign-In-Nexus-Copilot.cmd explicitly signs in that profile. Neither supplies a model adapter or confirms generation entitlement. Native isolated setup and restricted prompt execution remain separate pending gates.
