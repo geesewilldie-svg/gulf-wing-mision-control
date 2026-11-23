@@ -5,8 +5,26 @@ import { listConversationMemory, taskForMemoryNote } from "./foundation/store";
 import { portableMemory } from "./portable-memory";
 import { portableWorkNote } from "./portable-work-note";
 import { SyncError } from "./sync-store";
-import { writeMemorySnapshot } from "../../scripts/memory-vault-lib.mjs";
+import {
+  writeMemorySnapshot,
+  memoryVaultStatus,
+  disableMemoryVault,
+} from "../../scripts/memory-vault-lib.mjs";
 export async function memoryVault(body: any) {
+  const dir = path.resolve(
+    process.env.GW_SYNC_DATA_DIR || path.join(process.cwd(), ".gulf-wing"),
+  );
+  if (body.op === "memory.vault.status") return memoryVaultStatus(dir);
+  if (body.op === "memory.vault.disable") {
+    try {
+      return await disableMemoryVault(dir);
+    } catch {
+      throw new SyncError(
+        503,
+        "Vault settings could not be disabled. Existing notes were preserved.",
+      );
+    }
+  }
   const workspace = scope(body.scope);
   const exportedAt =
     body.op === "memory.vault.preview"

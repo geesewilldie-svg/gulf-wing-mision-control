@@ -22,7 +22,7 @@ try {
   if (!Number.isInteger(selected) || !roots[selected])
     throw Error("No vault selected.");
   console.log(
-    "This creates Nexus Memory Snapshots in that vault and permits paired controllers to save reviewed, new Markdown snapshots there. Existing notes are not overwritten. No automatic synchronization or provider sharing is enabled.",
+    "This prepares or re-enables Nexus Memory Snapshots in that vault and permits paired controllers to save reviewed, new Markdown snapshots there. Existing notes are not overwritten. No automatic synchronization or provider sharing is enabled.",
   );
   if (
     (await prompt.question("Enable reviewed snapshot saves? (Y/N) "))

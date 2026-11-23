@@ -1,4 +1,5 @@
 "use client";
+import MemoryVaultStatus from "./memory-vault-status";
 import VaultNoteReview from "./vault-note-review";
 import UtilityWorkspace from "./utility-workspace";
 import CandidateReview from "./candidate-review";
@@ -402,6 +403,7 @@ export default function NexusFoundation({ disabled }: { disabled: boolean }) {
           />
           <section className="nexus-card">
             <h3>Owner memory and instructions</h3>
+            <MemoryVaultStatus />
             <p>
               Explicit owner records only. Instructions guide local responses
               but cannot grant execution authority. Personal records apply

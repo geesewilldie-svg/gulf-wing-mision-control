@@ -62,6 +62,8 @@ export async function POST(request: Request) {
       throw new SyncError(400, "Choose a supported foundation operation.");
     try {
       switch (body.op) {
+        case "memory.vault.status":
+        case "memory.vault.disable":
         case "memory.vault.preview":
         case "memory.vault.save":
           return response(await memoryVault(body));

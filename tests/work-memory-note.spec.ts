@@ -188,6 +188,8 @@ test("task card reviews its own saved artifact without starting a model", async 
       return route.fulfill({ json: data });
     }
     const body = route.request().postDataJSON();
+    if (body.op === "memory.vault.status")
+      return route.fulfill({ json: { state: "not-configured" } });
     expect(body.op).toBe("memory.vault.preview");
     expect(body.taskId).toBe(taskId);
     expect(body.scope).toBe("Aviation");
