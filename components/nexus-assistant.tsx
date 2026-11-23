@@ -1,4 +1,6 @@
 "use client";
+import { NexusSourceMap } from "./nexus-source-map";
+import type { SourceMap } from "../lib/source-map";
 import type { LaptopOperationFeedback } from "../lib/laptop-operation-feedback";
 import { useEffect, useState, useRef, createContext, useContext } from "react";
 import { usePathname } from "next/navigation";
@@ -25,6 +27,7 @@ type Answer = {
     detail: string;
     authorization: string;
   }[];
+  sourceMap?: SourceMap;
   operationId?: string;
   operationChoices?: ({
     id: string;
@@ -352,6 +355,20 @@ export default function NexusAssistant({
               <article className="nexus-answer">
                 <h3>{answer.engine}</h3>
                 <p>{answer.answer}</p>
+                {answer.sourceMap && (
+                  <NexusSourceMap
+                    map={answer.sourceMap}
+                    disabled={disabled || busy}
+                    onRead={(id, hash, name) =>
+                      void ask(
+                        `Read laptop file ${id}@${hash}`,
+                        [],
+                        undefined,
+                        `Read file: ${name}`,
+                      ).catch(() => {})
+                    }
+                  />
+                )}
                 {answer.linkPreview && (
                   <NexusLinkReview
                     key={answer.linkPreview.requestId}

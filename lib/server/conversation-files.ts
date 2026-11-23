@@ -1,3 +1,4 @@
+import { sourceMap } from "../source-map";
 import type { FileIntent } from "../file-intent";
 import { searchDocuments } from "../nexus";
 import { fileSnapshot, refreshFiles } from "./local-files";
@@ -18,7 +19,29 @@ export async function conversationFiles(
       .filter((scan) => scan.partial)
       .map((scan) => `${scan.label}: partial index. ${scan.issues.join(" ")}`),
   ].filter((warning): warning is string => Boolean(warning));
-  if (intent.kind === "read") return readIndexedFile(intent, files, warnings);
+  if (intent.kind === "read")
+    return { ...readIndexedFile(intent, files, warnings), sourceMap: null };
+  if (intent.kind === "map") {
+    if (status.roots.length && !status.scannedAt)
+      warnings.push(
+        "No saved scan is available. Ask “Refresh my laptop file index” before browsing files.",
+      );
+    return {
+      engine: "Nexus source map",
+      answer: "Your selected folders and current indexed files.",
+      sourceMap: sourceMap(status, files),
+      fileChoices: [],
+      fileRead: null,
+      sources: [],
+      warnings,
+      routing: {
+        mode: "local",
+        selected: [],
+        reason:
+          "Folder membership from the current selected-file index only; no model, provider or source edit.",
+      },
+    };
+  }
   const sources =
     intent.kind === "search"
       ? searchDocuments(
@@ -67,6 +90,7 @@ export async function conversationFiles(
             }))
         : [],
     fileRead: null,
+    sourceMap: null,
     warnings,
     routing: {
       mode: "local",

@@ -342,3 +342,7 @@ A separate locally enabled capability can hand a specifically reviewed HTTPS add
 ### Native link acceptance and operation feedback — November 23, 2026
 
 The owner verified reviewed HTTPS opening on Windows. Milestone 4 now presents saved execution records with action-specific status and recovery guidance: browser handoff remains distinct from page verification. Viewing results is read-only and does not retry unknown effects. General browser interaction, arbitrary desktop execution and a native helper remain unfinished.
+
+### Selected-source navigation — November 23, 2026
+
+Following native acceptance of reviewed link opening and saved result history, the retained local-source roadmap adds a metadata-only folder/file map with filtering and direct version-bound indexed reading. Only folder membership is established; entity extraction, semantic document relationships, agent connections and broad Windows execution remain pending.

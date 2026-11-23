@@ -1,5 +1,5 @@
 export type FileIntent =
-  | { kind: "status" | "refresh" }
+  | { kind: "status" | "refresh" | "map" }
   | { kind: "read"; target: string; part: number }
   | { kind: "search"; query: string };
 
@@ -12,6 +12,8 @@ export function fileIntent(query: string): FileIntent | null {
   if (/^show (?:my )?connected folders$/i.test(text)) return { kind: "status" };
   if (/^refresh (?:my )?laptop file index$/i.test(text))
     return { kind: "refresh" };
+  if (/^show (?:my )?(?:connected source map|source map)$/i.test(text))
+    return { kind: "map" };
   const read = /^read laptop file (.+?)(?: part ([0-9]+))?$/i.exec(text);
   if (read)
     return {

@@ -35,3 +35,7 @@ Read access, local search, source preview, agent sharing, editing, moving/deleti
 ## Owner clarification — November 21, 2026
 
 The owner explicitly wants both GitHub Copilot for coding and Microsoft Copilot for work/everyday tasks. Retain these as separate adapter discovery targets alongside Gemini, Codex and Claude. This clarification does not replace the architecture sequence or establish account access, API entitlement, supported unattended delegation or a live connection. Verify each product's official supported interface and account requirements before implementation; Microsoft Graph data access alone is not a Copilot agent integration.
+
+## Selected-source pilot update — November 23, 2026
+
+The owner verified selected-folder/Obsidian status, refresh, search and part-by-part PDF reading on Windows. Show my source map adds folder-to-file membership navigation for current validated index entries. This is the initial source-map slice; semantic cross-document relationships and entity/agent graphs are still unbuilt. Existing selected-folder authorization and content-version checks govern Read file.
