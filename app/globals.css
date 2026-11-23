@@ -3383,3 +3383,9 @@ body {
 .memory-file-dialog .nexus-galaxy-text { font-size:16px; line-height:1.8; max-height:64dvh; }
 .memory-file-dialog button { padding:12px 18px; border:1px solid #355b73; border-radius:8px; color:#e0f4ff; background:#102d41; min-height:44px; }.memory-file-close { position:sticky; top:0; float:right; z-index:1; }
 @media(prefers-reduced-motion:reduce){.memory-file-star i{transition:none;}}
+
+.memory-star-focus { position:absolute; z-index:4; top:8px; left:12px; max-width:min(300px,calc(100% - 24px)); padding:10px 12px; border-radius:10px; background:#04111ddd; color:#d8f4ff; font:12px/1.5 monospace; overflow-wrap:anywhere; }
+.memory-star-focus strong { font-size:14px; }.memory-star-focus p { margin:5px 0; font-size:12px; }.memory-star-focus small { color:#88b1c6; }
+.memory-star-focus > div { display:flex; flex-wrap:wrap; gap:7px; margin-top:9px; }.nexus-file-galaxy .memory-star-focus button { font-size:12px; padding:7px 10px; min-height:38px; }
+
+.memory-spiral-stage.is-file-focused .memory-spiral-label { opacity:.12; }

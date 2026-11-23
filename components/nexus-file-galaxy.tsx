@@ -139,8 +139,8 @@ export default function NexusFileGalaxy({ enabled }: { enabled: boolean }) {
     <section className="nexus-file-galaxy" aria-label="Real file galaxy">
       <h3>Your Memory Galaxy</h3>
       <p>
-        Select a bright, labelled file star to open its contents. Connections
-        follow shared folders and explicit note links.
+        Select a bright file star to zoom in, explore nearby file stars, or open
+        the selected file.
       </p>
       <details className="memory-galaxy-tools">
         <summary>Find files and view controls</summary>
@@ -192,8 +192,8 @@ export default function NexusFileGalaxy({ enabled }: { enabled: boolean }) {
       {map && (
         <>
           <p>
-            {shown.length} file stars shown · {map.withheld} changed or
-            unavailable files withheld
+            {shown.length} indexed file stars available · {map.withheld} changed
+            or unavailable files withheld
             {map.omitted
               ? ` · ${map.omitted} more indexed files outside this view`
               : ""}

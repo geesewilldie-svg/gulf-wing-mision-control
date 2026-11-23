@@ -1,4 +1,5 @@
 "use client";
+import { galaxyNeighborhood } from "@/lib/galaxy-neighborhood";
 import { useEffect, useRef, useState } from "react";
 export type GalaxyFile = {
   id: string;
@@ -41,6 +42,26 @@ export default function AnimatedFileGalaxy({
   const rotation = useRef({ x: -0.85, y: 0 }),
     time = useRef(0),
     drag = useRef<{ x: number; y: number } | null>(null);
+  const [revision, setRevision] = useState(0);
+  const [trail, setTrail] = useState<string[]>([]);
+  const focusId = trail.at(-1);
+  const neighborhood = galaxyNeighborhood(files, focusId);
+  const focused = neighborhood.focus;
+  const visible = neighborhood.visible;
+  const focusZoom = useRef(1);
+  const targetZoom = focused ? 1.65 : 1;
+  function focusStar(file: GalaxyFile) {
+    if (file.id === focused?.id) {
+      onRead(file);
+      return;
+    }
+    focusZoom.current = 1;
+    setPaused(true);
+    setTrail((previous) => [...previous, file.id]);
+  }
+  useEffect(() => {
+    if (focusId && !files.some((file) => file.id === focusId)) setTrail([]);
+  }, [files, focusId]);
   const [paused, setPaused] = useState(false),
     [reduced, setReduced] = useState(false);
   useEffect(() => {
@@ -64,7 +85,8 @@ export default function AnimatedFileGalaxy({
     const draw = () => {
       const cx = width / 2,
         cy = height / 2,
-        scale = Math.min(width * 0.29, height * 0.34) * zoom;
+        scale =
+          Math.min(width * 0.29, height * 0.34) * zoom * focusZoom.current;
       ctx.clearRect(0, 0, width, height);
       const yaw = rotation.current.y + time.current * 0.13,
         tilt = rotation.current.x;
@@ -146,39 +168,35 @@ export default function AnimatedFileGalaxy({
           ctx.fill();
         }
       }
-      const positions = files.map((file, i) => {
+      const progress = Math.max(0, Math.min(1, (focusZoom.current - 1) / 0.65));
+      const positions = visible.map((file, i) => {
+        const index = files.findIndex((candidate) => candidate.id === file.id);
         const r =
-            0.58 + Math.sqrt((i + 0.5) / Math.max(files.length, 1)) * 0.48,
-          a = i * 2.3999632297 + 0.8;
+            0.58 + Math.sqrt((index + 0.5) / Math.max(files.length, 1)) * 0.48,
+          a = index * 2.3999632297 + 0.8;
+        const original = project({
+          x: Math.cos(a) * r,
+          y: 0,
+          z: Math.sin(a) * r,
+        });
+        if (!focused) return { file, ...original };
+        const neighborIndex = i - 1,
+          angle =
+            (neighborIndex * TAU) / Math.max(1, neighborhood.nearby.length) +
+            0.4;
+        const orbit = project({
+          x: Math.cos(angle) * 0.72,
+          y: 0,
+          z: Math.sin(angle) * 0.72,
+        });
+        const target = file.id === focused.id ? { x: cx, y: cy } : orbit;
         return {
           file,
-          ...project({ x: Math.cos(a) * r, y: 0, z: Math.sin(a) * r }),
+          x: original.x + (target.x - original.x) * progress,
+          y: original.y + (target.y - original.y) * progress,
         };
       });
-      ctx.globalAlpha = 0.5;
-      ctx.strokeStyle = "#76e8ff";
-      ctx.lineWidth = 1;
-      for (const point of positions)
-        for (const link of point.file.noteLinks?.links || []) {
-          const target = positions.find((other) => other.file.id === link.id);
-          if (target) {
-            ctx.beginPath();
-            ctx.moveTo(point.x, point.y);
-            ctx.lineTo(target.x, target.y);
-            ctx.stroke();
-          }
-        }
-      ctx.globalAlpha = 0.18;
-      ctx.lineWidth = 0.6;
-      for (const root of groups) {
-        const members = positions.filter((point) => point.file.rootId === root);
-        for (let i = 1; i < members.length; i++) {
-          ctx.beginPath();
-          ctx.moveTo(members[0].x, members[0].y);
-          ctx.lineTo(members[i].x, members[i].y);
-          ctx.stroke();
-        }
-      }
+      // No connecting strokes: relationships are explored by focusing file stars.
       ctx.globalAlpha = 1;
       for (const point of positions) {
         const button = buttons.current.get(point.file.id);
@@ -205,12 +223,20 @@ export default function AnimatedFileGalaxy({
     observer.observe(container);
     resize();
     const tick = (now: number) => {
+      const settling = Math.abs(focusZoom.current - targetZoom) > 0.002;
+      if (settling)
+        focusZoom.current += (targetZoom - focusZoom.current) * 0.22;
       if (!document.hidden && now - last > 32) {
-        if (last) time.current += Math.min((now - last) / 1000, 0.05);
+        if (last && !paused && !reduced && !selectedId)
+          time.current += Math.min((now - last) / 1000, 0.05);
         last = now;
         draw();
       }
-      frame = requestAnimationFrame(tick);
+      if (
+        (!paused && !reduced && !selectedId) ||
+        Math.abs(focusZoom.current - targetZoom) > 0.002
+      )
+        frame = requestAnimationFrame(tick);
     };
     const rotate = (event: PointerEvent) => {
       if (!drag.current) return;
@@ -226,13 +252,20 @@ export default function AnimatedFileGalaxy({
       draw();
     };
     container.addEventListener("pointermove", rotate);
-    if (!paused && !reduced && !selectedId) frame = requestAnimationFrame(tick);
+    if (reduced) {
+      focusZoom.current = targetZoom;
+      draw();
+    } else if (
+      (!paused && !selectedId) ||
+      Math.abs(focusZoom.current - targetZoom) > 0.002
+    )
+      frame = requestAnimationFrame(tick);
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
       container.removeEventListener("pointermove", rotate);
     };
-  }, [files, zoom, paused, reduced, selectedId]);
+  }, [files, zoom, paused, reduced, selectedId, focusId, revision]);
   return (
     <div className="memory-spiral-shell">
       <div className="memory-spiral-controls">
@@ -245,13 +278,14 @@ export default function AnimatedFileGalaxy({
             rotation.current = { x: -0.85, y: 0 };
             time.current = 0;
             setPaused(true);
+            setRevision((value) => value + 1);
           }}
         >
           Reset rotation
         </button>
       </div>
       <div
-        className="memory-spiral-stage"
+        className={`memory-spiral-stage ${focused ? "is-file-focused" : ""}`}
         ref={stage}
         onPointerDown={(event) => {
           if (event.target !== canvas.current) return;
@@ -275,19 +309,47 @@ export default function AnimatedFileGalaxy({
           <strong>M E M O R Y</strong>
           <span>{reduced ? "REDUCED MOTION" : "FILE CONSTELLATION"}</span>
         </div>
-        {files.map((file) => (
+        {focused && (
+          <div
+            className="memory-star-focus"
+            role="region"
+            aria-label="Selected file star"
+          >
+            <strong>{focused.name}</strong>
+            <p>
+              {neighborhood.nearby.length} nearby file{" "}
+              {neighborhood.nearby.length === 1 ? "star" : "stars"}
+              {neighborhood.omitted
+                ? ` · ${neighborhood.omitted} more in the file list`
+                : ""}
+            </p>
+            <small>Same folder or an explicit note link.</small>
+            <div>
+              <button onClick={() => onRead(focused)}>Open file</button>
+              {trail.length > 1 && (
+                <button
+                  onClick={() => setTrail((previous) => previous.slice(0, -1))}
+                >
+                  Back
+                </button>
+              )}
+              <button onClick={() => setTrail([])}>Return to galaxy</button>
+            </div>
+          </div>
+        )}
+        {visible.map((file) => (
           <button
             key={file.id}
             ref={(element) => {
               if (element) buttons.current.set(file.id, element);
               else buttons.current.delete(file.id);
             }}
-            className={`memory-file-star ${selectedId === file.id ? "is-selected" : ""}`}
-            aria-label={`Read indexed file: ${file.folder} / ${file.name}`}
+            className={`memory-file-star ${selectedId === file.id || focused?.id === file.id ? "is-selected" : ""}`}
+            aria-label={`${focused?.id === file.id ? "Open file star" : "Focus file star"}: ${file.folder} / ${file.name}`}
             title={`${file.folder} / ${file.name}`}
             onPointerEnter={() => setPaused(true)}
             onFocus={() => setPaused(true)}
-            onClick={() => onRead(file)}
+            onClick={() => focusStar(file)}
           >
             <i aria-hidden="true" />
             <span>{file.name}</span>
@@ -295,9 +357,9 @@ export default function AnimatedFileGalaxy({
         ))}
       </div>
       <p className="memory-spiral-key">
-        Bright labelled stars open files. The faint star field preserves the
-        original galaxy appearance and is decorative. Drag the background to
-        rotate.
+        Select a file star to zoom into its neighborhood, then open it or
+        explore a nearby file star. The faint background stars are decorative.
+        Drag the background to rotate.
       </p>
     </div>
   );

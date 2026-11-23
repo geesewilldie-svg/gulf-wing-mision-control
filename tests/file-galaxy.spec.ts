@@ -69,7 +69,7 @@ test("real file nodes read exact versions and remain usable when expanded", asyn
     page.getByRole("region", { name: "Real file galaxy" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: /Read indexed file:/ }),
+    page.getByRole("button", { name: /(?:Focus|Open) file star:/ }),
   ).toHaveCount(2);
   const spiral = page.getByRole("img", {
     name: "Original animated spiral galaxy style with selectable file stars",
@@ -103,10 +103,33 @@ test("real file nodes read exact versions and remain usable when expanded", asyn
   });
   await dialog
     .getByRole("button", {
-      name: "Read indexed file: Notes / Start.md",
+      name: "Focus file star: Notes / Start.md",
       exact: true,
     })
     .click();
+  await expect(
+    dialog.getByRole("region", { name: "Selected file star", exact: true }),
+  ).toContainText("Start.md");
+  expect(reads).toEqual([]);
+  await expect
+    .poll(async () => {
+      const star = await dialog
+        .getByRole("button", {
+          name: "Open file star: Notes / Start.md",
+          exact: true,
+        })
+        .boundingBox();
+      const field = await spiral.boundingBox();
+      return Math.abs(
+        star!.x + star!.width / 2 - (field!.x + field!.width / 2),
+      );
+    })
+    .toBeLessThan(2);
+  await dialog.screenshot({
+    path: `artifacts/file-galaxy/${test.info().project.name}-focus.png`,
+  });
+
+  await dialog.getByRole("button", { name: "Open file", exact: true }).click();
   await expect(
     page.getByRole("region", { name: "Indexed file viewer" }),
   ).toContainText("Verified indexed text part 1");
@@ -117,7 +140,7 @@ test("real file nodes read exact versions and remain usable when expanded", asyn
   await expect(dialog).toBeVisible();
   await dialog
     .getByRole("button", {
-      name: "Read indexed file: Notes / Start.md",
+      name: "Open file star: Notes / Start.md",
       exact: true,
     })
     .click();
@@ -142,10 +165,24 @@ test("real file nodes read exact versions and remain usable when expanded", asyn
   denyRead = true;
   await dialog
     .getByRole("button", {
-      name: "Read indexed file: Notes / Plan.md",
+      name: "Focus file star: Notes / Plan.md",
       exact: true,
     })
     .click();
+  await expect(
+    dialog.getByRole("region", { name: "Selected file star", exact: true }),
+  ).toContainText("Plan.md");
+  await dialog.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(
+    dialog.getByRole("region", { name: "Selected file star", exact: true }),
+  ).toContainText("Start.md");
+  await dialog
+    .getByRole("button", {
+      name: "Focus file star: Notes / Plan.md",
+      exact: true,
+    })
+    .click();
+  await dialog.getByRole("button", { name: "Open file", exact: true }).click();
   await expect(
     dialog.getByText(
       "Controller access is required. Private file view was cleared.",
@@ -153,7 +190,7 @@ test("real file nodes read exact versions and remain usable when expanded", asyn
     ),
   ).toBeVisible();
   await expect(
-    dialog.getByRole("button", { name: /Read indexed file:/ }),
+    dialog.getByRole("button", { name: /(?:Focus|Open) file star:/ }),
   ).toHaveCount(0);
   await expect(
     page.getByRole("region", { name: "Indexed file viewer" }),
@@ -259,7 +296,7 @@ test("Memory Galaxy is available on the shared Nexus surface for desktop and pho
     dialog.getByRole("region", { name: "Real file galaxy", exact: true }),
   ).toBeVisible();
   await expect(
-    dialog.getByText("0 file stars shown", { exact: false }),
+    dialog.getByText("0 indexed file stars available", { exact: false }),
   ).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(dialog).toHaveCount(0);

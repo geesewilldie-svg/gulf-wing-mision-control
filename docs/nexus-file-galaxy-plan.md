@@ -52,3 +52,9 @@ The owner clarified that Memory Galaxy belongs to the entire Mission Control bas
 ## Owner visual correction
 
 Preserve the original animated spiral Galaxy style in the dashboard. The owner explicitly rejected the flat diagram replacement. File access must feel like selecting stars inside that existing galaxy, with an enlarged readable file preview. The corrective implementation restores the three-arm star field/HUD rings and overlays actual file stars; ambient decorative stars are not files and are labelled accordingly. File previews are modal overlays, not a small pane below a different diagram. The visual correction does not complete whole-drive browsing or original-document viewing.
+
+## Owner refinement: no lines, file-star neighborhoods
+
+The owner wants no lines connecting file stars. Preserve the original galaxy field and HUD treatment. Selecting a file star should zoom/recenter it and reveal nearby real file stars, analogous to selecting a galaxy then exploring nearby bodies. The implementation's first click focuses without reading contents; Open file or a second click on the centered star opens its preview. Nearby stars can be selected as the next focus, with Back and Return to galaxy.
+
+Current neighborhoods use shared selected-folder membership or literal incoming/outgoing wiki links, not a model's semantic guess and not a claim that one document contains other files. At most twelve nearby stars are shown; the file-list alternative retains access to the displayed index. Missing/stale/unselected sources do not become neighboring stars. Original all-drive/original-file browsing remains a separate unfinished adapter.
