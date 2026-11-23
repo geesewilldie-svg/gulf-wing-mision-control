@@ -11,6 +11,7 @@ import {
   revokeCandidatePackage,
 } from "@/lib/server/foundation/candidate-promotion";
 import { runReviewedCandidateTests } from "@/lib/server/foundation/candidate-tests";
+import { memoryVault } from "@/lib/server/memory-vault";
 import { portableMemory } from "@/lib/server/portable-memory";
 import {
   authorized,
@@ -61,6 +62,9 @@ export async function POST(request: Request) {
       throw new SyncError(400, "Choose a supported foundation operation.");
     try {
       switch (body.op) {
+        case "memory.vault.preview":
+        case "memory.vault.save":
+          return response(await memoryVault(body));
         case "memory.export": {
           const workspace = scope(body.scope);
           return response({

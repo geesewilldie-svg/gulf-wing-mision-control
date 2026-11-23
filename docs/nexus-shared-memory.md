@@ -17,3 +17,11 @@ This creates a browser download, not an automatic write to a selected vault. Dow
 5. Galaxy views for these real notes alongside broader storage browsing. All-drive metadata browsing and original-file viewing remain separate adapters; the phone controls laptop-hosted sources without acquiring blanket phone-storage access.
 
 Agent vault write-back, continuous synchronization, automatic learning from every conversation and general cross-agent delegation are not delivered by this export.
+
+## Reviewed vault snapshots
+
+Run `Setup-Nexus-Memory-Vault.cmd` locally on Windows, select an already configured Obsidian vault, and confirm the displayed grant. Setup creates a new `Nexus Memory Snapshots` directory and a local `memory-vault.json` grant bound to that vault's ID and canonical path. Existing directories are not adopted; existing grants are not replaced. Setup sends no model request and saves no owner-memory note.
+
+In Foundation, select the memory workspace and choose **Review [workspace] snapshot for vault**. Read the exact Markdown, then **Confirm and save new vault snapshot**. Confirmation regenerates the snapshot and checks its hash against the preview; changed memory or previews older than fifteen minutes require fresh review. Save creates a uniquely named batch directory and Markdown file, with byte/hash read-back before publishing the final `.md` name. It never replaces prior notes. Refresh the selected-file index to bring the new note into the file-star galaxy, subject to normal file/index limits.
+
+Saving requires controller authorization, same origin, explicit confirmation and local setup. Removing the selected vault or replacing the destination with a link/junction blocks saving. No arbitrary target paths or supplied Markdown are accepted by the endpoint. This is an owner-approved snapshot workflow, not continuous agent write-back. Old snapshots remain private copies: corrections/forgetting do not remove them. An uncertain/interrupted save must be inspected before retrying; a retry can create another snapshot. A crash may leave an unpublished `.tmp` file in its batch directory. Local users with permission to change grants or filesystem contents remain trusted; this is not an OS sandbox against a hostile local account.

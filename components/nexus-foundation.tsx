@@ -42,11 +42,18 @@ export default function NexusFoundation({ disabled }: { disabled: boolean }) {
     [kind, setKind] = useState("fact"),
     [memoryScope, setMemoryScope] = useState<Scope>("Personal"),
     [editing, setEditing] = useState<MemoryRecord | null>(null);
+  const [vaultPreview, setVaultPreview] = useState<{
+    markdown: string;
+    sha256: string;
+    exportedAt: string;
+    workspace: Scope;
+  } | null>(null);
   const [search, setSearch] = useState(""),
     [matches, setMatches] = useState("");
   useEffect(() => {
     if (disabled) {
       setData(null);
+      setVaultPreview(null);
       return;
     }
     const abort = new AbortController();
@@ -523,6 +530,72 @@ export default function NexusFoundation({ disabled }: { disabled: boolean }) {
             >
               Download {memoryScope} memory for Obsidian
             </button>
+            <p>
+              To save directly in your selected Obsidian vault, run
+              Setup-Nexus-Memory-Vault.cmd on the laptop first. Each save
+              creates a separate snapshot; old copies are retained.
+            </p>
+            <button
+              disabled={busy}
+              onClick={async () => {
+                setVaultPreview(null);
+                const preview = await mutate({
+                  op: "memory.vault.preview",
+                  scope: memoryScope,
+                });
+                if (preview?.markdown) setVaultPreview(preview);
+              }}
+            >
+              Review {memoryScope} snapshot for vault
+            </button>
+            {vaultPreview && (
+              <section
+                aria-label="Review vault memory snapshot"
+                className="nexus-card"
+              >
+                <h4>Review {vaultPreview.workspace} memory snapshot</h4>
+                <p>
+                  Confirm saves this exact text as a new Markdown note under
+                  Nexus Memory Snapshots. Existing files and previous snapshots
+                  stay unchanged. Later corrections or forgetting do not update
+                  copies. No provider is contacted.
+                </p>
+                <pre
+                  style={{
+                    whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
+                    maxHeight: "24rem",
+                    overflow: "auto",
+                  }}
+                >
+                  {vaultPreview.markdown}
+                </pre>
+                <div className="foundation-actions">
+                  <button
+                    disabled={busy}
+                    onClick={async () => {
+                      const saved = await mutate({
+                        op: "memory.vault.save",
+                        scope: vaultPreview.workspace,
+                        exportedAt: vaultPreview.exportedAt,
+                        sha256: vaultPreview.sha256,
+                        confirm: true,
+                      });
+                      setVaultPreview(null);
+                      if (saved?.sha256)
+                        setMessage(
+                          `Vault snapshot saved and read back: ${saved.filename}. Refresh the laptop file index to find it in the galaxy.`,
+                        );
+                    }}
+                  >
+                    Confirm and save new vault snapshot
+                  </button>
+                  <button disabled={busy} onClick={() => setVaultPreview(null)}>
+                    Cancel vault snapshot
+                  </button>
+                </div>
+              </section>
+            )}
             {data.memory.map((m) => (
               <article key={m.id} className="foundation-memory">
                 <p>{m.content}</p>
