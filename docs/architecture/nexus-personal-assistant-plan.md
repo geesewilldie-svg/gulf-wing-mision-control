@@ -334,3 +334,7 @@ Saved managed drafts can be reopened after content verification and revised into
 ### Built-in laptop capability registry
 
 The bounded file/draft/maintenance adapters now have versioned descriptions of effects, prerequisites and verification. A controller-only local lookup reports included, setup-dependent and unbuilt capability families using configuration checks without dispatch. Static facts also ground local answering/planning prompts. This is an initial registry slice, not a complete invocation broker, all-service inventory or model execution grant. See `docs/nexus-laptop-capabilities.md`.
+
+### Reviewed Windows HTTPS handoff
+
+A separate locally enabled capability can hand a specifically reviewed HTTPS address to the Windows host's normal browser. It uses literal arguments, same-origin controller confirmation, a dispatch-time local-permission recheck and URL-hash-bound durable request records. Receipt completion means handoff only, not verified page/account state. The registry continues to mark page reading/clicking and general computer control as unbuilt. See `docs/nexus-reviewed-web-links.md`; this is not a general browser automation/helper adapter.

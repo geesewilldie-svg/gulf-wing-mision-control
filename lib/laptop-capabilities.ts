@@ -10,6 +10,20 @@ export type LaptopCapability = {
 };
 export const laptopCapabilities: readonly LaptopCapability[] = [
   {
+    id: "browser.open-reviewed-link",
+    version: 1,
+    name: "Open reviewed web links",
+    implemented: true,
+    description:
+      "Review an HTTPS address and request it open in the laptop's normal browser. Page display and load are not verified.",
+    effects:
+      "Hand one reviewed HTTPS link to Windows; no page reading or clicking.",
+    authorization:
+      "Windows host, paired controller, separate local enablement and Open on laptop confirmation.",
+    verification:
+      "Windows process handoff only; saved request receipt. No page or account verification.",
+  },
+  {
     id: "selected-files.read",
     version: 1,
     name: "Selected laptop files",
@@ -56,7 +70,7 @@ export const laptopCapabilities: readonly LaptopCapability[] = [
     name: "Browser control",
     implemented: false,
     description:
-      "Opening browser tabs, clicking pages and acting in signed-in accounts are not implemented.",
+      "Reading or clicking pages, controlling existing tabs and acting in signed-in accounts are not implemented.",
     effects: "None; no execution adapter.",
     authorization: "No grant or adapter is provided.",
     verification: "Not implemented.",

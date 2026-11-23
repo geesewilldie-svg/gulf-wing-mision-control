@@ -155,7 +155,7 @@ test("capability command requires controller identity, origin and local-only mod
   expect(result.ok()).toBe(true);
   const body = await result.json();
   expect(body.engine).toBe("Nexus laptop capabilities");
-  expect(body.capabilities).toHaveLength(5);
+  expect(body.capabilities).toHaveLength(6);
   expect(body.routing.selected).toEqual([]);
 });
 test("capability cards show honest unsupported actions in the assistant", async ({

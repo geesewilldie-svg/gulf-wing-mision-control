@@ -1,10 +1,12 @@
 import { laptopCapabilities } from "../laptop-capabilities";
 import { fileRoots } from "./local-files";
 import { maintenanceEnabled } from "./maintenance";
+import { linkOpeningEnabled } from "./web-link";
 export async function laptopCapabilitiesAnswer() {
-  const [folders, maintenance] = await Promise.allSettled([
+  const [folders, maintenance, links] = await Promise.allSettled([
     fileRoots(),
     maintenanceEnabled(),
+    linkOpeningEnabled(),
   ]);
   const capabilities = laptopCapabilities.map((capability) => {
     let status = capability.implemented
@@ -39,6 +41,11 @@ export async function laptopCapabilitiesAnswer() {
           ? "Enabled locally"
           : "Local enablement needed";
     }
+    if (capability.id === "browser.open-reviewed-link") {
+      if (process.platform !== "win32") status = "Windows host required";
+      else if (links.status === "rejected") status = "Settings unavailable";
+      else status = links.value ? "Enabled locally" : "Local enablement needed";
+    }
     return {
       id: capability.id,
       version: capability.version,
@@ -51,7 +58,7 @@ export async function laptopCapabilitiesAnswer() {
   return {
     engine: "Nexus laptop capabilities",
     answer:
-      "For laptop files and services, this build includes selected-file reading, reviewed draft files, and Nexus service checks when locally enabled. Browser and general computer control are not built yet. Setup settings are listed below; they do not prove live service health. No action was started.",
+      "For laptop files and services, this build includes selected-file reading, reviewed draft files, Nexus service checks and reviewed HTTPS link opening when locally enabled. Reading or clicking web pages and general computer control are not built yet. Setup settings are listed below; they do not prove live service health. No action was started.",
     capabilities,
     sources: [],
     warnings: [],

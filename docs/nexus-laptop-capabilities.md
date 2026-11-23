@@ -2,7 +2,7 @@
 
 In Auto or Local mode, ask “Show laptop capabilities” or “What can you do on my laptop?” Nexus returns a deterministic configuration summary and readable cards without asking a model, contacting providers or dispatching maintenance. The summary names included and missing capability families so it remains useful when spoken. The lookup uses existing controller and same-origin checks; cloud, Compare and Knowledge-only modes reject the command before provider use.
 
-The first version covers selected-file reading/index refresh, reviewed create-only managed drafts/copies, and two named Windows maintenance actions. Browser control and general computer/source-file mutation are explicitly marked not implemented. This is not a full inventory of voice, memory, tasks, accounts or coding workers, and is separate from the Connected Work activity display.
+The first version covers selected-file reading/index refresh, reviewed create-only managed drafts/copies, and two named Windows maintenance actions. A separate reviewed HTTPS-link opening capability is included behind local enablement and explicit confirmation. Page reading/clicking, tab management and general computer/source-file mutation remain explicitly unbuilt. This is not a full inventory of voice, memory, tasks, accounts or coding workers, and is separate from the Connected Work activity display.
 
 Definitions have stable IDs, version, description, effects, authorization prerequisites and verification notes. The declarations describe existing adapters; they do not authorize invocation, create grants, install providers or implement a general broker. Existing path, confirmation, platform, local-enable and revision checks remain authoritative.
 

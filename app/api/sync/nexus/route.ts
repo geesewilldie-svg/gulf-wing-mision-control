@@ -1,4 +1,6 @@
 import { memoryIntent } from "@/lib/memory-intent";
+import { webLinkIntent } from "@/lib/web-link";
+import { webLinkProposal } from "@/lib/server/web-link";
 import {
   laptopCapabilitiesIntent,
   laptopCapabilityFacts,
@@ -161,6 +163,15 @@ export async function POST(request: Request) {
           data.resetHistory === true,
       });
     };
+    const linkCommand = webLinkIntent(body.query);
+    if (linkCommand) {
+      if (!["auto", "local"].includes(body.mode as string))
+        throw new SyncError(
+          403,
+          "Laptop link requests are local-only. Choose Auto or local mode.",
+        );
+      return reply(await webLinkProposal(linkCommand, body.requestId));
+    }
     if (laptopCapabilitiesIntent(body.query)) {
       if (!["auto", "local"].includes(body.mode as string))
         throw new SyncError(

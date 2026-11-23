@@ -2,10 +2,11 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { withStore } from "./foundation/store";
 import { SyncError } from "./sync-store";
 import type { MaintenanceAction } from "./maintenance";
+export type LaptopAction = MaintenanceAction | "open-web-link";
 
 export type LaptopOperation = {
   id: string;
-  action: MaintenanceAction;
+  action: LaptopAction;
   outcome:
     | "running"
     | "complete"
@@ -30,10 +31,18 @@ function expire(db: Parameters<Parameters<typeof withStore>[0]>[0]) {
   );
 }
 export function claimLaptopOperation(
-  action: MaintenanceAction,
+  action: LaptopAction,
   requestId: unknown,
   timeout: number,
+  argumentHash?: string,
 ) {
+  if (action === "open-web-link" && !argumentHash)
+    throw new SyncError(
+      400,
+      "A web-link operation requires its argument reference.",
+    );
+  if (argumentHash !== undefined && !/^[a-f0-9]{64}$/.test(argumentHash))
+    throw new SyncError(400, "Invalid operation argument reference.");
   const key = requestId === undefined ? randomUUID() : requestId;
   if (typeof key !== "string" || !/^[a-zA-Z0-9-]{16,80}$/.test(key))
     throw new SyncError(400, "Invalid laptop operation request reference.");
@@ -50,6 +59,19 @@ export function claimLaptopOperation(
           "This request reference already belongs to a different operation.",
         );
       if (old) {
+        const evidence = db
+          .prepare(
+            "SELECT detail FROM events WHERE type='laptop.arguments' AND CASE WHEN json_valid(detail) THEN json_extract(detail,'$.operationId') END=? LIMIT 1",
+          )
+          .get(old.id) as { detail: string } | undefined;
+        const previousHash = evidence
+          ? JSON.parse(evidence.detail).hash
+          : undefined;
+        if (previousHash !== argumentHash)
+          throw new SyncError(
+            409,
+            "This request reference belongs to different operation arguments.",
+          );
         db.exec("COMMIT");
         return { execute: false, receipt: receipt(old) };
       }
@@ -75,6 +97,10 @@ export function claimLaptopOperation(
         at,
         Date.now() + timeout + 60000,
       );
+      if (argumentHash)
+        db.prepare(
+          "INSERT INTO events(task_id,type,at,detail) VALUES(NULL,'laptop.arguments',?,?)",
+        ).run(at, JSON.stringify({ operationId: id, hash: argumentHash }));
       const row = db
         .prepare("SELECT * FROM laptop_operations WHERE id=?")
         .get(id);

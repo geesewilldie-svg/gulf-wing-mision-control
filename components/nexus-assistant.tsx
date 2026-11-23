@@ -8,6 +8,7 @@ import type { ConversationTurn } from "@/lib/conversation";
 import { scopes, type Scope } from "@/lib/foundation/contracts";
 import NexusVoice from "./nexus-voice";
 import AssistantDrafts from "./assistant-drafts";
+import NexusLinkReview, { type LinkPreview } from "./nexus-link-review";
 const AssistantContext = createContext({
   conversationActive: false,
   openAssistant: () => {},
@@ -15,6 +16,7 @@ const AssistantContext = createContext({
 export const useNexusAssistant = () => useContext(AssistantContext);
 type Answer = {
   engine: string;
+  linkPreview?: LinkPreview;
   capabilities?: {
     id: string;
     name: string;
@@ -345,6 +347,13 @@ export default function NexusAssistant({
               <article className="nexus-answer">
                 <h3>{answer.engine}</h3>
                 <p>{answer.answer}</p>
+                {answer.linkPreview && (
+                  <NexusLinkReview
+                    key={answer.linkPreview.requestId}
+                    preview={answer.linkPreview}
+                    disabled={disabled}
+                  />
+                )}
                 {answer.capabilities && (
                   <div className="nexus-capability-list">
                     {answer.capabilities.map((capability) => (
