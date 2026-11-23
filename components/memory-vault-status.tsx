@@ -4,42 +4,54 @@ type Status = {
   state: "ready" | "disabled" | "not-configured" | "unavailable";
   label?: string;
   folder?: string;
+  workJournal?: "enabled" | "disabled";
+  journalReceipts?: { count: number; unconfirmed: number; full: boolean };
 };
 export default function MemoryVaultStatus() {
   const [status, setStatus] = useState<Status | null>(null);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const generation = useRef(0);
-  const load = useCallback(async (disable = false) => {
-    const current = ++generation.current;
-    setBusy(true);
-    setMessage("");
-    try {
-      const response = await fetch("/api/sync/foundation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          op: disable ? "memory.vault.disable" : "memory.vault.status",
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok)
-        throw Error(data.error || "Vault status is unavailable.");
-      if (current !== generation.current) return;
-      setStatus(data);
-      if (disable)
-        setMessage(
-          "Future vault saves are disabled. Existing notes remain. A save already being dispatched may finish; check the vault if needed.",
-        );
-    } catch (error) {
-      if (current === generation.current) {
-        setStatus(null);
-        setMessage((error as Error).message);
+  const load = useCallback(
+    async (action: "status" | "vault" | "journal" = "status") => {
+      const current = ++generation.current;
+      setBusy(true);
+      setMessage("");
+      try {
+        const response = await fetch("/api/sync/foundation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            op:
+              action === "vault"
+                ? "memory.vault.disable"
+                : action === "journal"
+                  ? "memory.journal.disable"
+                  : "memory.vault.status",
+          }),
+        });
+        const data = await response.json();
+        if (!response.ok)
+          throw Error(data.error || "Vault status is unavailable.");
+        if (current !== generation.current) return;
+        setStatus(data);
+        if (action !== "status")
+          setMessage(
+            action === "journal"
+              ? "Automatic work journal disabled. Reviewed saves remain available. Existing notes are retained; an already-dispatched save may finish."
+              : "Future vault saves are disabled. Existing notes remain. A save already being dispatched may finish; check the vault if needed.",
+          );
+      } catch (error) {
+        if (current === generation.current) {
+          setStatus(null);
+          setMessage((error as Error).message);
+        }
+      } finally {
+        if (current === generation.current) setBusy(false);
       }
-    } finally {
-      if (current === generation.current) setBusy(false);
-    }
-  }, []);
+    },
+    [],
+  );
   useEffect(() => {
     void load();
     return () => {
@@ -76,18 +88,43 @@ export default function MemoryVaultStatus() {
         </p>
       )}
       <p>
-        Access: create new notes only, after review and confirmation. Existing
-        notes are not overwritten. Automatic synchronization and new provider
-        sharing are not enabled. Folder checks do not guarantee the next write
-        will succeed.
+        Reviewed saves require confirmation. Existing notes are not overwritten.
+        No new provider sharing is enabled. Folder checks do not guarantee the
+        next write will succeed.
       </p>
+      {status?.state === "ready" && (
+        <p>
+          <strong>
+            Automatic work journal:{" "}
+            {status.workJournal === "enabled" ? "enabled" : "off"}
+          </strong>
+          .{" "}
+          {status.workJournal === "enabled"
+            ? "New completed task artifacts are saved without per-note review. Their claims remain unverified; old copies are retained."
+            : "To opt in, run Enable-Nexus-Work-Journal.cmd on the laptop."}
+        </p>
+      )}
+      {!!status?.journalReceipts?.count && (
+        <p>
+          {status.journalReceipts.count} journal receipts ·{" "}
+          {status.journalReceipts.unconfirmed} uncertain or interrupted saves.{" "}
+          {status.journalReceipts.full
+            ? "Journal receipt limit reached; automatic notes are stopped."
+            : "Uncertain saves are never automatically retried."}
+        </p>
+      )}
       <div className="foundation-actions">
         <button disabled={busy} onClick={() => void load()}>
           Refresh vault status
         </button>
         {status && ["ready", "unavailable"].includes(status.state) && (
-          <button disabled={busy} onClick={() => void load(true)}>
+          <button disabled={busy} onClick={() => void load("vault")}>
             Disable future vault saves
+          </button>
+        )}
+        {status?.workJournal === "enabled" && (
+          <button disabled={busy} onClick={() => void load("journal")}>
+            Disable automatic work journal
           </button>
         )}
       </div>

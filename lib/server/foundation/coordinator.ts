@@ -1,3 +1,4 @@
+import { answerMemorySources } from "../answer-memory-sources";
 import {
   IncompletePlanError,
   nexusPlanningFacts,
@@ -29,7 +30,10 @@ export async function generatePlan(
   loadKnowledge: typeof readKnowledge = readKnowledge,
 ) {
   const memory = memoryContext(t.scope, t.request);
-  const sources = searchDocuments(await loadKnowledge(), t.request)
+  const sources = searchDocuments(
+    answerMemorySources(await loadKnowledge()).documents,
+    t.request,
+  )
     .slice(0, 3)
     .map((d) => ({ id: d.id, source: d.source, text: d.text.slice(0, 1000) }));
   // Source reads yield control: owner corrections or cancellation can invalidate

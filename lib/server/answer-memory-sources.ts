@@ -10,7 +10,7 @@ export function answerMemorySources(documents: KnowledgeDocument[]) {
     const source = document.source.replace(/\\/g, "/");
     if (
       /(?:^|[/·]\s*)Nexus Memory Snapshots(?:\/|$)/i.test(source) ||
-      /^\s*# Nexus (?:owner memory|reviewed work note)\s*(?:\r?\n|$)/i.test(
+      /^\s*# Nexus (?:owner memory|reviewed work note|automatic work note)\s*(?:\r?\n|$)/i.test(
         document.text,
       )
     )

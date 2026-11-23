@@ -3,18 +3,38 @@ import { createHash } from "node:crypto";
 import { scope } from "@/lib/foundation/contracts";
 import { listConversationMemory, taskForMemoryNote } from "./foundation/store";
 import { portableMemory } from "./portable-memory";
+import { workJournalReceipts } from "./work-journal";
 import { portableWorkNote } from "./portable-work-note";
 import { SyncError } from "./sync-store";
 import {
   writeMemorySnapshot,
   memoryVaultStatus,
   disableMemoryVault,
+  disableWorkJournal,
 } from "../../scripts/memory-vault-lib.mjs";
 export async function memoryVault(body: any) {
   const dir = path.resolve(
     process.env.GW_SYNC_DATA_DIR || path.join(process.cwd(), ".gulf-wing"),
   );
-  if (body.op === "memory.vault.status") return memoryVaultStatus(dir);
+  if (body.op === "memory.vault.status")
+    return {
+      ...(await memoryVaultStatus(dir)),
+      journalReceipts: await workJournalReceipts(),
+    };
+  if (body.op === "memory.journal.disable") {
+    try {
+      await disableWorkJournal(dir);
+      return {
+        ...(await memoryVaultStatus(dir)),
+        journalReceipts: await workJournalReceipts(),
+      };
+    } catch {
+      throw new SyncError(
+        503,
+        "Automatic journal settings could not be disabled. Existing notes were preserved.",
+      );
+    }
+  }
   if (body.op === "memory.vault.disable") {
     try {
       return await disableMemoryVault(dir);

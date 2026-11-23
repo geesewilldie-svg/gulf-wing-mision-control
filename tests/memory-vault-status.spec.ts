@@ -73,7 +73,11 @@ test("vault status supports legacy grants, disable, local re-enable and unavaila
 test("status and disable require controller authorization and same origin", async ({
   request,
 }) => {
-  for (const op of ["memory.vault.status", "memory.vault.disable"]) {
+  for (const op of [
+    "memory.vault.status",
+    "memory.vault.disable",
+    "memory.journal.disable",
+  ]) {
     expect(
       (await request.post("/api/sync/foundation", { data: { op } })).status(),
     ).toBe(401);

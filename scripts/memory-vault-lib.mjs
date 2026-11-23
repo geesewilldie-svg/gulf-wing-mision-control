@@ -51,6 +51,34 @@ async function grantDetails(dir, allowDisabled = false) {
     throw Error("Vault saves are disabled.");
   return { grant, root };
 }
+function journalSince(grant) {
+  const journal = grant.workJournal;
+  return journal?.enabled === true &&
+    typeof journal.since === "string" &&
+    /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(journal.since) &&
+    Number.isFinite(Date.parse(journal.since))
+    ? journal.since
+    : null;
+}
+export async function workJournalGrant(dir) {
+  const { grant } = await grantDetails(dir);
+  return journalSince(grant);
+}
+export async function enableWorkJournal(dir) {
+  const { grant } = await grantDetails(dir);
+  const since = journalSince(grant) || new Date().toISOString();
+  await replaceGrant(dir, { ...grant, workJournal: { enabled: true, since } });
+  return since;
+}
+export async function disableWorkJournal(dir) {
+  const grant = await json(path.join(dir, "memory-vault.json"));
+  if (grant.version !== 1) throw Error("Invalid vault settings.");
+  await replaceGrant(dir, {
+    ...grant,
+    workJournal: { ...grant.workJournal, enabled: false },
+  });
+  return { state: "disabled" };
+}
 async function replaceGrant(dir, grant) {
   const temporary = path.join(dir, `memory-vault-${randomUUID()}.tmp`);
   try {
@@ -85,6 +113,7 @@ export async function memoryVaultStatus(dir) {
       state: grant.enabled === false ? "disabled" : "ready",
       label,
       folder: "Nexus Memory Snapshots",
+      workJournal: journalSince(grant) ? "enabled" : "disabled",
     };
   } catch {
     return { state: "unavailable" };
@@ -94,7 +123,11 @@ export async function disableMemoryVault(dir) {
   // Disabling must work even when the selected drive has gone offline.
   const grant = await json(path.join(dir, "memory-vault.json"));
   if (grant.version !== 1) throw Error("Invalid vault settings.");
-  await replaceGrant(dir, { ...grant, enabled: false });
+  await replaceGrant(dir, {
+    ...grant,
+    enabled: false,
+    workJournal: { ...grant.workJournal, enabled: false },
+  });
   return { state: "disabled" };
 }
 export async function prepareMemoryVault(dir, id) {
@@ -129,8 +162,16 @@ export async function prepareMemoryVault(dir, id) {
   );
   return target;
 }
-export async function writeMemorySnapshot(dir, markdown, workspace) {
+/** @param {string | null} automaticSince */
+export async function writeMemorySnapshot(
+  dir,
+  markdown,
+  workspace,
+  automaticSince = null,
+) {
   const { grant } = await grantDetails(dir);
+  if (automaticSince !== null && journalSince(grant) !== automaticSince)
+    throw Error("Automatic journal is disabled or changed.");
   if (
     typeof markdown !== "string" ||
     Buffer.byteLength(markdown, "utf8") > 1500000 ||
@@ -148,6 +189,8 @@ export async function writeMemorySnapshot(dir, markdown, workspace) {
   if (hash !== createHash("sha256").update(markdown).digest("hex"))
     throw Error("Snapshot read-back failed.");
   const current = await grantDetails(dir);
+  if (automaticSince !== null && journalSince(current.grant) !== automaticSince)
+    throw Error("Automatic journal is disabled or changed.");
   if (
     current.grant.target !== grant.target ||
     current.grant.rootId !== grant.rootId

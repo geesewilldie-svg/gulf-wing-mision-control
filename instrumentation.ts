@@ -14,6 +14,8 @@ export async function register() {
       "Nexus foundation unavailable; dispatch remains stopped. Existing business data was not migrated.",
     );
   }
+  const { startWorkJournal } = await import("./lib/server/work-journal");
+  startWorkJournal();
   const { buildMorning } = await import("./lib/server/morning-brief");
   const globalScheduler = globalThis as typeof globalThis & {
     nexusBriefTimer?: ReturnType<typeof setInterval>;

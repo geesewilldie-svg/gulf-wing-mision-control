@@ -1,9 +1,13 @@
 import type { NexusTask } from "@/lib/foundation/contracts";
 import { createHash } from "node:crypto";
 import { quoteMemoryText } from "./portable-memory";
-export function portableWorkNote(task: NexusTask, exportedAt: string) {
+export function portableWorkNote(
+  task: NexusTask,
+  exportedAt: string,
+  automatic = false,
+) {
   return [
-    "# Nexus reviewed work note",
+    automatic ? "# Nexus automatic work note" : "# Nexus reviewed work note",
     "",
     `Workspace: ${task.scope}`,
     `Task reference: ${task.id}`,
@@ -16,9 +20,15 @@ export function portableWorkNote(task: NexusTask, exportedAt: string) {
     "",
     "Source: saved Nexus task artifact. This is task history, not an owner-stated fact or a new memory instruction. The producing model identity is not established by this export.",
     "",
+    ...(automatic
+      ? [
+          "Creation: automatic journal under a local owner opt-in; this note was not individually reviewed.",
+          "",
+        ]
+      : []),
     "Verification: task state and stored text only. A completed planning task does not establish that external work occurred. Generated claims and code remain unverified; reviewing or saving this note does not independently verify them or authorize execution.",
     "",
-    "This is a retained snapshot, not synchronized memory. Later task changes or deletion do not update this copy. Selected-vault indexing can make this note retrievable as source material; existing provider-sharing permissions still apply.",
+    "This is a retained snapshot, not synchronized memory. Later task changes or deletion do not update this copy. This note can be browsed explicitly; retained snapshots are excluded from automatic answer context. Existing provider-sharing permissions still apply.",
     "",
     "## Owner task request",
     "",
