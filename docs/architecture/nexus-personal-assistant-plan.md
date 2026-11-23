@@ -366,3 +366,7 @@ Native prerequisites and normal-profile login are reported. The staged GitHub co
 ### Fixed public Copilot acceptance probe — November 23, 2026
 
 The owner verified isolated profile OAuth. A local explicitly confirmed fixed public prompt can now test generation access using pinned CLI metadata, requested empty tools, explicit denies, disabled MCP/instructions/sync, bounded subprocess output/time, profile inspection and a durable daily no-replay reservation. This remains a diagnostic acceptance probe, not normal Nexus Copilot routing or an OS sandbox. Private-context and composed-task delegation remain unimplemented.
+
+### Owner requirement: real file galaxy and full-screen views — November 23, 2026
+
+The owner requests independently expandable/fullscreen galaxy and globe views, real clickable file nodes with atom-like connecting stems, and opening/viewing each selected file. This extends the existing relationship-graph target into a concrete interactive file-browser requirement. See [file galaxy plan](../nexus-file-galaxy-plan.md) for supported evidence, original-file versus indexed-text viewing, accessibility, authorization and acceptance. Current Galaxy points remain a demo; its existing portal expansion is not a real file graph, and the request globe still needs its own expansion control. These requested changes are planned, not delivered by the Copilot parser repair.

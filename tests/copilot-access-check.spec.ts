@@ -203,3 +203,56 @@ test("test transport bounds output and withholds child diagnostics", async () =>
     await fs.rm(dir, { recursive: true, force: true });
   }
 });
+
+test("commented Copilot settings remain unchanged and still enforce execution checks", async () =>
+  fixture(async (dir) => {
+    const file = path.join(dir, "copilot-profile", "config.json");
+    const text =
+      '// CLI configuration\n{\n  "user": "synthetic-owner", // saved account label\n}\n';
+    await fs.writeFile(file, text);
+    let calls = 0;
+    const result = await checkCopilotAccess({
+      dataDir: dir,
+      confirmed: true,
+      platform: "win32",
+      run: async () => {
+        calls++;
+        return "NEXUS_COPILOT_OK";
+      },
+    });
+    expect(result.state).toBe("verified");
+    expect(calls).toBe(1);
+    expect(await fs.readFile(file, "utf8")).toBe(text);
+  }));
+test("JSONC parser errors never permit partial objects or hidden execution settings", async () =>
+  fixture(async (dir) => {
+    const file = path.join(dir, "copilot-profile", "config.json");
+    let calls = 0;
+    const run = async () => {
+      calls++;
+      return "NEXUS_COPILOT_OK";
+    };
+    for (const text of [
+      '{ "user": "synthetic",',
+      "[{}]",
+      "null",
+      '{ /* comment */ "hooks": {"command":"PRIVATE_COMMAND"}, }',
+    ]) {
+      await fs.writeFile(file, text);
+      await expect(
+        checkCopilotAccess({
+          dataDir: dir,
+          confirmed: true,
+          platform: "win32",
+          run,
+        }),
+      ).rejects.toThrow();
+      expect(await fs.readFile(file, "utf8")).toBe(text);
+    }
+    expect(calls).toBe(0);
+    expect(
+      (await fs.readdir(dir)).some((name) =>
+        name.startsWith("copilot-access-check"),
+      ),
+    ).toBe(false);
+  }));

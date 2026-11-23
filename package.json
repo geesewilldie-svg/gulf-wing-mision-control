@@ -20,6 +20,7 @@
     "test:launcher": "node scripts/nexus-launcher.test.mjs"
   },
   "dependencies": {
+    "jsonc-parser": "3.3.1",
     "lucide-react": "^0.468.0",
     "next": "16.4.6",
     "quickjs-emscripten": "0.32.0",

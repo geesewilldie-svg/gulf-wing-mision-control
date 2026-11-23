@@ -1,3 +1,4 @@
+import { parse as parseJsonc } from "jsonc-parser";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import os from "node:os";
@@ -63,7 +64,20 @@ async function inspectProfile(profile) {
   try {
     const file = path.join(profile, "config.json");
     if ((await fs.stat(file)).size > 100000) throw Error();
-    config = JSON.parse(await fs.readFile(file, "utf8"));
+    /** @type {import("jsonc-parser").ParseError[]} */
+    const errors = [];
+    const text = await fs.readFile(file, "utf8");
+    config = parseJsonc(text.replace(/^\uFEFF/, ""), errors, {
+      allowTrailingComma: true,
+      disallowComments: false,
+    });
+    if (
+      errors.length ||
+      !config ||
+      typeof config !== "object" ||
+      Array.isArray(config)
+    )
+      throw Error("Invalid settings object");
   } catch (error) {
     if (error.code !== "ENOENT")
       throw Error(
