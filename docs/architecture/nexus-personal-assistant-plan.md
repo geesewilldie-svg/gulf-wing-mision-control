@@ -330,3 +330,7 @@ The first create-only file action lets the owner review/edit an answer, then exp
 ### Reviewed copies of managed drafts
 
 Saved managed drafts can be reopened after content verification and revised into a separate create-only artifact. Source hashes are checked before new dispatch and source/child references are retained in the existing event log. Completed requests remain deduplicated; originals are preserved. The editor now scrolls into view and focuses its text field, addressing the owner walkthrough's question-box/editor confusion. No database migration or broader filesystem permission is added.
+
+### Built-in laptop capability registry
+
+The bounded file/draft/maintenance adapters now have versioned descriptions of effects, prerequisites and verification. A controller-only local lookup reports included, setup-dependent and unbuilt capability families using configuration checks without dispatch. Static facts also ground local answering/planning prompts. This is an initial registry slice, not a complete invocation broker, all-service inventory or model execution grant. See `docs/nexus-laptop-capabilities.md`.

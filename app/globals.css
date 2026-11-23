@@ -3314,6 +3314,7 @@ body {
 .nexus-assistant-drawer .nexus-draft-toolbar button, .nexus-assistant-drawer .nexus-draft-actions > * { display: flex; align-items: center; justify-content: flex-start; width: 100%; min-height: 46px; margin: 0; padding: 12px 14px; border: 1px solid #355b73; border-radius: 9px; background: #102d41; color: #e0f4ff; font: inherit; font-size: 14px; line-height: 1.4; text-align: left; text-decoration: none; }
 .nexus-assistant-drawer .nexus-draft-actions a:hover { background: #173f5b; border-color: #78e8ff; }
 .nexus-draft-list { display: grid; gap: 16px; margin-top: 24px; }
+.nexus-capability-list { display: grid; gap: 16px; margin: 20px 0; }
 .nexus-draft-file, .nexus-draft-preview { min-width: 0; padding: 16px; border: 1px solid #35516b; border-radius: 12px; background: #0c1c2c; }
 .nexus-draft-file h4, .nexus-draft-preview h4 { margin: 0; color: #eff8ff; font-size: 16px; line-height: 1.5; overflow-wrap: anywhere; }
 .nexus-assistant-drawer .nexus-draft-meta { margin: 8px 0 16px; color: #abc2d5; font-size: 12px; line-height: 1.6; }

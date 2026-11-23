@@ -15,6 +15,13 @@ const AssistantContext = createContext({
 export const useNexusAssistant = () => useContext(AssistantContext);
 type Answer = {
   engine: string;
+  capabilities?: {
+    id: string;
+    name: string;
+    status: string;
+    detail: string;
+    authorization: string;
+  }[];
   operationId?: string;
   operationChoices?: { id: string; label: string }[];
   fileChoices?: { id: string; hash: string; name: string }[];
@@ -338,6 +345,24 @@ export default function NexusAssistant({
               <article className="nexus-answer">
                 <h3>{answer.engine}</h3>
                 <p>{answer.answer}</p>
+                {answer.capabilities && (
+                  <div className="nexus-capability-list">
+                    {answer.capabilities.map((capability) => (
+                      <section
+                        className="nexus-draft-file"
+                        aria-label={capability.name}
+                        key={capability.id}
+                      >
+                        <h4>{capability.name}</h4>
+                        <p className="nexus-draft-meta">{capability.status}</p>
+                        <p>{capability.detail}</p>
+                        <p className="nexus-router-note">
+                          {capability.authorization}
+                        </p>
+                      </section>
+                    ))}
+                  </div>
+                )}
                 {answer.operationChoices?.map((operation) => (
                   <button
                     key={operation.id}
@@ -485,10 +510,12 @@ export default function NexusAssistant({
                     ))}
                   </details>
                 )}
-                <h4>
-                  Retrieved sources · verify generated claims against these
-                  passages
-                </h4>
+                {!!answer.sources.length && (
+                  <h4>
+                    Retrieved sources · verify generated claims against these
+                    passages
+                  </h4>
+                )}
                 {answer.sources.map((source, i) => (
                   <details key={source.id}>
                     <summary>

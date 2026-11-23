@@ -148,6 +148,9 @@ test("actual planner sends implemented context and detects local output limits",
         "Nexus is a real, implemented personal assistant",
       );
       expect(requests[0].messages[0].content).toContain("laptop pairing code");
+      expect(requests[0].messages[0].content).toContain(
+        "managed-drafts.create",
+      );
       expect(requests[0].options.num_predict).toBe(768);
       limited = true;
       const cut = queue("Nexus phone checklist again");

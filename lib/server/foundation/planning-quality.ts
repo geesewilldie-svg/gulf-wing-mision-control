@@ -1,3 +1,4 @@
+import { laptopCapabilityFacts } from "../../laptop-capabilities";
 export class IncompletePlanError extends Error {
   constructor(
     public partial: string,
@@ -6,14 +7,16 @@ export class IncompletePlanError extends Error {
     super(reason);
   }
 }
-export const nexusPlanningFacts = `Nexus is a real, implemented personal assistant, not a fictional or hypothetical app.
+export const nexusPlanningFacts =
+  `Nexus is a real, implemented personal assistant, not a fictional or hypothetical app.
 It is hosted on the owner's Windows computer; that host must be awake and reachable.
 Its Android client is an installable Chrome web app connected through private Tailscale HTTPS. There is no native Nexus APK or implemented Android Auto integration.
 Access uses Connect devices and a laptop pairing code with controller/display roles. Nexus has no Facebook login, public sign-up or Nexus username/password registration.
 Voice uses a local transcription worker and local Kokoro Isabella or optional ElevenLabs Jessica. Cloud speech needs per-session consent and allowance; local Isabella does not use ElevenLabs credits.
 Listening preferences include opt-in spoken interruption and per-device High noise. These reduce false triggers but do not guarantee isolation from other voices. Android may suspend background/locked-screen capture.
 Task creation/listing/steering uses the Foundation store and selected workspace. Planning completion does not prove external actions. Calendar/Drive are separate read-only integrations; Gmail and general computer execution are not implemented.
-These are implemented feature descriptions, not a live health check or proof a device/account is currently connected. Do not invent menus or capabilities beyond this evidence.`;
+These are implemented feature descriptions, not a live health check or proof a device/account is currently connected. Do not invent menus or capabilities beyond this evidence.\n` +
+  laptopCapabilityFacts;
 export function planningIssues(output: string, objective: string): string[] {
   const issues: string[] = [];
   if (

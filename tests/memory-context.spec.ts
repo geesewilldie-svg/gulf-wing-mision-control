@@ -3,6 +3,7 @@ import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { POST } from "../app/api/sync/nexus/route";
+import { laptopCapabilityFacts } from "../lib/laptop-capabilities";
 import { token } from "../lib/server/sync-store";
 import {
   ownerContextRevision,
@@ -76,6 +77,7 @@ test("real answer route omits stale history and discards an answer prepared acro
       "OLD_PRIVATE_CONTEXT",
     );
     expect(bodies[0].messages[0].content).toContain("CURRENT_CONTEXT");
+    expect(bodies[0].messages[0].content).toContain(laptopCapabilityFacts);
     removeDuringAnswer = true;
     const stale = await ask(currentRevision);
     expect(stale.status).toBe(409);

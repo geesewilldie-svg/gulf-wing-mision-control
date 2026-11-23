@@ -1,4 +1,9 @@
 import { memoryIntent } from "@/lib/memory-intent";
+import {
+  laptopCapabilitiesIntent,
+  laptopCapabilityFacts,
+} from "@/lib/laptop-capabilities";
+import { laptopCapabilitiesAnswer } from "@/lib/server/laptop-capabilities";
 import { fileIntent } from "@/lib/file-intent";
 import { conversationFiles } from "@/lib/server/conversation-files";
 import {
@@ -156,6 +161,15 @@ export async function POST(request: Request) {
           data.resetHistory === true,
       });
     };
+    if (laptopCapabilitiesIntent(body.query)) {
+      if (!["auto", "local"].includes(body.mode as string))
+        throw new SyncError(
+          403,
+          "Laptop capability checks are local-only. Choose Auto or local mode.",
+        );
+      request.signal.throwIfAborted();
+      return reply(await laptopCapabilitiesAnswer());
+    }
     const fileCommand = fileIntent(body.query);
     if (fileCommand) {
       if (!["auto", "local"].includes(body.mode as string))
@@ -395,7 +409,10 @@ export async function POST(request: Request) {
               body.query as string,
               system +
                 (id === "local"
-                  ? "\nApplication-owned local owner context: " + ownerMemory
+                  ? "\n" +
+                    laptopCapabilityFacts +
+                    "\nApplication-owned local owner context: " +
+                    ownerMemory
                   : ""),
               id === "local" ? history : [],
               request.signal,
