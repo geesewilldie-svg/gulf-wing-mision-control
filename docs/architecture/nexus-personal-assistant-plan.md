@@ -1,6 +1,6 @@
 # Nexus personal assistant: reconciled architecture and build plan
 
-Design revision: November 11, 2026. This is a proposal, not a claim of delivered capability. The owner reuploaded the 50-section architecture specification and requested reconciliation before further implementation. Nexus replaces JARVIS throughout. Sample scenarios are not live work orders and are not included as operational tasks here.
+Original reconciliation: November 11, 2026. Memory Galaxy requirements consolidated November 23, 2026. This is an architecture/build plan, not a claim that all proposed capability is delivered. The owner reuploaded the 50-section architecture specification and requested reconciliation before further implementation. Nexus replaces JARVIS throughout. Sample scenarios are not live work orders and are not included as operational tasks here.
 
 ## Product and established decisions
 
@@ -14,6 +14,7 @@ The normal experience is a persistent conversation with visible listening, speak
 | Voice available across management screens | Established | Root-mounted conversation controller; native tray/helper later |
 | Dark background, cyan accents, clearer navigation | Established | Navy surfaces, high-contrast text, restrained cyan status/action accents |
 | Persistent memory, rules and tasks | Established | Application-owned transactional records, independent of model provider |
+| Memory Galaxy / file stars across bases | Established owner requirement | Preserve the original animated spiral; no file-connecting lines; focus/zoom neighborhoods, then explicitly open files; extend to host drives/folders/files |
 | Broad files, browser, applications and terminal capability | Established target | Incremental execution broker and Windows helper; current read-only search remains useful |
 | Use Codex and Claude as workers | Established target | Separate adapters with bounded work orders and supported authentication |
 | Gemini free now, paid later | Established | Retain separate public-only Gemini; no private-context fallback |
@@ -162,13 +163,34 @@ Core updates use a supervisor outside the component being replaced, schema compa
 
 ## Interface, voice and visual design
 
-Proposed layout: compact navigation for Today, Work, Knowledge and Connections; a persistent Nexus conversation drawer/dock on management screens; focused workspace content; expandable technical details. Separate Google accounts, Google files, laptop sources, model providers and laptop services rather than one long Connections form. Co-hosting shows clear intake → estimate → job → review stages with next actions.
+Proposed layout: compact navigation for Today, Work, Memory Galaxy, Knowledge and Connections; a persistent Nexus conversation drawer/dock on management screens; focused workspace content; expandable technical details. Separate Google accounts, Google files, laptop sources, model providers and laptop services rather than one long Connections form. Co-hosting shows clear intake → estimate → job → review stages with next actions.
 
-Use navy backgrounds, visibly distinct panel surfaces, readable neutral text and cyan emphasis. Provide keyboard focus, text labels, adequate contrast and reduced-motion treatment; do not use green or animation alone to convey status. A knowledge graph must display real source relationships and open the underlying evidence; it does not itself grant access.
+Use navy backgrounds, visibly distinct panel surfaces, readable neutral text and cyan emphasis. Provide keyboard focus, text labels, adequate contrast and reduced-motion treatment; do not use green or animation alone to convey status. Relationship views must use real source evidence and open the underlying source without granting new access. Memory Galaxy specifically represents relationships through selectable file-star neighborhoods, not drawn connecting lines.
 
 Root-mount one browser conversation controller so tab changes, drawer minimization and client-side management navigation do not destroy its state. Keep microphone off during model thinking and speech playback in the current loop. Show listening/muted/thinking/speaking/resume states and a prominent mute control. Stopping speech, pausing listening and cancelling a task are separate actions. Preserve selected voice and explicit saved auto-resume preference. Initial browser permission/autoplay gestures can still be necessary. Browser capture ends on close/navigation/sleep; native continuous operation/wake word requires separate implementation and testing.
 
 Images, OCR, visual interpretation, generation and editing are separate capabilities. Screen capture is on demand or explicitly scoped to a chosen window. Prefer accessibility trees/structured data when reliable; pixel interaction requires current coordinates, display scaling, monitor identity, freshness checks and post-action verification. Ambiguous recipients, amounts or destructive voice instructions require correction before dispatch.
+
+### Memory Galaxy: current governing interface contract
+
+This section and [the consolidated file-star plan](../nexus-file-galaxy-plan.md) govern Memory Galaxy. Later owner refinements replace earlier visual proposals for flat node maps, connecting stems and immediate preview on first selection. Historical progress entries below are not competing requirements.
+
+- Preserve the original animated spiral galaxy on the main dashboard and reuse that style in shared Memory views. Brighter labelled **file stars** represent actual authorized files. Faint decorative stars do not count as files. Keep globe and galaxy independently expandable/fullscreen, with usable fallback, close/Escape and accessible controls.
+- Draw no lines between file stars. First selection focuses and zooms the selected file star to the center without reading its contents. Show nearby real file stars; selecting one explores its neighborhood. Open file or selecting the centered star again opens a large readable viewer. Provide Back, Return to galaxy, search/list access, pause/rotation/zoom and reduced-motion support.
+- Neighborhood membership must have source evidence: shared folder, explicit note link, or a separately implemented relationship with provenance. Proximity is a navigation layout, not proof that files contain one another or form an AI-inferred hierarchy. Never invent documents to fill the scene.
+- The full target is a visual **Computer → Drive → Folder → File** explorer, including Pictures, Downloads, images and documents across owner-accessible host storage. Browse directory metadata lazily with pagination/clustering and breadcrumbs. A file need not first be indexed to be browseable. Do not replace this target with permanent selected-folder-only coverage.
+- Browsing, indexing/search, assistant fact memory, private model context and opening an original file are separate operations. SQLite remains authoritative for assistant facts/rules/tasks. Browsing must not silently index entire drives, copy all files into memory or send contents to a provider. Current selected-index text previews do not establish original PDF/image/native-app viewing.
+- Use the same host-backed resource service and responsive UI across laptop, phone, ScreenPad and future operating bases. Preserve host/device identity and availability. Browsing laptop files from a phone differs from enumerating the phone's own storage; native device/storage adapters and permissions require independent implementation. Presentation access alone reveals no private file metadata.
+- Carry opaque file/source identity, current version and host through browsing/preview/open, rechecking access and freshness before use. A native path, browser byte response or viewer launch needs its bounded adapter; the visual star itself does not confer those rights.
+
+| Area | Current implemented scope | Remaining required work |
+| --- | --- | --- |
+| Galaxy appearance and interaction | Original-style spiral, line-free indexed file stars, focus neighborhoods, Back/Return and enlarged text previews; fixture checks passed | Owner acceptance of latest focus behavior; stable selection/orientation across expansion |
+| Source coverage | Currently authorized selected-folder/Obsidian index, with explicit version checks | Host drive discovery, lazy directory browsing, real special folders, unindexed files and multi-host identity |
+| File viewing | Hash-bound indexed text and part navigation | Original image/PDF viewing and explicit native opening for supported other formats |
+| Device surfaces | Shared desktop/mobile Memory UI, Overview Galaxy and controller ScreenPad; globe expansion | Native acceptance per device, offline/unavailable-host states and each additional base's storage adapter |
+
+Track the Explorer work under milestone 4's file/resource adapters and the responsive visual contract under milestone 1. Do not mark the full file-star requirement complete merely because the initial selected-index galaxy is usable.
 
 ## Scheduling, resources and costs
 
@@ -264,11 +286,14 @@ Record concise decision summaries, not hidden reasoning. Observability links tas
 | Interface | Improve existing Next UI first | Desktop shell/helper later for tray/global invocation; validate packaging/license |
 | Languages | TypeScript core, existing Python speech; minimal native helper | Avoid unrelated service/language proliferation |
 | Memory | Relational records + text search + readable exports | Embeddings only after retrieval evidence; no mandatory graph database |
+| File-star interface | Original-style, line-free Memory Galaxy over authorized resources | A visual explorer does not require a graph database or importing every file into assistant fact memory |
 | Model strategy | Replaceable adapters; no silent paid fallback | Verify each account's supported integration and usage reporting |
 | Permissions | Typed broker checks and scoped grants | Arbitrary same-user code is not a hard sandbox |
 | Browser | Dedicated automation profile | Existing-session attachment needs explicit supported account handling |
 | Updates | External supervisor and tested recovery | In-place self-modification cannot guarantee rollback |
 | Phone | Shared API/contracts now; client later | Full phone OS automation remains platform-specific |
+
+Memory Galaxy traceability: real file identities and supported resource adapters → line-free focus/neighborhood UI → original-source viewer/open adapters → native drive/device, stale-access, preview, fullscreen and keyboard/touch acceptance.
 
 Major requirement traceability: one identity → coordinator/task IDs → steering/restart tests; persistent memory → fact/correction contracts → restart/correction tests; broad access → broker/helper/invocations → native/account/takeover tests; learning → manifests/workshop/releases → holdout/rollback tests; voice/UI → root controller/events → navigation/mute tests; proactive work → schedules/cursors → DST/missed-run tests; business subscription → tenant/assignment contracts → isolation/sandbox tests.
 
@@ -367,9 +392,9 @@ Native prerequisites and normal-profile login are reported. The staged GitHub co
 
 The owner verified isolated profile OAuth. A local explicitly confirmed fixed public prompt can now test generation access using pinned CLI metadata, requested empty tools, explicit denies, disabled MCP/instructions/sync, bounded subprocess output/time, profile inspection and a durable daily no-replay reservation. This remains a diagnostic acceptance probe, not normal Nexus Copilot routing or an OS sandbox. Private-context and composed-task delegation remain unimplemented.
 
-### Owner requirement: real file galaxy and full-screen views — November 23, 2026
+### Historical initial file-galaxy request — superseded visual details
 
-The owner requests independently expandable/fullscreen galaxy and globe views, real clickable file nodes with atom-like connecting stems, and opening/viewing each selected file. This extends the existing relationship-graph target into a concrete interactive file-browser requirement. See [file galaxy plan](../nexus-file-galaxy-plan.md) for supported evidence, original-file versus indexed-text viewing, accessibility, authorization and acceptance. Current Galaxy points remain a demo; its existing portal expansion is not a real file graph, and the request globe still needs its own expansion control. These requested changes are planned, not delivered by the Copilot parser repair.
+The initial request included clickable file nodes and connecting stems. The owner subsequently rejected the flat diagram and connecting lines, requesting the original animated spiral with focus/zoom file-star neighborhoods instead. The current governing interface contract above supersedes those initial visual details. Expansion and selected-index navigation are implemented; whole-drive and original-file access remain incomplete. See [the consolidated plan](../nexus-file-galaxy-plan.md).
 
 ### Memory Galaxy as whole-computer file explorer — owner clarification
 

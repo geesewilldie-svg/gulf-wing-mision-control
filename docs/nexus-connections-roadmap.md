@@ -55,3 +55,7 @@ The owner installed CLI 1.0.114 and reported normal-profile OAuth completed on a
 The owner verified isolated-profile sign-in as geesewilldie-svg. A locally confirmed fixed public access diagnostic is implemented with an exact prompt, requested empty tool list, explicit denies and daily durable no-replay receipts. Native generation/flag acceptance is pending; normal Nexus Copilot routing and private-context delegation remain unbuilt.
 
 The owner expanded the source-graph requirement to a fullscreen file galaxy with selectable real file nodes, visible evidence-based connections and file viewing, plus independent globe expansion. See [file galaxy requirements](nexus-file-galaxy-plan.md). Existing demo dots are not real files; original-document viewing is retained as a separate bounded-adapter requirement beyond indexed text.
+
+## Governing Memory Galaxy direction
+
+Use the consolidated [Memory Galaxy/file-star plan](nexus-file-galaxy-plan.md) and architecture interface contract. Earlier graph/stem proposals are historical: the owner now requires the original animated spiral with no file-connecting lines, focus/zoom neighborhoods and explicit opening. Broad drive/folder/original-file access remains the next resource-adapter requirement, shared across bases; current selected-index stars do not complete it.
