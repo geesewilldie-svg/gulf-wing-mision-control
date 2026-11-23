@@ -1,6 +1,7 @@
+import { noteLinks } from "./note-links";
 import type { FileSearchStatus, IndexedFile } from "./local-files";
 
-// Only folder membership is established here; never infer semantic relationships.
+// Folder membership and explicit note links only; never infer semantic relationships.
 export function sourceMap(status: FileSearchStatus, files: IndexedFile[]) {
   const selected = files.slice(0, 80);
   return {
@@ -19,6 +20,7 @@ export function sourceMap(status: FileSearchStatus, files: IndexedFile[]) {
           hash: file.hash,
           name: file.name,
           sections: file.documents.length,
+          noteLinks: root.kind === "obsidian" ? noteLinks(file, files) : null,
         })),
     })),
   };

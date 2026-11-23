@@ -346,3 +346,7 @@ The owner verified reviewed HTTPS opening on Windows. Milestone 4 now presents s
 ### Selected-source navigation — November 23, 2026
 
 Following native acceptance of reviewed link opening and saved result history, the retained local-source roadmap adds a metadata-only folder/file map with filtering and direct version-bound indexed reading. Only folder membership is established; entity extraction, semantic document relationships, agent connections and broad Windows execution remain pending.
+
+### Explicit indexed note connections — November 23, 2026
+
+After owner acceptance of source-map reading, the map adds literal Obsidian wiki-link edges with same-vault unique-target resolution and version-bound reading. Unresolved targets do not become guessed relationships. Bounded extraction and display limits are disclosed. Semantic entity graphs, connected-agent inventories and general Windows/browser automation remain pending.

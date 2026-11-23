@@ -39,3 +39,5 @@ The owner explicitly wants both GitHub Copilot for coding and Microsoft Copilot 
 ## Selected-source pilot update — November 23, 2026
 
 The owner verified selected-folder/Obsidian status, refresh, search and part-by-part PDF reading on Windows. Show my source map adds folder-to-file membership navigation for current validated index entries. This is the initial source-map slice; semantic cross-document relationships and entity/agent graphs are still unbuilt. Existing selected-folder authorization and content-version checks govern Read file.
+
+The next source-map increment resolves supported literal wiki links between current indexed notes in one selected Obsidian vault, with direct version-bound reading. This supplies explicit note-to-note edges, not inferred company/job/person relationships or proof of any agent connection. Native note-link acceptance remains pending.

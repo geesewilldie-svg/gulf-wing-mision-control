@@ -23,8 +23,8 @@ export function NexusSourceMap({
     <section aria-label="Connected source map">
       <h4>Your connected sources</h4>
       <p>
-        Folders contain the files listed below. This shows folder membership,
-        not relationships between document contents.
+        Folders contain the files listed below. Obsidian note connections come
+        from explicit wiki links in current indexed text.
       </p>
       <p>
         {map.total} current indexed files · {map.withheld} changed or
@@ -59,6 +59,49 @@ export function NexusSourceMap({
               <li key={file.id} className="nexus-draft-file">
                 <p style={{ overflowWrap: "anywhere" }}>{file.name}</p>
                 <p>{file.sections} indexed text sections</p>
+                {file.noteLinks && (
+                  <div>
+                    <p>
+                      <strong>Linked notes</strong>
+                    </p>
+                    {!file.noteLinks.links.length && (
+                      <p>No resolved wiki links in the inspected text.</p>
+                    )}
+                    {file.noteLinks.links.map((link) => (
+                      <div className="nexus-draft-file" key={link.id}>
+                        <p style={{ overflowWrap: "anywhere" }}>{link.name}</p>
+                        <p>
+                          Explicit wiki link from {file.name}. This does not
+                          establish a business relationship.
+                        </p>
+                        <div className="nexus-draft-actions">
+                          <button
+                            disabled={disabled}
+                            aria-label={`Read linked note: ${file.name} to ${link.name}`}
+                            onClick={() =>
+                              onRead(link.id, link.hash, link.name)
+                            }
+                          >
+                            Read linked note
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {file.noteLinks.unresolved > 0 && (
+                      <p>
+                        {file.noteLinks.unresolved} wiki links could not be
+                        resolved uniquely to a current indexed note in this
+                        vault. Target names are withheld.
+                      </p>
+                    )}
+                    {file.noteLinks.partial && (
+                      <p>
+                        Partial link coverage: inspected text or displayed
+                        connections reached a limit.
+                      </p>
+                    )}
+                  </div>
+                )}
                 <div className="nexus-draft-actions">
                   <button
                     disabled={disabled}
