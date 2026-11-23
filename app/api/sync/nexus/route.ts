@@ -1,3 +1,4 @@
+import { answerMemorySources } from "@/lib/server/answer-memory-sources";
 import { connectionIntent } from "@/lib/connection-intent";
 import { connectionInventory } from "@/lib/server/connection-inventory";
 import { memoryIntent } from "@/lib/memory-intent";
@@ -322,6 +323,11 @@ export async function POST(request: Request) {
       ],
       request.signal,
     );
+    const answerSources = answerMemorySources(documents);
+    if (answerSources.withheldSources)
+      warnings.push(
+        "Retained Nexus memory snapshots and task notes were excluded from automatic answer context. You can still browse and read them explicitly. Current owner memory stays local-only.",
+      );
     let webSources: Awaited<ReturnType<typeof publicResearch>> = [];
     if (typeof body.publicQuery === "string" && body.publicQuery.trim()) {
       try {
@@ -344,8 +350,10 @@ export async function POST(request: Request) {
       .at(-1)?.content;
     const seen = new Set<string>();
     const results = [
-      ...searchDocuments(documents, body.query),
-      ...(previousQuestion ? searchDocuments(documents, previousQuestion) : []),
+      ...searchDocuments(answerSources.documents, body.query),
+      ...(previousQuestion
+        ? searchDocuments(answerSources.documents, previousQuestion)
+        : []),
     ]
       .filter((document) => {
         const key = document.source + ":" + document.id;
