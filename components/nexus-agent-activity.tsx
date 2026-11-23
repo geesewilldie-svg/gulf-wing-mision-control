@@ -1,4 +1,5 @@
 "use client";
+import ExpandableVisual from "./expandable-visual";
 import { useEffect, useState } from "react";
 import type { AgentEvent, ProviderStatus } from "@/lib/agent-router";
 export default function NexusAgentActivity({ enabled }: { enabled: boolean }) {
@@ -85,92 +86,94 @@ export default function NexusAgentActivity({ enabled }: { enabled: boolean }) {
         <p>Pair as a Controller to view private request status.</p>
       ) : (
         <>
-          <svg
-            viewBox="0 0 700 310"
-            role="img"
-            aria-label="Nexus request globe and provider connections"
-          >
-            <defs>
-              <radialGradient id="request-core">
-                <stop stopColor="#195975" />
-                <stop offset="1" stopColor="#061b2c" />
-              </radialGradient>
-            </defs>
-            <circle
-              cx="350"
-              cy="150"
-              r="71"
-              fill="url(#request-core)"
-              stroke="#41c2e7"
-            />
-            <ellipse
-              cx="350"
-              cy="150"
-              rx="71"
-              ry="25"
-              fill="none"
-              stroke="#5cc6df66"
-            />
-            <ellipse
-              cx="350"
-              cy="150"
-              rx="29"
-              ry="71"
-              fill="none"
-              stroke="#5cc6df66"
-            />
-            <text
-              x="350"
-              y="155"
-              textAnchor="middle"
-              fill="#bcf4ff"
-              fontSize="15"
-              letterSpacing="4"
+          <ExpandableVisual name="request globe">
+            <svg
+              viewBox="0 0 700 310"
+              role="img"
+              aria-label="Nexus request globe and provider connections"
             >
-              NEXUS
-            </text>
-            {nodes.map((n, i) => {
-              const angle = (i * Math.PI * 2) / nodes.length - Math.PI / 2,
-                x = 350 + Math.cos(angle) * 244,
-                y = 150 + Math.sin(angle) * 110,
-                e = state?.events.find((e) => e.agent === n.id),
-                recent = e && Date.now() - (e.finished ?? e.started) < 8000,
-                working = e?.state === "working",
-                cls = working
-                  ? "is-working"
-                  : recent && e?.state === "complete"
-                    ? "is-complete"
-                    : recent && e?.state === "failed"
-                      ? "is-failed"
-                      : "";
-              return (
-                <g key={n.id} className={cls}>
-                  <path
-                    d={`M${350 + Math.cos(angle) * 72} ${150 + Math.sin(angle) * 72} L${x} ${y}`}
-                    fill="none"
-                    stroke={n.configured ? "#2d7188" : "#293442"}
-                    strokeWidth="1.5"
-                    className="request-path"
-                  />
-                  <circle
-                    cx={x}
-                    cy={y}
-                    r="8"
-                    fill={n.configured ? "#68d5ef" : "#455364"}
-                  />
-                  <text
-                    x={x}
-                    y={y + 24}
-                    textAnchor="middle"
-                    fill="#b3d3e0"
-                    fontSize="11"
-                  >
-                    {n.name}
-                  </text>
-                </g>
-              );
-            })}
-          </svg>
+              <defs>
+                <radialGradient id="request-core">
+                  <stop stopColor="#195975" />
+                  <stop offset="1" stopColor="#061b2c" />
+                </radialGradient>
+              </defs>
+              <circle
+                cx="350"
+                cy="150"
+                r="71"
+                fill="url(#request-core)"
+                stroke="#41c2e7"
+              />
+              <ellipse
+                cx="350"
+                cy="150"
+                rx="71"
+                ry="25"
+                fill="none"
+                stroke="#5cc6df66"
+              />
+              <ellipse
+                cx="350"
+                cy="150"
+                rx="29"
+                ry="71"
+                fill="none"
+                stroke="#5cc6df66"
+              />
+              <text
+                x="350"
+                y="155"
+                textAnchor="middle"
+                fill="#bcf4ff"
+                fontSize="15"
+                letterSpacing="4"
+              >
+                NEXUS
+              </text>
+              {nodes.map((n, i) => {
+                const angle = (i * Math.PI * 2) / nodes.length - Math.PI / 2,
+                  x = 350 + Math.cos(angle) * 244,
+                  y = 150 + Math.sin(angle) * 110,
+                  e = state?.events.find((e) => e.agent === n.id),
+                  recent = e && Date.now() - (e.finished ?? e.started) < 8000,
+                  working = e?.state === "working",
+                  cls = working
+                    ? "is-working"
+                    : recent && e?.state === "complete"
+                      ? "is-complete"
+                      : recent && e?.state === "failed"
+                        ? "is-failed"
+                        : "";
+                return (
+                  <g key={n.id} className={cls}>
+                    <path
+                      d={`M${350 + Math.cos(angle) * 72} ${150 + Math.sin(angle) * 72} L${x} ${y}`}
+                      fill="none"
+                      stroke={n.configured ? "#2d7188" : "#293442"}
+                      strokeWidth="1.5"
+                      className="request-path"
+                    />
+                    <circle
+                      cx={x}
+                      cy={y}
+                      r="8"
+                      fill={n.configured ? "#68d5ef" : "#455364"}
+                    />
+                    <text
+                      x={x}
+                      y={y + 24}
+                      textAnchor="middle"
+                      fill="#b3d3e0"
+                      fontSize="11"
+                    >
+                      {n.name}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
+          </ExpandableVisual>
           <p className="nexus-router-note">
             {message ||
               "Short requests may finish between refreshes; their completed paths remain highlighted briefly. Signals are shown for 15 minutes; durable coding-worker history remains in Foundation."}

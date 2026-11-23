@@ -3331,3 +3331,33 @@ body {
 .nexus-assistant-drawer .nexus-draft-actions .nexus-draft-primary { background: #4bd8ed; border-color: #4bd8ed; color: #04202b; font-weight: 700; }
 .nexus-draft-status { margin: 18px 0; padding: 14px; border-left: 3px solid #54d8ed; background: #0d2738; border-radius: 6px; font-size: 14px; line-height: 1.6; }
 .nexus-assistant-drawer .nexus-answer button { display: block; width: 100%; text-align: left; margin-top: 8px; overflow-wrap: anywhere; }
+
+/* Real file navigation; independent from the procedural core demo. */
+.nexus-file-galaxy { padding: 18px; min-width: 0; overflow: auto; }
+.nexus-file-galaxy p { line-height: 1.6; color: #b3c9d9; }
+.nexus-galaxy-chart { border: 1px solid #27495f; border-radius: 16px; background: radial-gradient(ellipse at center, #132b42, #050c17); margin: 16px 0; overflow: hidden; }
+.nexus-galaxy-chart svg { display:block; width:100%; min-height: 270px; }
+.nexus-galaxy-chart [role=button] { cursor: pointer; outline: none; }
+.nexus-galaxy-chart [role=button]:focus circle { stroke: #fff; stroke-width: 3; }
+.nexus-galaxy-text { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 45dvh; overflow:auto; line-height: 1.65; }
+.nexus-galaxy-note { padding: 30px; }
+.holo-expanded { inset: 12px !important; z-index: 100; overflow:auto; }
+.holo-expanded .nexus-file-galaxy { flex:1; }
+.nexus-expanded-visual { position: fixed; inset: 12px; z-index: 100; background: #07131e; border: 1px solid #396376; border-radius: 16px; padding: 20px; overflow: auto; box-shadow: 0 0 0 100vmax #020912ed; }
+.nexus-expanded-visual > svg { width:100%; height: min(78dvh, 850px); }
+.nexus-expanded-visual:fullscreen { inset:0; width:100vw; height:100vh; }
+
+.holo-toolbar { flex-wrap: wrap; gap: 12px; }
+.holo-tools button:last-child { width: auto; min-width: 88px; padding: 7px 10px; height: auto; min-height: 34px; display:flex; gap:6px; font-size:12px; line-height:1.4; white-space:normal; }
+.nexus-file-galaxy .nexus-draft-actions, .holo-expanded > .nexus-draft-actions, .nexus-expanded-visual .nexus-draft-actions { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+.nexus-file-galaxy button, .holo-expanded > .nexus-draft-actions button, .nexus-expanded-visual button { min-height:44px; padding:10px 14px; border:1px solid #355b73; border-radius:9px; background:#102d41; color:#e0f4ff; font-size:14px; line-height:1.4; text-align:left; }
+.nexus-file-galaxy label { display:grid; gap:8px; min-width:0; flex:1 1 170px; }
+.nexus-file-galaxy input { width:100%; min-width:0; padding:10px; border:1px solid #355b73; border-radius:9px; background:#07131e; color:#e0f4ff; }
+.nexus-galaxy-chart { overflow:auto; }
+.nexus-galaxy-chart svg { min-width:560px; min-height:340px; }
+.nexus-file-galaxy .nexus-draft-file { margin-top:16px; }
+.nexus-file-galaxy h3 { font-size:20px; margin-bottom:10px; }
+.nexus-expanded-visual > .nexus-draft-actions { position:sticky; top:0; background:#07131e; padding-bottom:12px; }
+.holo-expanded:fullscreen { inset:0 !important; width:100vw; height:100vh; }
+
+.nexus-galaxy-chart svg { height: clamp(280px, 45dvh, 420px); }

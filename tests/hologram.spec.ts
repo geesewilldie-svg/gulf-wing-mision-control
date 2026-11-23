@@ -11,9 +11,16 @@ test("hologram modes, agent selection and mission handoff work", async ({
     await expect(
       page.getByRole("button", { name: mode, exact: true }),
     ).toHaveAttribute("aria-pressed", "true");
-    await expect(
-      page.getByRole("img", { name: new RegExp(`${mode} hologram`) }),
-    ).toBeVisible();
+    if (mode === "Galaxy")
+      await expect(
+        page.getByText("Pair as a controller to browse real files.", {
+          exact: false,
+        }),
+      ).toBeVisible();
+    else
+      await expect(
+        page.getByRole("img", { name: new RegExp(`${mode} hologram`) }),
+      ).toBeVisible();
   }
   await page
     .getByRole("button", { name: "Claude Research", exact: true })
@@ -67,7 +74,7 @@ test("expanded hologram fits the viewport and Escape restores the view", async (
     .focus();
   await page.keyboard.press("Tab");
   await expect(
-    dialog.getByRole("button", { name: "Core", exact: true }),
+    dialog.getByRole("button", { name: "Browser fullscreen", exact: true }),
   ).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(
@@ -94,27 +101,34 @@ test("reduced motion renders a static hologram and preserves usable controls", a
   ).toBe(frame);
   await page.getByRole("button", { name: "Galaxy", exact: true }).click();
   await expect(
-    page.getByRole("img", { name: /Galaxy hologram/ }),
+    page.getByText("Pair as a controller to browse real files.", {
+      exact: false,
+    }),
   ).toBeVisible();
-  expect(
-    await canvas.evaluate((element: HTMLCanvasElement) => element.toDataURL()),
-  ).not.toBe(frame);
+  await expect(canvas).toHaveCount(0);
 });
 
-test("terrain graph is distinct, selectable, rotatable and static when paused", async ({ page }) => {
+test("terrain graph is distinct, selectable, rotatable and static when paused", async ({
+  page,
+}) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
   const canvas = page.locator(".holo-stage canvas");
-  const frame = () => canvas.evaluate((element: HTMLCanvasElement) => element.toDataURL());
+  const frame = () =>
+    canvas.evaluate((element: HTMLCanvasElement) => element.toDataURL());
   const core = await frame();
   await page.getByRole("button", { name: "Graph", exact: true }).click();
-  await expect(page.getByText("DEMO SIGNAL TERRAIN", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("DEMO SIGNAL TERRAIN", { exact: true }),
+  ).toBeVisible();
   await expect(page.getByLabel("Demo terrain height scale")).toBeVisible();
   const terrain = await frame();
   expect(terrain).not.toBe(core);
   await page.waitForTimeout(150);
   expect(await frame()).toBe(terrain);
-  await page.getByRole("button", { name: "Claude Research", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Claude Research", exact: true })
+    .click();
   await expect.poll(frame).not.toBe(terrain);
   const selected = await frame();
   await canvas.focus();

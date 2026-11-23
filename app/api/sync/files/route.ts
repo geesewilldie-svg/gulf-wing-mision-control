@@ -1,3 +1,5 @@
+import { sourceMap } from "@/lib/source-map";
+import { readIndexedFile } from "@/lib/server/read-indexed-file";
 import {
   authorized,
   failure,
@@ -31,6 +33,8 @@ export async function POST(request: Request) {
       action?: string;
       query?: string;
       id?: string;
+      hash?: string;
+      part?: number;
     };
     if (!body || typeof body !== "object")
       throw new SyncError(400, "Choose a supported folder operation.");
@@ -39,6 +43,41 @@ export async function POST(request: Request) {
     if (body.action === "remove" && typeof body.id === "string")
       return response((await removeFileRoot(body.id)).status);
     const snapshot = await fileSnapshot();
+    if (body.action === "map")
+      return response({
+        map: sourceMap(snapshot.status, snapshot.files),
+        warnings: [
+          snapshot.status.warning,
+          ...snapshot.status.scans
+            .filter((scan) => scan.partial)
+            .map(
+              (scan) =>
+                `${scan.label}: partial index. ${scan.issues.join(" ")}`,
+            ),
+        ].filter(Boolean),
+      });
+    if (body.action === "read-indexed") {
+      if (
+        typeof body.id !== "string" ||
+        !/^[a-f0-9]{24}$/i.test(body.id) ||
+        typeof body.hash !== "string" ||
+        !/^[a-f0-9]{64}$/i.test(body.hash)
+      )
+        throw new SyncError(400, "Select a current indexed file.");
+      return response(
+        readIndexedFile(
+          {
+            kind: "read",
+            target: `${body.id}@${body.hash}`,
+            part: body.part ?? 1,
+          },
+          snapshot.files,
+          [snapshot.status.warning].filter((value): value is string =>
+            Boolean(value),
+          ),
+        ),
+      );
+    }
     if (
       body.action === "search" &&
       typeof body.query === "string" &&

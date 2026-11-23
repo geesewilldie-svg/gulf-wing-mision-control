@@ -1,4 +1,5 @@
 "use client";
+import NexusFileGalaxy from "./nexus-file-galaxy";
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -43,20 +44,30 @@ function createPoints(mode: Mode): Point[] {
 
 // Original procedural surface: illustrative signal heights, never provider telemetry.
 function drawTerrain(
-  ctx: CanvasRenderingContext2D, width: number, height: number,
-  rotation: { x: number; y: number }, time: number, selected: string,
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  rotation: { x: number; y: number },
+  time: number,
+  selected: string,
 ) {
   const size = 40;
   const scale = Math.min(width * 0.27, height * 0.36);
   const yaw = rotation.y + 0.55;
   const tilt = Math.max(0.25, Math.min(1.15, 0.58 + rotation.x));
-  const peaks = [ [-0.65, -0.5], [0.55, -0.5], [-0.5, 0.65], [0.65, 0.55] ];
+  const peaks = [
+    [-0.65, -0.5],
+    [0.55, -0.5],
+    [-0.5, 0.65],
+    [0.65, 0.55],
+  ];
   const selectedIndex = agents.findIndex((agent) => agent.name === selected);
   const heightAt = (x: number, z: number) => {
     let value = 0.025 + 0.018 * Math.sin(x * 14 + time) * Math.cos(z * 12);
     peaks.forEach(([px, pz], index) => {
       const distance = (x - px) ** 2 + (z - pz) ** 2;
-      value += Math.exp(-distance * 11) * (index === selectedIndex ? 0.95 : 0.57);
+      value +=
+        Math.exp(-distance * 11) * (index === selectedIndex ? 0.95 : 0.57);
     });
     return value;
   };
@@ -75,45 +86,67 @@ function drawTerrain(
   // Floor grid and drop lines establish depth, distinct from the orbital views.
   ctx.strokeStyle = "#174359";
   ctx.lineWidth = 0.6;
-  const line = (a: ReturnType<typeof project>, b: ReturnType<typeof project>) => {
-    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  const line = (
+    a: ReturnType<typeof project>,
+    b: ReturnType<typeof project>,
+  ) => {
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
   };
   for (let i = 0; i <= 12; i++) {
-    const n = -1.35 + i * 2.7 / 12;
+    const n = -1.35 + (i * 2.7) / 12;
     line(project(n, -0.12, -1.35), project(n, -0.12, 1.35));
     line(project(-1.35, -0.12, n), project(1.35, -0.12, n));
   }
   const grid = Array.from({ length: size + 1 }, (_, row) =>
     Array.from({ length: size + 1 }, (_, col) => {
-      const x = -1.2 + col * 2.4 / size, z = -1.2 + row * 2.4 / size;
+      const x = -1.2 + (col * 2.4) / size,
+        z = -1.2 + (row * 2.4) / size;
       const h = heightAt(x, z);
       return { ...project(x, h, z), h };
     }),
   );
   const cells = [];
-  for (let row = 0; row < size; row++) for (let col = 0; col < size; col++) {
-    const corners = [grid[row][col], grid[row][col + 1], grid[row + 1][col + 1], grid[row + 1][col]];
-    cells.push({ corners, depth: corners.reduce((sum, point) => sum + point.depth, 0) / 4 });
-  }
+  for (let row = 0; row < size; row++)
+    for (let col = 0; col < size; col++) {
+      const corners = [
+        grid[row][col],
+        grid[row][col + 1],
+        grid[row + 1][col + 1],
+        grid[row + 1][col],
+      ];
+      cells.push({
+        corners,
+        depth: corners.reduce((sum, point) => sum + point.depth, 0) / 4,
+      });
+    }
   cells.sort((a, b) => a.depth - b.depth);
   ctx.lineWidth = 0.75;
   for (const { corners } of cells) {
     const h = corners.reduce((sum, point) => sum + point.h, 0) / 4;
     ctx.beginPath();
-    corners.forEach((point, index) => index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y));
+    corners.forEach((point, index) =>
+      index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y),
+    );
     ctx.closePath();
-    ctx.fillStyle = "rgba(3, 15, 30, 0.8)"; ctx.fill();
-    ctx.fillStyle = color(h, 0.12); ctx.fill();
-    ctx.strokeStyle = color(h, 0.65); ctx.stroke();
+    ctx.fillStyle = "rgba(3, 15, 30, 0.8)";
+    ctx.fill();
+    ctx.fillStyle = color(h, 0.12);
+    ctx.fill();
+    ctx.strokeStyle = color(h, 0.65);
+    ctx.stroke();
   }
   const sweep = Math.sin(time * 0.65) * 1.15;
   ctx.strokeStyle = "#a6f7ff";
   ctx.lineWidth = 1.6;
   ctx.beginPath();
   for (let col = 0; col <= size; col++) {
-    const x = -1.2 + col * 2.4 / size;
+    const x = -1.2 + (col * 2.4) / size;
     const p = project(x, heightAt(x, sweep) + 0.008, sweep);
-    if (col === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+    if (col === 0) ctx.moveTo(p.x, p.y);
+    else ctx.lineTo(p.x, p.y);
   }
   ctx.stroke();
   peaks.forEach(([x, z], index) => {
@@ -121,7 +154,9 @@ function drawTerrain(
     ctx.strokeStyle = color(heightAt(x, z), 0.45);
     line(project(x, -0.12, z), top);
     ctx.fillStyle = index === selectedIndex ? "#fff3c4" : "#83e9ff";
-    ctx.beginPath(); ctx.arc(top.x, top.y, index === selectedIndex ? 4 : 2.5, 0, TAU); ctx.fill();
+    ctx.beginPath();
+    ctx.arc(top.x, top.y, index === selectedIndex ? 4 : 2.5, 0, TAU);
+    ctx.fill();
     ctx.font = "10px monospace";
     ctx.fillText(agents[index].name.toUpperCase(), top.x + 8, top.y - 8);
   });
@@ -131,9 +166,11 @@ function drawTerrain(
 export default function HolographicCore({
   selected,
   onSelect,
+  filesEnabled = false,
 }: {
   selected: string;
   onSelect: (name: string) => void;
+  filesEnabled?: boolean;
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const stage = useRef<HTMLDivElement>(null);
@@ -144,6 +181,9 @@ export default function HolographicCore({
   const [reduced, setReduced] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const expandButton = useRef<HTMLButtonElement>(null);
+  const expandedPanel = useRef<HTMLDivElement>(null);
+  const nativeFullscreen = useRef(false);
+  const [fullscreenMessage, setFullscreenMessage] = useState("");
   const previousExpanded = useRef(false);
   useEffect(() => {
     if (previousExpanded.current !== expanded)
@@ -173,10 +213,18 @@ export default function HolographicCore({
     const previousOverflow = document.body.style.overflow;
     if (app) app.inert = true;
     document.body.style.overflow = "hidden";
+    const fullscreenChanged = () => {
+      if (nativeFullscreen.current && !document.fullscreenElement) {
+        nativeFullscreen.current = false;
+        setExpanded(false);
+      }
+    };
+    document.addEventListener("fullscreenchange", fullscreenChanged);
     window.addEventListener("keydown", close);
     return () => {
       if (app) app.inert = previousInert;
       document.body.style.overflow = previousOverflow;
+      document.removeEventListener("fullscreenchange", fullscreenChanged);
       window.removeEventListener("keydown", close);
     };
   }, [expanded]);
@@ -295,8 +343,7 @@ export default function HolographicCore({
       for (const point of projected) {
         ctx.globalAlpha = Math.max(0.14, (point.depth + 1.5) / 2.6);
         ctx.fillStyle = mode === "Core" ? activeColor : colors[point.group];
-        const radius =
-          0.6 + (point.depth + 1) * 0.5;
+        const radius = 0.6 + (point.depth + 1) * 0.5;
         ctx.beginPath();
         ctx.arc(point.x, point.y, radius, 0, TAU);
         ctx.fill();
@@ -351,15 +398,18 @@ export default function HolographicCore({
 
   const content = (
     <div
+      ref={expandedPanel}
       className={`holo-view ${expanded ? "holo-expanded" : ""}`}
       role={expanded ? "dialog" : undefined}
       aria-modal={expanded ? true : undefined}
       aria-label={expanded ? "Expanded agent hologram" : undefined}
       onKeyDown={(e) => {
         if (!expanded || e.key !== "Tab") return;
-        const controls = e.currentTarget.querySelectorAll<HTMLElement>(
-          "button,canvas[tabindex]",
-        );
+        const controls = Array.from(
+          e.currentTarget.querySelectorAll<HTMLElement>(
+            'button:not([disabled]),input,summary,[tabindex="0"]',
+          ),
+        ).filter((element) => element.getClientRects().length > 0);
         const first = controls[0],
           last = controls[controls.length - 1];
         if (e.shiftKey && document.activeElement === first) {
@@ -371,6 +421,26 @@ export default function HolographicCore({
         }
       }}
     >
+      {expanded && (
+        <div className="nexus-draft-actions">
+          <button
+            onClick={async () => {
+              try {
+                if (!expandedPanel.current?.requestFullscreen) throw Error();
+                await expandedPanel.current.requestFullscreen();
+                nativeFullscreen.current = true;
+              } catch {
+                setFullscreenMessage(
+                  "Browser fullscreen is unavailable. Expanded view remains available.",
+                );
+              }
+            }}
+          >
+            Browser fullscreen
+          </button>
+          {fullscreenMessage && <p role="status">{fullscreenMessage}</p>}
+        </div>
+      )}
       <div className="holo-toolbar">
         <div className="view-tabs" role="group" aria-label="Hologram view">
           {(["Core", "Galaxy", "Graph"] as const).map((view) => (
@@ -384,146 +454,161 @@ export default function HolographicCore({
           ))}
         </div>
         <div className="holo-tools">
-          <button
-            aria-label={
-              paused ? "Resume hologram motion" : "Pause hologram motion"
-            }
-            aria-pressed={paused}
-            onClick={() => setPaused(!paused)}
-          >
-            {paused ? <Play size={13} /> : <Pause size={13} />}
-          </button>
-          <button
-            aria-label="Reset hologram view"
-            onClick={() => {
-              rotation.current = { x: -0.15, y: 0 };
-              setRevision((v) => v + 1);
-            }}
-          >
-            <RotateCcw size={13} />
-          </button>
+          {mode !== "Galaxy" && (
+            <>
+              <button
+                aria-label={
+                  paused ? "Resume hologram motion" : "Pause hologram motion"
+                }
+                aria-pressed={paused}
+                onClick={() => setPaused(!paused)}
+              >
+                {paused ? <Play size={13} /> : <Pause size={13} />}
+              </button>
+              <button
+                aria-label="Reset hologram view"
+                onClick={() => {
+                  rotation.current = { x: -0.15, y: 0 };
+                  setRevision((v) => v + 1);
+                }}
+              >
+                <RotateCcw size={13} />
+              </button>
+            </>
+          )}
           <button
             ref={expandButton}
             aria-label={expanded ? "Collapse hologram" : "Expand hologram"}
             aria-pressed={expanded}
             onClick={() => setExpanded(!expanded)}
           >
-            <Maximize2 size={13} />
+            <Maximize2 size={13} />{" "}
+            {expanded ? "Close expanded view" : "Expand view"}
           </button>
         </div>
       </div>
-      <div ref={stage} className={`holo-stage ${mode === "Graph" ? "terrain-stage" : ""}`}>
-        <canvas
-          ref={canvas}
-          aria-label={`${mode} hologram. Drag or use arrow keys to rotate the demo visualization.`}
-          role="img"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (
-              !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(
-                e.key,
-              )
-            )
-              return;
-            e.preventDefault();
-            rotation.current.y +=
-              e.key === "ArrowRight" ? 0.15 : e.key === "ArrowLeft" ? -0.15 : 0;
-            rotation.current.x +=
-              e.key === "ArrowDown" ? 0.15 : e.key === "ArrowUp" ? -0.15 : 0;
-            setRevision((v) => v + 1);
-          }}
-          onPointerDown={(e) => {
-            e.currentTarget.setPointerCapture(e.pointerId);
-            pointer.current = { x: e.clientX, y: e.clientY };
-          }}
-          onPointerMove={(e) => {
-            if (!pointer.current) return;
-            rotation.current.y += (e.clientX - pointer.current.x) * 0.006;
-            rotation.current.x += (e.clientY - pointer.current.y) * 0.006;
-            pointer.current = { x: e.clientX, y: e.clientY };
-            if (paused || reduced) setRevision((v) => v + 1);
-          }}
-          onPointerUp={() => {
-            pointer.current = null;
-          }}
-          onPointerCancel={() => {
-            pointer.current = null;
-          }}
-        />
-        <div className="holo-caption">
-          <ScanLine size={12} />
-          <span>GW / NEURAL ENGINE</span>
-          <span>
-            {reduced
-              ? "REDUCED MOTION"
-              : paused
-                ? "MOTION PAUSED"
-                : "SIMULATION ACTIVE"}
-          </span>
-        </div>
-        {mode === "Graph" && (
-          <div className="terrain-legend" aria-label="Demo terrain height scale">
-            <span>LOW</span><span>DEMO SIGNAL HEIGHT</span><span>HIGH</span>
-          </div>
-        )}
-        {renderError && (
-          <p className="holo-fallback">
-            Visualization unavailable. Select any agent below to continue.
-          </p>
-        )}
-        <div className="holo-center-label">
-          <small>GULF WING</small>
-          <strong>
-            {mode === "Core"
-              ? "N E X U S"
-              : mode === "Galaxy"
-                ? "M E M O R Y"
-                : "S I G N A L"}
-          </strong>
-          <span>
-            {mode === "Core"
-              ? "COGNITIVE CORE"
-              : mode === "Galaxy"
-                ? "DEMO KNOWLEDGE FIELD"
-                : "DEMO SIGNAL TERRAIN"}
-          </span>
-        </div>
+      {mode === "Galaxy" ? (
+        <NexusFileGalaxy enabled={filesEnabled} />
+      ) : (
         <div
-          className="holo-nodes"
-          role="group"
-          aria-label="Agent constellation"
+          ref={stage}
+          className={`holo-stage ${mode === "Graph" ? "terrain-stage" : ""}`}
         >
-          {agents.map((agent, i) => (
-            <button
-              key={agent.name}
-              className={`holo-node holo-node-${i} ${selected === agent.name ? "is-selected" : ""}`}
-              style={{ "--node-color": agent.color } as React.CSSProperties}
-              aria-label={`${agent.name} ${agent.role.split(" & ")[0]}`}
-              aria-pressed={selected === agent.name}
-              onClick={() => onSelect(agent.name)}
+          <canvas
+            ref={canvas}
+            aria-label={`${mode} hologram. Drag or use arrow keys to rotate the demo visualization.`}
+            role="img"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (
+                !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(
+                  e.key,
+                )
+              )
+                return;
+              e.preventDefault();
+              rotation.current.y +=
+                e.key === "ArrowRight"
+                  ? 0.15
+                  : e.key === "ArrowLeft"
+                    ? -0.15
+                    : 0;
+              rotation.current.x +=
+                e.key === "ArrowDown" ? 0.15 : e.key === "ArrowUp" ? -0.15 : 0;
+              setRevision((v) => v + 1);
+            }}
+            onPointerDown={(e) => {
+              e.currentTarget.setPointerCapture(e.pointerId);
+              pointer.current = { x: e.clientX, y: e.clientY };
+            }}
+            onPointerMove={(e) => {
+              if (!pointer.current) return;
+              rotation.current.y += (e.clientX - pointer.current.x) * 0.006;
+              rotation.current.x += (e.clientY - pointer.current.y) * 0.006;
+              pointer.current = { x: e.clientX, y: e.clientY };
+              if (paused || reduced) setRevision((v) => v + 1);
+            }}
+            onPointerUp={() => {
+              pointer.current = null;
+            }}
+            onPointerCancel={() => {
+              pointer.current = null;
+            }}
+          />
+          <div className="holo-caption">
+            <ScanLine size={12} />
+            <span>GW / NEURAL ENGINE</span>
+            <span>
+              {reduced
+                ? "REDUCED MOTION"
+                : paused
+                  ? "MOTION PAUSED"
+                  : "SIMULATION ACTIVE"}
+            </span>
+          </div>
+          {mode === "Graph" && (
+            <div
+              className="terrain-legend"
+              aria-label="Demo terrain height scale"
             >
-              <span className="node-light" />
-              <span className="node-label">
-                <strong>{agent.name}</strong>
-                <small>{agent.role.split(" & ")[0]}</small>
-              </span>
-            </button>
-          ))}
+              <span>LOW</span>
+              <span>DEMO SIGNAL HEIGHT</span>
+              <span>HIGH</span>
+            </div>
+          )}
+          {renderError && (
+            <p className="holo-fallback">
+              Visualization unavailable. Select any agent below to continue.
+            </p>
+          )}
+          <div className="holo-center-label">
+            <small>GULF WING</small>
+            <strong>{mode === "Core" ? "N E X U S" : "S I G N A L"}</strong>
+            <span>
+              {mode === "Core" ? "COGNITIVE CORE" : "DEMO SIGNAL TERRAIN"}
+            </span>
+          </div>
+          <div
+            className="holo-nodes"
+            role="group"
+            aria-label="Agent constellation"
+          >
+            {agents.map((agent, i) => (
+              <button
+                key={agent.name}
+                className={`holo-node holo-node-${i} ${selected === agent.name ? "is-selected" : ""}`}
+                style={{ "--node-color": agent.color } as React.CSSProperties}
+                aria-label={`${agent.name} ${agent.role.split(" & ")[0]}`}
+                aria-pressed={selected === agent.name}
+                onClick={() => onSelect(agent.name)}
+              >
+                <span className="node-light" />
+                <span className="node-label">
+                  <strong>{agent.name}</strong>
+                  <small>{agent.role.split(" & ")[0]}</small>
+                </span>
+              </button>
+            ))}
+          </div>
+          <div className="holo-readout left">
+            VECTOR / 04
+            <br />
+            <span>LOCAL DEMO</span>
+          </div>
+          <div className="holo-readout right">
+            {mode.toUpperCase()} VIEW
+            <br />
+            <span>DRAG TO ROTATE</span>
+          </div>
         </div>
-        <div className="holo-readout left">
-          VECTOR / 04
-          <br />
-          <span>LOCAL DEMO</span>
-        </div>
-        <div className="holo-readout right">
-          {mode.toUpperCase()} VIEW
-          <br />
-          <span>DRAG TO ROTATE</span>
-        </div>
-      </div>
+      )}
       <div className="holo-bottom">
-        <span>04 AGENT NODES</span>
-        <span>NO LIVE CONNECTIONS</span>
+        <span>
+          {mode === "Galaxy" ? "SELECTED FILES" : "04 DEMO AGENT NODES"}
+        </span>
+        <span>
+          {mode === "Galaxy" ? "READ-ONLY INDEX" : "DEMO VISUALIZATION"}
+        </span>
         <span>GW—01</span>
       </div>
     </div>

@@ -363,7 +363,15 @@ export default function Dashboard() {
                   <Radio size={12} /> DEMO SYSTEM
                 </span>
               </div>
-              <HolographicCore selected={selected} onSelect={setSelected} />
+              <HolographicCore
+                selected={selected}
+                onSelect={setSelected}
+                filesEnabled={
+                  sync.mode === "shared" &&
+                  sync.role === "controller" &&
+                  !sync.needsPair
+                }
+              />
             </div>
             <aside
               className="neural-console"

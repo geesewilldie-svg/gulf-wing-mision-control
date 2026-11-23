@@ -370,3 +370,11 @@ The owner verified isolated profile OAuth. A local explicitly confirmed fixed pu
 ### Owner requirement: real file galaxy and full-screen views — November 23, 2026
 
 The owner requests independently expandable/fullscreen galaxy and globe views, real clickable file nodes with atom-like connecting stems, and opening/viewing each selected file. This extends the existing relationship-graph target into a concrete interactive file-browser requirement. See [file galaxy plan](../nexus-file-galaxy-plan.md) for supported evidence, original-file versus indexed-text viewing, accessibility, authorization and acceptance. Current Galaxy points remain a demo; its existing portal expansion is not a real file graph, and the request globe still needs its own expansion control. These requested changes are planned, not delivered by the Copilot parser repair.
+
+### Memory Galaxy as whole-computer file explorer — owner clarification
+
+The owner explicitly wants Memory Galaxy to expose their available drives, folders (including Pictures and Downloads) and files for navigation and opening, rather than being limited to the selected knowledge index. The target is lazy Computer → Drive → Folder → File exploration with genuine file nodes and folder/explicit-source connections. Directory browsing does not imply indexing or sharing contents with models. See the expanded [file galaxy plan](../nexus-file-galaxy-plan.md). The first indexed-galaxy slice is useful groundwork, not completion of the drive/original-file access requirement.
+
+### Shared Memory across bases — owner clarification
+
+Memory Galaxy is required across the entire Mission Control base, including laptop, phone and future bases of operations. The first shared Memory tab reuses the authenticated host-backed view across desktop/mobile controllers and ScreenPad, while presentation surfaces withhold private nodes. Future drive/folder adapters must preserve host identity and separately validate each device's storage access rather than assuming a phone browser can enumerate its local storage or another offline host.

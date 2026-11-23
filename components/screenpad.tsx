@@ -77,7 +77,15 @@ export default function ScreenPad() {
           className="screenpad-visual"
           aria-label="ScreenPad intelligence"
         >
-          <HolographicCore selected={workspace.selected} onSelect={select} />
+          <HolographicCore
+            selected={workspace.selected}
+            onSelect={select}
+            filesEnabled={
+              sync.mode === "shared" &&
+              sync.role === "controller" &&
+              !sync.needsPair
+            }
+          />
         </section>
         <section
           className="screenpad-actions"

@@ -13,7 +13,7 @@ Owner requirement accepted November 23, 2026. This document records the requeste
 
 ## Current implementation and reuse
 
-HolographicCore's Galaxy uses deterministic demo points and demo agents. Its existing small Expand hologram button opens a viewport portal; it is not a real indexed-file graph. NexusAgentActivity's globe shows request/provider events and currently has no separate expansion control. Neither should be mislabelled as the requested file browser.
+At requirement capture, HolographicCore's Galaxy used deterministic demo points and demo agents and the request globe lacked expansion. The first implementation below replaces Galaxy mode with selected real files and adds independent expansion. Core/terrain remain demos; whole-drive/original-file navigation is still not implemented.
 
 Reuse sourceMap / noteLinks for explicit current metadata and same-vault wiki links, fileSnapshot for stale/permission filtering, and readIndexedFile for hash-bound parts. The file galaxy is a separate authenticated data view; the request globe remains a provider/activity view. Setup inventory, node selection, live service activity and a source relationship are distinct facts.
 
@@ -30,3 +30,21 @@ Reuse sourceMap / noteLinks for explicit current metadata and same-vault wiki li
 Use known synthetic folders/notes to assert file node counts, folder membership and explicit wiki edges. Click a node and verify the correct indexed text and next part; follow an edge and verify target ID/hash. Remove a folder or change a file and verify withholding. Test duplicate names, partial indexes, unsupported originals, auth loss, fullscreen rejection/fallback and keyboard/touch operation. Capture actual owner-laptop behavior for expansion, source selection and viewing before calling this feature native-accepted.
 
 A graph or fullscreen button adds no provider consent, file-edit right, arbitrary terminal access or Microsoft/GitHub account access. Copilot work continues separately.
+
+## Owner clarification: a visual whole-computer file explorer
+
+The owner clarified that Memory Galaxy should work like their Files/File Explorer: see available drives, browse what is in each drive, enter Pictures, Downloads and other folders, select files and open them. Retain all owner-accessible drives/folders/files as the target, not only previously selected/indexed notes. This includes non-text content such as pictures and documents.
+
+The intended navigation is Computer → Drive → Folder → File, with breadcrumbs/back, familiar folder labels and an optional atom-like connection layout. Folder membership is a real connection independent of semantic note links. Browse metadata lazily for the opened drive/folder, paginate or cluster large directories, and disclose how many children are shown. Do not attempt to put millions of fabricated or unlabelled points on one screen. Each actual visible file dot represents a file; folders/drives use distinct shapes and can be entered.
+
+Browsing, indexed search, model context and native opening are separate operations. A file can be browseable without being searchable or sent to a model. Provide OS-permission-respecting directory listing and an opaque identity-bound read/open adapter; revalidate the chosen file at use time. Listing drives does not silently ingest their entire contents, expand search scopes or authorize external transmission. Do not require the user to manually add every folder as a permanent knowledge source to achieve ordinary Explorer navigation. Unavailable/removable/cloud-only drives and denied access need accurate states; do not auto-elevate or claim complete coverage.
+
+Original file behavior should match the format: direct image/PDF viewing when supported, a clear indexed-text option where available, or explicit native app opening for other formats. Downloads/Pictures/OneDrive need real host locations rather than assumed paths. This broader Explorer adapter remains to be implemented after the bounded indexed-galaxy first slice. That slice must explicitly say selected indexed files and must not claim the whole-computer requirement is complete.
+
+## First implementation slice
+
+The selected-index galaxy, evidence-bearing folder/wiki edges, searchable/list-based node selection and hash-bound text viewer are now implemented for paired controllers in Overview. Galaxy/core and request globe have expanded viewport controls plus browser-fullscreen attempts. Original-file/all-drive exploration remains planned. Expanded/collapsed source-view remount currently reloads metadata and clears selection; persistent selection/orientation across expansion is an identified follow-up. Native owner acceptance remains pending installation.
+
+## Shared Mission Control surface requirement
+
+The owner clarified that Memory Galaxy belongs to the entire Mission Control base: laptop, phone and every future base of operations. Implement it as a shared resource-navigation service and responsive UI, not a laptop-only decorative card. Paired controllers use the same host-backed Memory section from desktop/mobile browsers, with appropriately sized pointer/touch/keyboard controls. Preserve source-host identity when multiple bases are added. A phone browsing a host's files is different from browsing the phone's own storage; each device's local-storage adapter, availability and authority must be implemented and verified separately. Do not silently merge files across hosts or imply access to offline bases. Presentation access does not automatically reveal private file metadata.

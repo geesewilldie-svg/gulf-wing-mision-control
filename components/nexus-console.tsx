@@ -1,4 +1,6 @@
 "use client";
+import NexusFileGalaxy from "./nexus-file-galaxy";
+import ExpandableVisual from "./expandable-visual";
 import { useEffect, useState } from "react";
 import { connections } from "@/lib/nexus";
 import { useWorkspace } from "@/hooks/use-workspace";
@@ -71,6 +73,7 @@ export default function NexusConsole() {
           "Co-hosting",
           "Marketing",
           "Foundation",
+          "Memory",
           "Knowledge",
           "Connections",
           "Gemini Public",
@@ -143,6 +146,19 @@ export default function NexusConsole() {
           </div>
         </section>
       )}
+      {tab === "Memory" && (
+        <section className="nexus-card">
+          <h2>Memory Galaxy</h2>
+          <p>
+            Files belong to this connected Nexus host. This first view shows
+            selected indexed sources; drive and folder browsing is still being
+            built.
+          </p>
+          <ExpandableVisual name="memory galaxy">
+            <NexusFileGalaxy enabled={!disabled} />
+          </ExpandableVisual>
+        </section>
+      )}
       {tab === "Knowledge" && (
         <section className="nexus-card">
           <h2>Your knowledge</h2>
@@ -202,7 +218,9 @@ export default function NexusConsole() {
             <LocalFileSearch disabled={disabled} />
           </div>
           <div hidden={connection !== "Device access"}>
-            <p><Link href="/phone">Set up Nexus on your Android phone →</Link></p>
+            <p>
+              <Link href="/phone">Set up Nexus on your Android phone →</Link>
+            </p>
             <SyncControls />
             <TeamAccess disabled={disabled} />
             <LaptopMaintenance disabled={disabled} />
