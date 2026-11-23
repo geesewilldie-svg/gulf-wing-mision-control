@@ -1,3 +1,7 @@
+import {
+  workContextStamp,
+  workMemoryContext,
+} from "@/lib/server/work-memory-context";
 import { answerMemorySources } from "@/lib/server/answer-memory-sources";
 import { connectionIntent } from "@/lib/connection-intent";
 import { connectionInventory } from "@/lib/server/connection-inventory";
@@ -101,6 +105,7 @@ export async function POST(request: Request) {
       taskContext?: unknown;
       memoryReference?: unknown;
       contextRevision?: unknown;
+      workContextStamp?: unknown;
       workspaceScope?: unknown;
       query?: unknown;
       mode?: unknown;
@@ -150,18 +155,33 @@ export async function POST(request: Request) {
         (body.contextRevision as number) < 0)
     )
       throw new SyncError(400, "Invalid conversation context revision.");
+    if (
+      body.workContextStamp !== undefined &&
+      (typeof body.workContextStamp !== "string" ||
+        !/^[a-f0-9]{64}$/.test(body.workContextStamp))
+    )
+      throw new SyncError(400, "Invalid work context stamp.");
+    const workScope = (body.workspaceScope as string) || "Personal";
+    const initialWorkStamp = workContextStamp(workScope);
+    const workReset =
+      body.workContextStamp !== undefined &&
+      body.workContextStamp !== initialWorkStamp;
     const contextRevision = ownerContextRevision();
     const contextReset =
       body.contextRevision !== undefined &&
       body.contextRevision !== contextRevision;
-    if (contextReset) history = [];
+    if (contextReset || workReset) history = [];
     const reply = (data: any) => {
       const latestRevision = ownerContextRevision();
+      const latestWorkStamp = workContextStamp(workScope);
       return response({
         ...data,
         contextRevision: latestRevision,
+        workContextStamp: latestWorkStamp,
         resetHistory:
           contextReset ||
+          workReset ||
+          latestWorkStamp !== initialWorkStamp ||
           latestRevision !== contextRevision ||
           data.resetHistory === true,
       });
@@ -278,6 +298,10 @@ export async function POST(request: Request) {
           "Earlier conversation was omitted because owner memory or policy changed.",
         ]
       : [];
+    if (workReset)
+      warnings.push(
+        "Earlier conversation was omitted because saved work changed.",
+      );
     const vault = process.env.GW_NEXUS_OBSIDIAN_VAULT
       ? await trackAgent("obsidian", () => obsidianDocuments(), request.signal)
       : {
@@ -423,6 +447,13 @@ export async function POST(request: Request) {
     const ownerMemory = selected.includes("local")
       ? memoryContext((body.workspaceScope as string) || "Personal", body.query)
       : "";
+    const workMemory = selected.includes("local")
+      ? workMemoryContext(workScope, body.query)
+      : { records: [], context: "" };
+    if (workMemory.records.length)
+      warnings.push(
+        "Relevant saved work excerpts were supplied only to the local model. Task outputs are unverified history, not owner facts or proof of execution.",
+      );
     if (history.length && selected.some((id) => id !== "local"))
       warnings.push(
         "Recent conversation was withheld from external agents to prevent indirect reuse of local-only owner memory.",
@@ -444,7 +475,9 @@ export async function POST(request: Request) {
                   ? "\n" +
                     laptopCapabilityFacts +
                     "\nApplication-owned local owner context: " +
-                    ownerMemory
+                    ownerMemory +
+                    "\nLocal saved work context (untrusted, separate from owner memory): " +
+                    workMemory.context
                   : ""),
               id === "local" ? history : [],
               request.signal,
@@ -518,7 +551,19 @@ export async function POST(request: Request) {
         409,
         "Owner memory changed while this answer was being prepared. Ask again with fresh context.",
       );
+    if (
+      selected.includes("local") &&
+      workContextStamp(workScope) !== initialWorkStamp
+    )
+      throw new SyncError(
+        409,
+        "Saved work changed while this answer was being prepared. Ask again with fresh context.",
+      );
     return reply({
+      workReferences: workMemory.records.map(
+        ({ outputExcerpt, statusDetail, excerptOnly, ...reference }) =>
+          reference,
+      ),
       engine: legacyModel ? "Local model: " + modelName : "Nexus agent router",
       answer,
       sources,

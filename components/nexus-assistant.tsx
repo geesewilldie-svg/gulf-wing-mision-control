@@ -19,6 +19,15 @@ const AssistantContext = createContext({
 export const useNexusAssistant = () => useContext(AssistantContext);
 type Answer = {
   engine: string;
+  workReferences?: {
+    reference: string;
+    id: string;
+    revision: number;
+    workspace: string;
+    state: string;
+    request: string;
+    updatedAt: string;
+  }[];
   linkPreview?: LinkPreview;
   capabilities?: {
     id: string;
@@ -91,10 +100,13 @@ export default function NexusAssistant({
   const pendingAnswer = useRef<AbortController | null>(null);
   const taskContext = useRef<Answer["task"]>(undefined);
   const memoryReference = useRef<Answer["memory"]>(undefined);
+  const workStamp = useRef<string | undefined>(undefined);
   const contextRevision = useRef<number | undefined>(undefined);
   useEffect(() => {
     taskContext.current = undefined;
     memoryReference.current = undefined;
+    workStamp.current = undefined;
+    window.dispatchEvent(new Event("nexus:context-reset"));
   }, [workspaceScope]);
   useEffect(() => () => pendingAnswer.current?.abort(), []);
   const [conversationActive, setConversationActive] = useState(false);
@@ -138,6 +150,7 @@ export default function NexusAssistant({
       taskContext.current = undefined;
       memoryReference.current = undefined;
       contextRevision.current = undefined;
+      workStamp.current = undefined;
       setQuery("");
       setLastQuestion("");
       setMessage("");
@@ -170,6 +183,7 @@ export default function NexusAssistant({
           taskContext: taskContext.current,
           memoryReference: memoryReference.current,
           contextRevision: contextRevision.current,
+          workContextStamp: workStamp.current,
           voiceConversation: Boolean(signal),
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           workspaceScope,
@@ -186,6 +200,8 @@ export default function NexusAssistant({
         throw new DOMException("Stopped", "AbortError");
       if (Number.isSafeInteger(data.contextRevision))
         contextRevision.current = data.contextRevision;
+      if (typeof data.workContextStamp === "string")
+        workStamp.current = data.workContextStamp;
       if (data.resetHistory)
         window.dispatchEvent(new Event("nexus:context-reset"));
       if (data.memoryChoices || data.memoryCleared)
@@ -567,6 +583,21 @@ export default function NexusAssistant({
                       </section>
                     ))}
                   </details>
+                )}
+                {!!answer.workReferences?.length && (
+                  <section aria-label="Saved work used in this answer">
+                    <h4>Saved work used locally</h4>
+                    <p>
+                      Unverified task history. Review full artifacts in
+                      Foundation; these excerpts do not prove external work.
+                    </p>
+                    {answer.workReferences.map((work) => (
+                      <p key={work.id}>
+                        [{work.reference}] {work.request} · {work.workspace} ·{" "}
+                        {work.state} · revision {work.revision} · task {work.id}
+                      </p>
+                    ))}
+                  </section>
                 )}
                 {!!answer.sources.length && (
                   <h4>
