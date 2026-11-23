@@ -41,3 +41,7 @@ The owner explicitly wants both GitHub Copilot for coding and Microsoft Copilot 
 The owner verified selected-folder/Obsidian status, refresh, search and part-by-part PDF reading on Windows. Show my source map adds folder-to-file membership navigation for current validated index entries. This is the initial source-map slice; semantic cross-document relationships and entity/agent graphs are still unbuilt. Existing selected-folder authorization and content-version checks govern Read file.
 
 The next source-map increment resolves supported literal wiki links between current indexed notes in one selected Obsidian vault, with direct version-bound reading. This supplies explicit note-to-note edges, not inferred company/job/person relationships or proof of any agent connection. Native note-link acceptance remains pending.
+
+## Current configuration visibility — November 23, 2026
+
+The owner verified explicit linked-note navigation on the selected Windows vault. Show my connections provides configuration-only cards, including disabled APIs and unbuilt GitHub/Microsoft Copilot targets. Connected work remains a request-activity visualization; its Obsidian flag now comes from selected-vault settings. Setup is not live readiness, a current token grant is not proved by a saved authorization, and Codex workshop enablement does not prove CLI sign-in. No new agent integration is introduced by the inventory.

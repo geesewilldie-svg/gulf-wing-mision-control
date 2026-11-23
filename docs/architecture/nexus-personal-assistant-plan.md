@@ -350,3 +350,7 @@ Following native acceptance of reviewed link opening and saved result history, t
 ### Explicit indexed note connections — November 23, 2026
 
 After owner acceptance of source-map reading, the map adds literal Obsidian wiki-link edges with same-vault unique-target resolution and version-bound reading. Unresolved targets do not become guessed relationships. Bounded extraction and display limits are disclosed. Semantic entity graphs, connected-agent inventories and general Windows/browser automation remain pending.
+
+### Connection setup inventory — November 23, 2026
+
+After native explicit-note-link acceptance, connection setup inspection distinguishes current local configuration, retained Google scopes, public-only Gemini and unbuilt Copilot integrations. Activity uses selected-vault configuration. This improves readiness feedback without supplying new provider rights, live health checks or general agent delegation.

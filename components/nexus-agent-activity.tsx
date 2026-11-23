@@ -77,6 +77,10 @@ export default function NexusAgentActivity({ enabled }: { enabled: boolean }) {
         sharing are opt-in. Codex signals indicate candidate authoring, not
         tested or deployed code.
       </p>
+      <p>
+        For saved setup details, ask Nexus: “Show my connections”. Activity
+        signals here do not represent every configured service.
+      </p>
       {!enabled ? (
         <p>Pair as a Controller to view private request status.</p>
       ) : (

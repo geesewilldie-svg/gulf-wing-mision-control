@@ -2,6 +2,7 @@ import { authorized, failure, response } from "@/lib/server/sync-store";
 import { providerStatus, events } from "@/lib/server/agent-router";
 import { workerActivity } from "@/lib/server/foundation/store";
 import { codexWorkerEnabled } from "@/lib/server/foundation/codex-worker";
+import { fileRoots } from "@/lib/server/local-files";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
@@ -19,7 +20,7 @@ export async function GET(request: Request) {
           configured: await codexWorkerEnabled(),
         },
       ],
-      obsidian: Boolean(process.env.GW_NEXUS_OBSIDIAN_VAULT?.trim()),
+      obsidian: (await fileRoots()).some((root) => root.kind === "obsidian"),
     });
   } catch (e) {
     return failure(e);

@@ -411,27 +411,29 @@ export default function NexusAssistant({
                     </details>
                   </section>
                 )}
-                <div className="nexus-capability-list">
-                  {answer.operationChoices?.map((operation) => (
-                    <section className="nexus-draft-file" key={operation.id}>
-                      <h4>{operation.name || operation.label}</h4>
-                      {operation.status && <p>{operation.status}</p>}
-                      <div className="nexus-draft-actions">
-                        <button
-                          disabled={disabled || busy}
-                          aria-label={`View result: ${operation.label}`}
-                          onClick={() =>
-                            void ask(
-                              `Show laptop operation ${operation.id}`,
-                            ).catch(() => {})
-                          }
-                        >
-                          View result
-                        </button>
-                      </div>
-                    </section>
-                  ))}
-                </div>
+                {!!answer.operationChoices?.length && (
+                  <div className="nexus-capability-list">
+                    {answer.operationChoices?.map((operation) => (
+                      <section className="nexus-draft-file" key={operation.id}>
+                        <h4>{operation.name || operation.label}</h4>
+                        {operation.status && <p>{operation.status}</p>}
+                        <div className="nexus-draft-actions">
+                          <button
+                            disabled={disabled || busy}
+                            aria-label={`View result: ${operation.label}`}
+                            onClick={() =>
+                              void ask(
+                                `Show laptop operation ${operation.id}`,
+                              ).catch(() => {})
+                            }
+                          >
+                            View result
+                          </button>
+                        </div>
+                      </section>
+                    ))}
+                  </div>
+                )}
                 {answer.operationId && (
                   <button
                     disabled={disabled || busy}

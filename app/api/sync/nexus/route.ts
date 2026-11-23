@@ -1,3 +1,5 @@
+import { connectionIntent } from "@/lib/connection-intent";
+import { connectionInventory } from "@/lib/server/connection-inventory";
 import { memoryIntent } from "@/lib/memory-intent";
 import { webLinkIntent } from "@/lib/web-link";
 import { webLinkProposal } from "@/lib/server/web-link";
@@ -163,6 +165,17 @@ export async function POST(request: Request) {
           data.resetHistory === true,
       });
     };
+    if (connectionIntent(body.query)) {
+      if (!["auto", "local"].includes(body.mode as string))
+        throw new SyncError(
+          403,
+          "Connection setup checks are local-only. Choose Auto or local mode.",
+        );
+      request.signal.throwIfAborted();
+      const inventory = await connectionInventory();
+      request.signal.throwIfAborted();
+      return reply(inventory);
+    }
     const linkCommand = webLinkIntent(body.query);
     if (linkCommand) {
       if (!["auto", "local"].includes(body.mode as string))
