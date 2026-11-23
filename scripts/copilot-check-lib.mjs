@@ -41,7 +41,7 @@ export function copilotTestArguments(entrypoint) {
     COPILOT_TEST_PROMPT,
   ];
 }
-async function inspectProfile(profile) {
+export async function inspectProfile(profile) {
   for (const name of [
     "settings.json",
     "mcp-config.json",
@@ -109,6 +109,52 @@ async function inspectProfile(profile) {
   }
   check(config);
 }
+export function copilotFailureCategory(text) {
+  if (
+    /unknown (?:option|argument)|unexpected argument|invalid value|requires? (?:a |an )?(?:value|argument)/i.test(
+      text,
+    )
+  )
+    return "option-rejected";
+  if (
+    /max.ai.credits|credit (?:cap|budget)|session.{0,30}(?:budget|credit).{0,30}(?:exceed|limit)/i.test(
+      text,
+    )
+  )
+    return "session-credit-limit";
+  if (/quota|rate.limit|allowance|plan.{0,30}(?:exhaust|exceed)/i.test(text))
+    return "account-limit";
+  if (
+    /not (?:authenticated|logged in)|authentication|unauthorized|sign.in|login required|401/i.test(
+      text,
+    )
+  )
+    return "authentication";
+  if (
+    /not entitled|subscription required|plan.{0,30}not supported|403|forbidden/i.test(
+      text,
+    )
+  )
+    return "access-not-established";
+  if (/untrusted|trust.{0,20}folder|working directory.{0,20}trust/i.test(text))
+    return "folder-trust";
+  if (/ENOTFOUND|ECONN|ETIMEDOUT|certificate|TLS|network/i.test(text))
+    return "network";
+  return "process-failed";
+}
+export const copilotFailureCategories = [
+  "option-rejected",
+  "session-credit-limit",
+  "account-limit",
+  "authentication",
+  "access-not-established",
+  "folder-trust",
+  "network",
+  "process-failed",
+  "timeout-or-interrupt",
+  "output-limit",
+  "start-failed",
+];
 export function runCopilotTestProcess(plan) {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, plan.args, {
@@ -119,6 +165,8 @@ export function runCopilotTestProcess(plan) {
       detached: process.platform !== "win32",
       stdio: ["ignore", "pipe", "pipe"],
     });
+    let stderr = "";
+    let stoppedCategory = "timeout-or-interrupt";
     let stdout = "",
       bytes = 0,
       done = false,
@@ -170,23 +218,38 @@ export function runCopilotTestProcess(plan) {
     process.once("SIGTERM", stop);
     child.stdout.on("data", (chunk) => {
       bytes += chunk.length;
-      if (bytes > 65536) stop();
-      else stdout += chunk.toString("utf8");
+      if (bytes > 65536) {
+        stoppedCategory = "output-limit";
+        stop();
+      } else stdout += chunk.toString("utf8");
     });
     child.stderr.on("data", (chunk) => {
       bytes += chunk.length;
-      if (bytes > 65536) stop();
+      if (bytes > 65536) {
+        stoppedCategory = "output-limit";
+        stop();
+      } else stderr += chunk.toString("utf8");
     });
     child.once("error", () =>
       finish(
-        Error("Copilot test could not start. No automatic retry will occur."),
+        Object.assign(
+          Error("Copilot test could not start. No automatic retry will occur."),
+          { category: "start-failed" },
+        ),
       ),
     );
     child.once("close", (code) =>
       finish(
         failed || code !== 0
-          ? Error(
-              "Copilot did not return a confirmed result. Check sign-in, access and quota locally; no automatic retry will occur.",
+          ? Object.assign(
+              Error(
+                "Copilot did not return a confirmed result. Check sign-in, access and quota locally; no automatic retry will occur.",
+              ),
+              {
+                category: failed
+                  ? stoppedCategory
+                  : copilotFailureCategory(stderr + "\n" + stdout),
+              },
             )
           : undefined,
       ),
@@ -259,12 +322,17 @@ export async function checkCopilotAccess({
           ? "Fixed public reply matched. This does not verify tools, private-context access or general Nexus routing."
           : "Reply did not match the fixed test. Output was withheld; do not automatically retry.",
       };
-    } catch {
+    } catch (error) {
+      const category = copilotFailureCategories.includes(error?.category)
+        ? error.category
+        : "process-failed";
       receipt = {
         version: 1,
         at: now.toISOString(),
         state: "unconfirmed",
+        category,
         detail:
+          `Diagnostic category: ${category}. ` +
           "No confirmed test result. Account access or quota may have failed; usage may have occurred. Do not automatically retry.",
       };
     }

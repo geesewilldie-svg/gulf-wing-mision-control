@@ -1,3 +1,4 @@
+import { diagnoseCopilot } from "../scripts/copilot-diagnostic-lib.mjs";
 import { test, expect } from "@playwright/test";
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -8,6 +9,7 @@ import {
   copilotTestArguments,
   COPILOT_TEST_PROMPT,
   runCopilotTestProcess,
+  copilotFailureCategory,
 } from "../scripts/copilot-check-lib.mjs";
 
 async function fixture(run: (dir: string) => Promise<void>) {
@@ -256,3 +258,68 @@ test("JSONC parser errors never permit partial objects or hidden execution setti
       ),
     ).toBe(false);
   }));
+
+test("read-only diagnostic never sends prompts or changes an old daily reservation", async () =>
+  fixture(async (dir) => {
+    const date = new Date("2026-11-23T12:00:00Z");
+    const file = path.join(dir, "copilot-access-check-2026-11-23.json");
+    const old = JSON.stringify({
+      version: 1,
+      state: "unconfirmed",
+      detail: "Prior uncertain result",
+    });
+    await fs.writeFile(file, old);
+    const calls: string[][] = [];
+    const result = await diagnoseCopilot({
+      dataDir: dir,
+      platform: "win32",
+      now: date,
+      run: async (plan: any) => {
+        calls.push(plan.args);
+        expect(plan.args).not.toContain("--prompt");
+        expect(plan.args).not.toContain("--interactive");
+        return plan.args.at(-1) === "--version"
+          ? "GitHub Copilot CLI 1.0.114."
+          : "--available-tools --deny-tool --disable-builtin-mcps --no-custom-instructions --max-ai-credits --sync-session";
+      },
+    });
+    expect(calls).toHaveLength(2);
+    expect(result.modelRequest).toBe("not sent");
+    expect(result.reservation).toBe("unconfirmed");
+    expect(result.priorCategory).toContain("cannot be recovered");
+    expect(await fs.readFile(file, "utf8")).toBe(old);
+  }));
+
+test("failed child diagnostics become fixed categories without retaining private output", async () => {
+  expect(
+    copilotFailureCategory(
+      "PRIVATE_EMAIL@example.test quota exceeded PRIVATE_TOKEN",
+    ),
+  ).toBe("account-limit");
+  expect(
+    copilotFailureCategory("unknown option --invented PRIVATE_TOKEN"),
+  ).toBe("option-rejected");
+  expect(copilotFailureCategory("certificate failed PRIVATE_TOKEN")).toBe(
+    "network",
+  );
+  const dir = await fs.mkdtemp(path.join(tmpdir(), "nexus-category-"));
+  try {
+    let error: any;
+    try {
+      await runCopilotTestProcess({
+        args: [
+          "-e",
+          "process.stderr.write('quota exceeded PRIVATE_TOKEN');process.exit(1)",
+        ],
+        cwd: dir,
+        env: {},
+      });
+    } catch (value) {
+      error = value;
+    }
+    expect(error.category).toBe("account-limit");
+    expect(error.message).not.toContain("PRIVATE_TOKEN");
+  } finally {
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+});
