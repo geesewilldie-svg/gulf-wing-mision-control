@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import { indexSavedSnapshot } from "./local-files";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { withStore, taskForMemoryNote } from "./foundation/store";
@@ -13,6 +14,7 @@ const privateDir = () =>
   );
 const state = globalThis as typeof globalThis & {
   nexusJournalBusy?: boolean;
+  nexusJournalIndexCursor?: number;
   nexusJournalTimer?: ReturnType<typeof setInterval>;
 };
 async function receipt(dir: string, name: string, value: unknown) {
@@ -25,6 +27,38 @@ async function receipt(dir: string, name: string, value: unknown) {
     await fs.rename(temporary, path.join(dir, name));
   } finally {
     await fs.rm(temporary, { force: true });
+  }
+}
+async function retryNoteIndex(ledger: string) {
+  let attempted = 0;
+  const names = (await fs.readdir(ledger))
+    .filter((name) => /^[a-f0-9-]{36}-\d+\.json$/i.test(name))
+    .sort()
+    .slice(0, 500);
+  const offset =
+    (state.nexusJournalIndexCursor || 0) % Math.max(1, names.length);
+  for (let i = 0; i < names.length && attempted < 2; i++) {
+    const position = (offset + i) % names.length;
+    state.nexusJournalIndexCursor = (position + 1) % names.length;
+    const name = names[position];
+    try {
+      const filename = path.join(ledger, name);
+      const stat = await fs.lstat(filename);
+      if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 5000) continue;
+      const entry = JSON.parse(await fs.readFile(filename, "utf8"));
+      if (
+        entry.state !== "saved" ||
+        entry.indexing !== "pending" ||
+        !entry.file
+      )
+        continue;
+      attempted++;
+      const indexed = await indexSavedSnapshot(entry.file, entry.sha256);
+      if (indexed.state === "indexed")
+        await receipt(ledger, name, { ...entry, indexing: "indexed" });
+    } catch {
+      /* Metadata may be retried; publication is never replayed. */
+    }
   }
 }
 export async function workJournalTick(
@@ -43,6 +77,7 @@ export async function workJournalTick(
     if (!since) return;
     const ledger = path.join(root, "work-journal");
     await fs.mkdir(ledger, { recursive: true, mode: 0o700 });
+    await retryNoteIndex(ledger);
     let count = (await fs.readdir(ledger)).filter((name) =>
       name.endsWith(".json"),
     ).length;
@@ -132,7 +167,19 @@ export async function workJournalTick(
           "journal-" + task.scope.toLowerCase().replace(/ /g, "-"),
           since,
         );
-        await receipt(ledger, name, { ...claim, state: "saved", ...saved });
+        const confirmed = {
+          ...claim,
+          state: "saved",
+          ...saved,
+          indexing: "pending",
+        };
+        await receipt(ledger, name, confirmed);
+        const indexed = await indexSavedSnapshot(saved.file, saved.sha256);
+        if (indexed.state === "indexed")
+          await receipt(ledger, name, {
+            ...confirmed,
+            indexing: "indexed",
+          }).catch(() => {});
       } catch {
         // Never retry a possibly published note. A receipt-write failure leaves
         // the initial claim, which is equally non-replayable.
@@ -152,11 +199,12 @@ export async function workJournalReceipts() {
     names = await fs.readdir(folder);
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT")
-      return { count: 0, unconfirmed: 0, full: false };
+      return { count: 0, unconfirmed: 0, full: false, pendingIndex: 0 };
     throw error;
   }
   names = names.filter((name) => /^[a-f0-9-]{36}-\d+\.json$/i.test(name));
-  let unknown = 0;
+  let unknown = 0,
+    pendingIndex = 0;
   for (const name of names.slice(0, 500)) {
     try {
       const filename = path.join(folder, name);
@@ -165,6 +213,8 @@ export async function workJournalReceipts() {
         throw Error();
       const entry = JSON.parse(await fs.readFile(filename, "utf8"));
       if (!["saved", "skipped"].includes(entry.state)) unknown++;
+      if (entry.state === "saved" && entry.indexing === "pending")
+        pendingIndex++;
     } catch {
       unknown++;
     }
@@ -179,6 +229,7 @@ export async function workJournalReceipts() {
   }
   // Orphaned capacity reservations are conservative unknown outcomes too.
   return {
+    pendingIndex,
     count: Math.max(names.length, reserved),
     unconfirmed: unknown + Math.max(0, reserved - names.length),
     full: Math.max(names.length, reserved) >= 500,

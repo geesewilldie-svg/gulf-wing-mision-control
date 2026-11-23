@@ -197,5 +197,13 @@ export async function writeMemorySnapshot(
   )
     throw Error("Vault configuration changed during save.");
   await fs.rename(temporary, path.join(batch, name));
-  return { filename: name, sha256: hash, bytes: actual.length };
+  return {
+    filename: name,
+    sha256: hash,
+    bytes: actual.length,
+    file: {
+      rootId: grant.rootId,
+      name: `Nexus Memory Snapshots/${path.basename(batch)}/${name}`,
+    },
+  };
 }

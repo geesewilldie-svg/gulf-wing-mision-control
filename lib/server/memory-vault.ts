@@ -1,4 +1,5 @@
 import path from "node:path";
+import { indexSavedSnapshot } from "./local-files";
 import { createHash } from "node:crypto";
 import { scope } from "@/lib/foundation/contracts";
 import { listConversationMemory, taskForMemoryNote } from "./foundation/store";
@@ -115,7 +116,7 @@ export async function memoryVault(body: any) {
       "Memory changed, task changed or confirmation is missing. Review a fresh snapshot before saving.",
     );
   try {
-    return await writeMemorySnapshot(
+    const saved = await writeMemorySnapshot(
       path.resolve(
         process.env.GW_SYNC_DATA_DIR || path.join(process.cwd(), ".gulf-wing"),
       ),
@@ -123,6 +124,8 @@ export async function memoryVault(body: any) {
       (kind === "work-note" ? "work-" : "") +
         workspace.toLowerCase().replace(/ /g, "-"),
     );
+    const indexed = await indexSavedSnapshot(saved.file, saved.sha256);
+    return { ...saved, indexing: indexed.state };
   } catch {
     throw new SyncError(
       503,

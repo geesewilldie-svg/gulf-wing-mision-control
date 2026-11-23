@@ -5,7 +5,12 @@ type Status = {
   label?: string;
   folder?: string;
   workJournal?: "enabled" | "disabled";
-  journalReceipts?: { count: number; unconfirmed: number; full: boolean };
+  journalReceipts?: {
+    count: number;
+    unconfirmed: number;
+    full: boolean;
+    pendingIndex?: number;
+  };
 };
 export default function MemoryVaultStatus() {
   const [status, setStatus] = useState<Status | null>(null);
@@ -111,6 +116,14 @@ export default function MemoryVaultStatus() {
           {status.journalReceipts.full
             ? "Journal receipt limit reached; automatic notes are stopped."
             : "Uncertain saves are never automatically retried."}
+        </p>
+      )}
+      {!!status?.journalReceipts?.pendingIndex && (
+        <p>
+          {status.journalReceipts.pendingIndex} saved journal notes are waiting
+          to enter the file index. They are already saved; do not create another
+          copy. New saves can be indexed after the selected-file index is
+          initialized and within its limits.
         </p>
       )}
       <div className="foundation-actions">

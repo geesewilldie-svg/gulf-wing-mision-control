@@ -483,3 +483,102 @@ export async function removeFileRoot(id: string) {
   }
   return fileSnapshot();
 }
+
+// Add only a freshly published Nexus note. This does not rescan other roots,
+// replace their parsed text or pretend a full-folder refresh has happened.
+export async function indexSavedSnapshot(
+  file: { rootId: string; name: string },
+  expectedHash: string,
+): Promise<{ state: "indexed" | "pending" }> {
+  if (updating) return { state: "pending" };
+  updating = true;
+  try {
+    if (
+      !file ||
+      !/^[a-f0-9]{24}$/.test(file.rootId) ||
+      !/^Nexus Memory Snapshots\/[a-f0-9-]{36}\/nexus-[a-z-]+[a-f0-9-]{36}\.md$/.test(
+        file.name,
+      ) ||
+      !permittedRelative(file.name) ||
+      !/^[a-f0-9]{64}$/.test(expectedHash)
+    )
+      return { state: "pending" };
+    const roots = await fileRoots();
+    const saved = await index();
+    if (!saved || saved.configHash !== configHash(roots))
+      return { state: "pending" };
+    const root = roots.find(
+      (root) => root.id === file.rootId && root.kind === "obsidian",
+    );
+    if (!root) return { state: "pending" };
+    const read = await readSource(root, file.name);
+    if (
+      digest(read.data) !== expectedHash ||
+      !/^# Nexus (?:owner memory|reviewed work note|automatic work note)\r?\n/.test(
+        read.data.toString("utf8"),
+      )
+    )
+      return { state: "pending" };
+    const id = digest(root.id + ":" + file.name).slice(0, 24);
+    if (saved.files.some((f) => f.id === id && f.hash === expectedHash))
+      return { state: "indexed" };
+    const existing = saved.files.filter((f) => f.id !== id);
+    const extracted = await extractKnowledge(
+      path.basename(file.name),
+      read.data,
+    );
+    const characters =
+      existing.reduce(
+        (n, f) => n + f.documents.reduce((c, d) => c + d.text.length, 0),
+        0,
+      ) + extracted.documents.reduce((n, d) => n + d.text.length, 0);
+    if (
+      existing.length >= 200 ||
+      existing.reduce((n, f) => n + f.size, 0) + read.data.length > 8_000_000 ||
+      characters > 2_000_000 ||
+      !extracted.documents.length ||
+      extracted.documents.length > 100
+    )
+      return { state: "pending" };
+    const added: IndexedFile = {
+      id,
+      rootId: root.id,
+      name: file.name,
+      hash: expectedHash,
+      size: read.stat.size,
+      modifiedAt: read.stat.mtime.toISOString(),
+      documents: extracted.documents.map((document, i) => ({
+        ...document,
+        id: "file-" + id + "-" + i,
+        source: "Obsidian · " + root.label + " / " + file.name,
+      })),
+    };
+    const next: Index = {
+      ...saved,
+      files: [added, ...existing],
+      scans: saved.scans.map((scan) =>
+        scan.rootId === root.id
+          ? {
+              ...scan,
+              indexed:
+                scan.indexed + (saved.files.some((f) => f.id === id) ? 0 : 1),
+            }
+          : scan,
+      ),
+    };
+    if (
+      Buffer.byteLength(JSON.stringify(next)) > 12_000_000 ||
+      configHash(await fileRoots()) !== saved.configHash
+    )
+      return { state: "pending" };
+    // Share the in-process refresh guard and refuse a changed persisted base.
+    if (JSON.stringify(await index()) !== JSON.stringify(saved))
+      return { state: "pending" };
+    await atomic("local-file-index.json", next);
+    return { state: "indexed" };
+  } catch {
+    return { state: "pending" };
+  } finally {
+    updating = false;
+  }
+}
