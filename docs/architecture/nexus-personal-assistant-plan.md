@@ -403,3 +403,7 @@ The owner explicitly wants Memory Galaxy to expose their available drives, folde
 ### Shared Memory across bases — owner clarification
 
 Memory Galaxy is required across the entire Mission Control base, including laptop, phone and future bases of operations. The first shared Memory tab reuses the authenticated host-backed view across desktop/mobile controllers and ScreenPad, while presentation surfaces withhold private nodes. Future drive/folder adapters must preserve host identity and separately validate each device's storage access rather than assuming a phone browser can enumerate its local storage or another offline host.
+
+### Shared second-brain direction
+
+The owner's video reference clarifies that Obsidian is intended as portable Markdown knowledge shared across permitted agents and future models, not solely a drive browser. Keep SQLite operational tasks, permissions and revisions; define record authority and conflicts before introducing agent-managed vault writes. The first step is a controller-only, workspace-specific Markdown snapshot of current owner memory. It is an explicit export, not synchronization or permission for external sharing. Subsequent stages require provenance, verification states, bounded automatic write-back and correction/forgetting propagation. See [shared-memory contract](../nexus-shared-memory.md). Existing file-star visual requirements remain governing.

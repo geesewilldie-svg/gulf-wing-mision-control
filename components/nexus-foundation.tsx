@@ -500,6 +500,29 @@ export default function NexusFoundation({ disabled }: { disabled: boolean }) {
             >
               Export visible owner memory
             </button>
+            <p>
+              Download owner memory from the selected memory workspace as
+              Markdown for Obsidian. This is a private snapshot; later
+              corrections or forgetting do not change downloaded copies.
+              Automatic vault updates are not connected.
+            </p>
+            <button
+              disabled={busy}
+              onClick={async () => {
+                const exported = await mutate({
+                  op: "memory.export",
+                  scope: memoryScope,
+                });
+                if (exported?.markdown) {
+                  download(exported.markdown, exported.filename);
+                  setMessage(
+                    "Markdown download prepared. Save it in your Obsidian vault if you want it available there.",
+                  );
+                }
+              }}
+            >
+              Download {memoryScope} memory for Obsidian
+            </button>
             {data.memory.map((m) => (
               <article key={m.id} className="foundation-memory">
                 <p>{m.content}</p>

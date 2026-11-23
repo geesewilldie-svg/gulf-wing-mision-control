@@ -11,6 +11,7 @@ import {
   revokeCandidatePackage,
 } from "@/lib/server/foundation/candidate-promotion";
 import { runReviewedCandidateTests } from "@/lib/server/foundation/candidate-tests";
+import { portableMemory } from "@/lib/server/portable-memory";
 import {
   authorized,
   sameOrigin,
@@ -30,6 +31,7 @@ import {
   deleteMemory,
   setPolicy,
   memoryContext,
+  listConversationMemory,
 } from "@/lib/server/foundation/store";
 import {
   foundationCapabilities,
@@ -59,6 +61,17 @@ export async function POST(request: Request) {
       throw new SyncError(400, "Choose a supported foundation operation.");
     try {
       switch (body.op) {
+        case "memory.export": {
+          const workspace = scope(body.scope);
+          return response({
+            markdown: portableMemory(
+              listConversationMemory(workspace),
+              workspace,
+              new Date().toISOString(),
+            ),
+            filename: `nexus-memory-${workspace.toLowerCase().replace(/ /g, "-")}.md`,
+          });
+        }
         case "utility.preview":
           return response(previewUtilityActivation(body));
         case "utility.activate":
