@@ -1,8 +1,9 @@
 import path from "node:path";
 import { createHash } from "node:crypto";
 import { scope } from "@/lib/foundation/contracts";
-import { listConversationMemory } from "./foundation/store";
+import { listConversationMemory, taskForMemoryNote } from "./foundation/store";
 import { portableMemory } from "./portable-memory";
+import { portableWorkNote } from "./portable-work-note";
 import { SyncError } from "./sync-store";
 import { writeMemorySnapshot } from "../../scripts/memory-vault-lib.mjs";
 export async function memoryVault(body: any) {
@@ -21,18 +22,59 @@ export async function memoryVault(body: any) {
       409,
       "Preview expired. Review a fresh memory snapshot.",
     );
-  const markdown = portableMemory(
-    listConversationMemory(workspace),
-    workspace,
-    exportedAt,
-  );
+  if (
+    body.kind !== undefined &&
+    body.kind !== "owner-memory" &&
+    body.kind !== "work-note"
+  )
+    throw new SyncError(
+      400,
+      "Choose an owner-memory snapshot or saved work note.",
+    );
+  const kind = body.kind || "owner-memory";
+  let markdown: string;
+  if (kind === "work-note") {
+    if (
+      typeof body.taskId !== "string" ||
+      !/^[a-f0-9-]{36}$/i.test(body.taskId)
+    )
+      throw new SyncError(400, "Choose a saved task.");
+    const task = taskForMemoryNote(body.taskId, workspace);
+    if (!task)
+      throw new SyncError(
+        404,
+        "Task is no longer available in this workspace.",
+      );
+    if (
+      !task.output.trim() ||
+      ["accepted", "queued", "running", "verifying"].includes(task.state)
+    )
+      throw new SyncError(
+        409,
+        "Wait for a saved task output before reviewing a work note.",
+      );
+    markdown = portableWorkNote(task, exportedAt);
+  } else {
+    markdown = portableMemory(
+      listConversationMemory(workspace),
+      workspace,
+      exportedAt,
+    );
+  }
   const sha256 = createHash("sha256").update(markdown).digest("hex");
   if (body.op === "memory.vault.preview")
-    return { markdown, sha256, exportedAt, workspace };
+    return {
+      markdown,
+      sha256,
+      exportedAt,
+      workspace,
+      kind,
+      ...(kind === "work-note" ? { taskId: body.taskId } : {}),
+    };
   if (body.confirm !== true || body.sha256 !== sha256)
     throw new SyncError(
       409,
-      "Memory changed or confirmation is missing. Review a fresh snapshot before saving.",
+      "Memory changed, task changed or confirmation is missing. Review a fresh snapshot before saving.",
     );
   try {
     return await writeMemorySnapshot(
@@ -40,7 +82,8 @@ export async function memoryVault(body: any) {
         process.env.GW_SYNC_DATA_DIR || path.join(process.cwd(), ".gulf-wing"),
       ),
       markdown,
-      workspace.toLowerCase().replace(/ /g, "-"),
+      (kind === "work-note" ? "work-" : "") +
+        workspace.toLowerCase().replace(/ /g, "-"),
     );
   } catch {
     throw new SyncError(

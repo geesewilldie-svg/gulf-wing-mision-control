@@ -288,6 +288,15 @@ export function listConversationTasks(workspace: unknown, limit = 10) {
       .map(task),
   );
 }
+export function taskForMemoryNote(id: string, workspace: unknown) {
+  const selected = scope(workspace);
+  return withStore((db) => {
+    const row = db
+      .prepare("SELECT * FROM tasks WHERE id=? AND scope=?")
+      .get(id, selected);
+    return row ? task(row) : null;
+  });
+}
 export function createTask(input: any) {
   const request = text(input.request, 2000),
     workspace = scope(input.scope);

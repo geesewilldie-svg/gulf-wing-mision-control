@@ -2,7 +2,7 @@ import type { MemoryRecord, Scope } from "@/lib/foundation/contracts";
 
 // Quote every content line: owner text must never become export metadata,
 // a heading, executable HTML, or an instruction supplied by Nexus.
-const quote = (value: string) =>
+export const quoteMemoryText = (value: string) =>
   value
     .split(/\r\n|\r|\n/)
     .map(
@@ -34,7 +34,7 @@ export function portableMemory(
       "",
       `Source: owner | Revision: ${record.revision} | Updated (UTC): ${record.updatedAt}`,
       "",
-      quote(record.content),
+      quoteMemoryText(record.content),
       "",
     ]),
     ...(selected.length
