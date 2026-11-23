@@ -3361,3 +3361,25 @@ body {
 .holo-expanded:fullscreen { inset:0 !important; width:100vw; height:100vh; }
 
 .nexus-galaxy-chart svg { height: clamp(280px, 45dvh, 420px); }
+
+.memory-spiral-shell { margin:16px 0; border:1px solid #27495f; border-radius:14px; overflow:hidden; background:radial-gradient(ellipse at center,#0d2535 0%,#06111d 63%,#030b13 100%); }
+.memory-spiral-controls { display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:10px 14px; }
+.memory-spiral-controls > span { margin-right:auto; font:10px monospace; letter-spacing:2px; color:#6ca7bf; }
+.memory-spiral-stage { position:relative; height:clamp(350px,55dvh,650px); overflow:hidden; isolation:isolate; touch-action:pan-y; }
+.memory-spiral-stage canvas { position:absolute; inset:0; width:100%; height:100%; touch-action:none; cursor:grab; }
+.memory-spiral-stage canvas:active { cursor:grabbing; }
+.memory-spiral-label { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; color:#b6edff; text-shadow:0 0 20px #52dbff88; opacity:.72; }
+.memory-spiral-label small { font:8px monospace; letter-spacing:4px; }.memory-spiral-label strong { margin:8px 0; font:14px monospace; letter-spacing:5px; }.memory-spiral-label span { font:8px monospace; letter-spacing:2px; color:#5d9cb5; }
+.nexus-file-galaxy .memory-file-star { position:absolute; z-index:2; transform:translate(-50%,-50%); width:44px; height:44px; min-height:44px; border:0; padding:0; background:transparent; border-radius:50%; display:grid; place-items:center; cursor:pointer; }
+.memory-file-star i { display:block; width:10px; height:10px; border:1px solid white; border-radius:50%; background:var(--file-glow,#52dbff); box-shadow:0 0 8px var(--file-glow),0 0 22px var(--file-glow); transition:transform .15s; }
+.memory-file-star:hover i,.memory-file-star:focus-visible i,.memory-file-star.is-selected i { transform:scale(1.65); }
+.memory-file-star span { position:absolute; top:36px; left:50%; transform:translateX(-50%); width:max-content; max-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:4px 7px; font:11px/1.5 monospace; background:#03111de8; border:1px solid #22506b; border-radius:5px; color:#d9f4ff; pointer-events:none; }
+.memory-file-star:focus-visible { outline:2px solid #fff; outline-offset:2px; }
+.memory-spiral-key { margin:0; padding:10px 14px; font-size:11px; color:#729cad; }
+.memory-file-dialog-backdrop { position:fixed; inset:0; z-index:150; padding:clamp(12px,3vw,36px); display:grid; place-items:center; background:#020912df; }
+.memory-file-dialog { width:min(100%,1100px); max-height:95dvh; overflow:auto; background:#071724; border:1px solid #4a9db7; border-radius:16px; padding:clamp(16px,3vw,28px); box-shadow:0 0 45px #0b344e; }
+.memory-file-dialog .nexus-draft-file { border:0; margin-top:12px; padding:0; background:transparent; }
+.memory-file-dialog h4 { font-size:22px; margin:0 0 14px; }.memory-file-dialog p { line-height:1.6; color:#a6c2d4; }
+.memory-file-dialog .nexus-galaxy-text { font-size:16px; line-height:1.8; max-height:64dvh; }
+.memory-file-dialog button { padding:12px 18px; border:1px solid #355b73; border-radius:8px; color:#e0f4ff; background:#102d41; min-height:44px; }.memory-file-close { position:sticky; top:0; float:right; z-index:1; }
+@media(prefers-reduced-motion:reduce){.memory-file-star i{transition:none;}}

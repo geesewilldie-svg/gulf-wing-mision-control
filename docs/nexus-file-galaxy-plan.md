@@ -48,3 +48,7 @@ The selected-index galaxy, evidence-bearing folder/wiki edges, searchable/list-b
 ## Shared Mission Control surface requirement
 
 The owner clarified that Memory Galaxy belongs to the entire Mission Control base: laptop, phone and every future base of operations. Implement it as a shared resource-navigation service and responsive UI, not a laptop-only decorative card. Paired controllers use the same host-backed Memory section from desktop/mobile browsers, with appropriately sized pointer/touch/keyboard controls. Preserve source-host identity when multiple bases are added. A phone browsing a host's files is different from browsing the phone's own storage; each device's local-storage adapter, availability and authority must be implemented and verified separately. Do not silently merge files across hosts or imply access to offline bases. Presentation access does not automatically reveal private file metadata.
+
+## Owner visual correction
+
+Preserve the original animated spiral Galaxy style in the dashboard. The owner explicitly rejected the flat diagram replacement. File access must feel like selecting stars inside that existing galaxy, with an enlarged readable file preview. The corrective implementation restores the three-arm star field/HUD rings and overlays actual file stars; ambient decorative stars are not files and are labelled accordingly. File previews are modal overlays, not a small pane below a different diagram. The visual correction does not complete whole-drive browsing or original-document viewing.

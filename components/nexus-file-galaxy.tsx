@@ -1,16 +1,9 @@
 "use client";
+import AnimatedFileGalaxy, { type GalaxyFile } from "./animated-file-galaxy";
+import GalaxyFileDialog from "./galaxy-file-dialog";
 import { useEffect, useRef, useState } from "react";
 import type { SourceMap } from "@/lib/source-map";
-type FileNode = {
-  id: string;
-  hash: string;
-  name: string;
-  folder: string;
-  rootId: string;
-  x: number;
-  y: number;
-  noteLinks?: { links: { id: string }[] } | null;
-};
+type FileNode = GalaxyFile;
 export default function NexusFileGalaxy({ enabled }: { enabled: boolean }) {
   const [map, setMap] = useState<SourceMap | null>(null),
     [error, setError] = useState(""),
@@ -29,14 +22,6 @@ export default function NexusFileGalaxy({ enabled }: { enabled: boolean }) {
   const [selected, setSelected] = useState<FileNode | null>(null),
     [busy, setBusy] = useState(false),
     [reload, setReload] = useState(0);
-  const chart = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (chart.current)
-      chart.current.scrollLeft = Math.max(
-        0,
-        (chart.current.scrollWidth - chart.current.clientWidth) / 2,
-      );
-  }, [map, zoom]);
   const epoch = useRef(0),
     request = useRef<AbortController | null>(null),
     viewer = useRef<HTMLHeadingElement>(null);
@@ -83,26 +68,13 @@ export default function NexusFileGalaxy({ enabled }: { enabled: boolean }) {
     };
   }, [enabled, reload]);
   const nodes: FileNode[] =
-    map?.folders.flatMap((folder, index) => {
-      const angle = (index * 2 * Math.PI) / map.folders.length;
-      const cx = map.folders.length === 1 ? 350 : 350 + Math.cos(angle) * 175,
-        cy = map.folders.length === 1 ? 210 : 210 + Math.sin(angle) * 105;
-      return folder.files.map((file, i) => ({
+    map?.folders.flatMap((folder) =>
+      folder.files.map((file) => ({
         ...file,
         folder: folder.label,
         rootId: folder.id,
-        x:
-          cx +
-          Math.cos(i * 2.39996) *
-            Math.sqrt((i + 1) / Math.max(1, folder.files.length)) *
-            105,
-        y:
-          cy +
-          Math.sin(i * 2.39996) *
-            Math.sqrt((i + 1) / Math.max(1, folder.files.length)) *
-            78,
-      }));
-    }) || [];
+      })),
+    ) || [];
   const shown = nodes.filter((node) =>
     `${node.folder} ${node.name}`.toLowerCase().includes(filter.toLowerCase()),
   );
@@ -165,50 +137,53 @@ export default function NexusFileGalaxy({ enabled }: { enabled: boolean }) {
     );
   return (
     <section className="nexus-file-galaxy" aria-label="Real file galaxy">
-      <h3>Your file galaxy</h3>
+      <h3>Your Memory Galaxy</h3>
       <p>
-        Each dot is a current indexed file. Squares group selected folders; cyan
-        connections show explicit note links.
+        Select a bright, labelled file star to open its contents. Connections
+        follow shared folders and explicit note links.
       </p>
-      <div className="nexus-draft-actions">
-        <label>
-          Find files
-          <input
-            type="search"
-            value={filter}
-            onChange={(event) => setFilter(event.target.value)}
-          />
-        </label>
-        <button
-          onClick={() => {
-            epoch.current++;
-            request.current?.abort();
-            setReload((value) => value + 1);
-          }}
-        >
-          Reload sources
-        </button>
-        <button
-          aria-label="Zoom in file galaxy"
-          onClick={() => setZoom((value) => Math.min(2.5, value + 0.25))}
-        >
-          Zoom in
-        </button>
-        <button
-          aria-label="Zoom out file galaxy"
-          onClick={() => setZoom((value) => Math.max(0.75, value - 0.25))}
-        >
-          Zoom out
-        </button>
-        <button
-          onClick={() => {
-            setZoom(1);
-            setFilter("");
-          }}
-        >
-          Reset view
-        </button>
-      </div>
+      <details className="memory-galaxy-tools">
+        <summary>Find files and view controls</summary>
+        <div className="nexus-draft-actions">
+          <label>
+            Find files
+            <input
+              type="search"
+              value={filter}
+              onChange={(event) => setFilter(event.target.value)}
+            />
+          </label>
+          <button
+            onClick={() => {
+              epoch.current++;
+              request.current?.abort();
+              setReload((value) => value + 1);
+            }}
+          >
+            Reload sources
+          </button>
+          <button
+            aria-label="Zoom in file galaxy"
+            onClick={() => setZoom((value) => Math.min(2.5, value + 0.25))}
+          >
+            Zoom in
+          </button>
+          <button
+            aria-label="Zoom out file galaxy"
+            onClick={() => setZoom((value) => Math.max(0.75, value - 0.25))}
+          >
+            Zoom out
+          </button>
+          <button
+            onClick={() => {
+              setZoom(1);
+              setFilter("");
+            }}
+          >
+            Reset view
+          </button>
+        </div>
+      </details>
       {error && <p role="status">{error}</p>}
       {warnings.map((warning, i) => (
         <p key={i}>{warning}</p>
@@ -217,7 +192,7 @@ export default function NexusFileGalaxy({ enabled }: { enabled: boolean }) {
       {map && (
         <>
           <p>
-            {shown.length} file dots shown · {map.withheld} changed or
+            {shown.length} file stars shown · {map.withheld} changed or
             unavailable files withheld
             {map.omitted
               ? ` · ${map.omitted} more indexed files outside this view`
@@ -229,120 +204,12 @@ export default function NexusFileGalaxy({ enabled }: { enabled: boolean }) {
               refresh the selected-file index.
             </p>
           )}
-          <div className="nexus-galaxy-chart" ref={chart}>
-            <svg
-              viewBox={`${350 - 350 / zoom} ${210 - 210 / zoom} ${700 / zoom} ${420 / zoom}`}
-              role="group"
-              aria-label="Indexed file nodes and connections"
-            >
-              {map.folders.map((folder, index) => {
-                const angle = (index * 2 * Math.PI) / map.folders.length,
-                  cx =
-                    map.folders.length === 1
-                      ? 350
-                      : 350 + Math.cos(angle) * 175,
-                  cy =
-                    map.folders.length === 1
-                      ? 210
-                      : 210 + Math.sin(angle) * 105;
-                return (
-                  <g key={folder.id}>
-                    {shown
-                      .filter((node) => node.rootId === folder.id)
-                      .map((node) => (
-                        <line
-                          key={node.id}
-                          x1={cx}
-                          y1={cy}
-                          x2={node.x}
-                          y2={node.y}
-                          stroke="#36566d"
-                        >
-                          <title>
-                            Folder membership: {folder.label} contains{" "}
-                            {node.name}
-                          </title>
-                        </line>
-                      ))}
-                    <rect
-                      x={cx - 5}
-                      y={cy - 5}
-                      width="10"
-                      height="10"
-                      fill="#bba5ff"
-                    />
-                    <text
-                      x={cx}
-                      y={cy - 14}
-                      textAnchor="middle"
-                      fill="#c4b3ee"
-                      fontSize="11"
-                    >
-                      {folder.label}
-                    </text>
-                  </g>
-                );
-              })}
-              {shown.flatMap((node) =>
-                (node.noteLinks?.links || []).map((link) => {
-                  const target = shown.find((other) => other.id === link.id);
-                  return target ? (
-                    <line
-                      key={`${node.id}-${link.id}`}
-                      x1={node.x}
-                      y1={node.y}
-                      x2={target.x}
-                      y2={target.y}
-                      stroke="#4ddcf1"
-                      strokeWidth="2"
-                    >
-                      <title>
-                        {node.name} explicitly links to {target.name}
-                      </title>
-                    </line>
-                  ) : null;
-                }),
-              )}
-              {shown.map((node) => (
-                <g
-                  key={node.id}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Read indexed file: ${node.folder} / ${node.name}`}
-                  onClick={() => void read(node)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      void read(node);
-                    }
-                  }}
-                >
-                  <title>
-                    {node.folder} / {node.name}
-                  </title>
-                  <circle cx={node.x} cy={node.y} r="32" fill="transparent" />
-                  <circle
-                    cx={node.x}
-                    cy={node.y}
-                    r={selected?.id === node.id ? 8 : 5}
-                    fill={selected?.id === node.id ? "#ffffff" : "#59daef"}
-                    stroke="#113f54"
-                  />
-                  <text
-                    x={node.x}
-                    y={node.y + 21}
-                    textAnchor="middle"
-                    fontSize="14"
-                    fill="#d6e8f2"
-                  >
-                    {node.name.length > 28
-                      ? node.name.slice(0, 25) + "…"
-                      : node.name}
-                  </text>
-                </g>
-              ))}
-            </svg>
-          </div>
+          <AnimatedFileGalaxy
+            files={shown}
+            selectedId={selected?.id}
+            zoom={zoom}
+            onRead={(file) => void read(file)}
+          />
           <details>
             <summary>Browse file list</summary>
             <div className="nexus-draft-actions">
@@ -356,43 +223,45 @@ export default function NexusFileGalaxy({ enabled }: { enabled: boolean }) {
         </>
       )}
       {(busy || reading) && selected && (
-        <section className="nexus-draft-file" aria-label="Indexed file viewer">
-          <h4 tabIndex={-1} ref={viewer}>
-            {selected.name}
-          </h4>
-          <p>
-            Indexed text preview; original document viewing is not implemented
-            here.
-          </p>
-          {busy ? (
-            <p>Reading current indexed text…</p>
-          ) : (
-            <pre className="nexus-galaxy-text">{reading?.answer}</pre>
-          )}
-          <div className="nexus-draft-actions">
-            {reading?.fileRead &&
-              reading.fileRead.part < reading.fileRead.totalParts && (
-                <button
-                  onClick={() =>
-                    void read(selected, reading.fileRead!.part + 1)
-                  }
-                >
-                  Next part
-                </button>
-              )}
-            <button
-              onClick={() => {
-                epoch.current++;
-                request.current?.abort();
-                setBusy(false);
-                setReading(null);
-                setSelected(null);
-              }}
-            >
-              Close file
-            </button>
-          </div>
-        </section>
+        <GalaxyFileDialog
+          onClose={() => {
+            epoch.current++;
+            request.current?.abort();
+            setBusy(false);
+            setReading(null);
+            setSelected(null);
+          }}
+        >
+          <section
+            className="nexus-draft-file"
+            aria-label="Indexed file viewer"
+          >
+            <h4 tabIndex={-1} ref={viewer}>
+              {selected.name}
+            </h4>
+            <p>
+              Indexed text preview; original document viewing is not implemented
+              here.
+            </p>
+            {busy ? (
+              <p>Reading current indexed text…</p>
+            ) : (
+              <pre className="nexus-galaxy-text">{reading?.answer}</pre>
+            )}
+            <div className="nexus-draft-actions">
+              {reading?.fileRead &&
+                reading.fileRead.part < reading.fileRead.totalParts && (
+                  <button
+                    onClick={() =>
+                      void read(selected, reading.fileRead!.part + 1)
+                    }
+                  >
+                    Next part
+                  </button>
+                )}
+            </div>
+          </section>
+        </GalaxyFileDialog>
       )}
     </section>
   );
