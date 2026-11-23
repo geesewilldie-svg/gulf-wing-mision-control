@@ -45,3 +45,7 @@ The next source-map increment resolves supported literal wiki links between curr
 ## Current configuration visibility — November 23, 2026
 
 The owner verified explicit linked-note navigation on the selected Windows vault. Show my connections provides configuration-only cards, including disabled APIs and unbuilt GitHub/Microsoft Copilot targets. Connected work remains a request-activity visualization; its Obsidian flag now comes from selected-vault settings. Setup is not live readiness, a current token grant is not proved by a saved authorization, and Codex workshop enablement does not prove CLI sign-in. No new agent integration is introduced by the inventory.
+
+## Copilot supported-interface discovery — November 23, 2026
+
+See [official-source findings](copilot-integration-discovery.md). Evaluate the GitHub coding SDK/CLI path first after read-only Windows prerequisites and account entitlement checks. SDK naming is transitioning, so choose an immutable supported release before implementation. Microsoft 365 Chat API is a separate licensed work/school preview surface with delegated scopes and text-only results; consumer Copilot is not thereby connected. The owner requested local checking first, with no known account plan. Both integrations remain unbuilt.

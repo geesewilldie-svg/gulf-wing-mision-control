@@ -354,3 +354,7 @@ After owner acceptance of source-map reading, the map adds literal Obsidian wiki
 ### Connection setup inventory — November 23, 2026
 
 After native explicit-note-link acceptance, connection setup inspection distinguishes current local configuration, retained Google scopes, public-only Gemini and unbuilt Copilot integrations. Activity uses selected-vault configuration. This improves readiness feedback without supplying new provider rights, live health checks or general agent delegation.
+
+### Copilot discovery and prerequisite gate — November 23, 2026
+
+Following native connection inventory acceptance, official source documentation identifies a programmable GitHub coding SDK/CLI path and a separate Microsoft 365 Chat API. Proceed with read-only local prerequisite/account discovery before implementing a bounded adapter. New provider execution must retain explicit sharing, allowance checks, deny-by-default tools, durable uncertain-effect receipts and independent result verification. Existing grants do not imply new account rights or Microsoft 365 consent.
