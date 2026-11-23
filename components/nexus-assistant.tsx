@@ -1,4 +1,5 @@
 "use client";
+import type { LaptopOperationFeedback } from "../lib/laptop-operation-feedback";
 import { useEffect, useState, useRef, createContext, useContext } from "react";
 import { usePathname } from "next/navigation";
 import { useWorkspace } from "@/hooks/use-workspace";
@@ -25,7 +26,11 @@ type Answer = {
     authorization: string;
   }[];
   operationId?: string;
-  operationChoices?: { id: string; label: string }[];
+  operationChoices?: ({
+    id: string;
+    label: string;
+  } & Partial<LaptopOperationFeedback>)[];
+  operationDetail?: LaptopOperationFeedback;
   fileChoices?: { id: string; hash: string; name: string }[];
   fileRead?: {
     id: string;
@@ -372,19 +377,44 @@ export default function NexusAssistant({
                     ))}
                   </div>
                 )}
-                {answer.operationChoices?.map((operation) => (
-                  <button
-                    key={operation.id}
-                    disabled={disabled || busy}
-                    onClick={() =>
-                      void ask(`Show laptop operation ${operation.id}`).catch(
-                        () => {},
-                      )
-                    }
+                {answer.operationDetail && (
+                  <section
+                    className="nexus-draft-file"
+                    aria-label="Saved operation result"
                   >
-                    Operation: {operation.label}
-                  </button>
-                ))}
+                    <h4>{answer.operationDetail.name}</h4>
+                    <p>
+                      <strong>{answer.operationDetail.status}</strong>
+                    </p>
+                    <p>{answer.operationDetail.detail}</p>
+                    <p>{answer.operationDetail.nextStep}</p>
+                    <details>
+                      <summary>Operation reference</summary>
+                      <p>{answer.operationDetail.id}</p>
+                    </details>
+                  </section>
+                )}
+                <div className="nexus-capability-list">
+                  {answer.operationChoices?.map((operation) => (
+                    <section className="nexus-draft-file" key={operation.id}>
+                      <h4>{operation.name || operation.label}</h4>
+                      {operation.status && <p>{operation.status}</p>}
+                      <div className="nexus-draft-actions">
+                        <button
+                          disabled={disabled || busy}
+                          aria-label={`View result: ${operation.label}`}
+                          onClick={() =>
+                            void ask(
+                              `Show laptop operation ${operation.id}`,
+                            ).catch(() => {})
+                          }
+                        >
+                          View result
+                        </button>
+                      </div>
+                    </section>
+                  ))}
+                </div>
                 {answer.operationId && (
                   <button
                     disabled={disabled || busy}

@@ -1,3 +1,4 @@
+import { laptopOperationFeedback } from "../laptop-operation-feedback";
 import { runMaintenance } from "./maintenance";
 import type { MaintenanceAction } from "./maintenance";
 import { laptopOperation, recentLaptopOperations } from "./laptop-operations";
@@ -36,23 +37,38 @@ export function conversationOperation(id: string) {
   if (id === "recent") {
     const operations = recentLaptopOperations();
     return {
-      engine: "Nexus laptop maintenance",
+      engine: "Nexus laptop operations",
       sources: [],
       warnings: [],
       answer: operations.length
-        ? `Recent saved laptop operations:\n${operations.map((operation) => `${operation.action}: ${operation.outcome}. Reference: ${operation.id}`).join("\n")}`
+        ? `Recent saved laptop operations:\n${operations.map((operation) => `${laptopOperationFeedback(operation).name}: ${laptopOperationFeedback(operation).status}. Reference: ${operation.id}`).join("\n")}`
         : "No durable laptop operation records are saved yet. Older audit-only operations are not imported.",
       operationChoices: operations.map((operation) => ({
-        id: operation.id,
-        label: `${operation.action}: ${operation.outcome}`,
+        label: `${laptopOperationFeedback(operation).name}: ${laptopOperationFeedback(operation).status}`,
+        ...laptopOperationFeedback(operation),
       })),
       routing: {
         mode: "local",
         selected: [],
         reason:
-          "Saved local operation records only; no maintenance process or model was started.",
+          "Saved local operation records only; no browser, maintenance process or model was started.",
       },
     };
   }
-  return maintenanceAnswer(laptopOperation(id));
+  const operation = laptopOperation(id);
+  const feedback = laptopOperationFeedback(operation);
+  return {
+    engine: "Nexus laptop operations",
+    operationId: operation.id,
+    operationDetail: feedback,
+    answer: `${feedback.name}: ${feedback.status}.`,
+    sources: [],
+    warnings: [],
+    routing: {
+      mode: "local",
+      selected: [],
+      reason:
+        "Saved status only. Viewing this record does not repeat the action or verify current laptop state.",
+    },
+  };
 }

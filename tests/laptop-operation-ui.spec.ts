@@ -28,6 +28,14 @@ test("recent operation selection retrieves saved status without submitting an ex
                 "Result: unknown. No final result was recorded; check current services.",
               sources: [],
               operationId: id,
+              operationDetail: {
+                id,
+                name: "Start missing Nexus services",
+                status: "Result unconfirmed",
+                detail: "The saved operation has no confirmed result.",
+                nextStep:
+                  "Inspect the laptop before making a new request. This saved request will not run again.",
+              },
             },
     });
   });
@@ -43,7 +51,7 @@ test("recent operation selection retrieves saved status without submitting an ex
     .click();
   await page
     .getByRole("button", {
-      name: "Operation: start-services: unknown",
+      name: "View result: start-services: unknown",
       exact: true,
     })
     .click();
@@ -53,6 +61,27 @@ test("recent operation selection retrieves saved status without submitting an ex
       { exact: true },
     ),
   ).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Saved operation result" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Result unconfirmed", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      "Inspect the laptop before making a new request. This saved request will not run again.",
+      { exact: true },
+    ),
+  ).toBeVisible();
+  const card = page.getByRole("region", { name: "Saved operation result" });
+  await card.screenshot({
+    path: `artifacts/operations/result-${test.info().project.name}.png`,
+  });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
   expect(queries).toEqual([
     "Show laptop operations",
     `Show laptop operation ${id}`,

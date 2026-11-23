@@ -338,3 +338,7 @@ The bounded file/draft/maintenance adapters now have versioned descriptions of e
 ### Reviewed Windows HTTPS handoff
 
 A separate locally enabled capability can hand a specifically reviewed HTTPS address to the Windows host's normal browser. It uses literal arguments, same-origin controller confirmation, a dispatch-time local-permission recheck and URL-hash-bound durable request records. Receipt completion means handoff only, not verified page/account state. The registry continues to mark page reading/clicking and general computer control as unbuilt. See `docs/nexus-reviewed-web-links.md`; this is not a general browser automation/helper adapter.
+
+### Native link acceptance and operation feedback — November 23, 2026
+
+The owner verified reviewed HTTPS opening on Windows. Milestone 4 now presents saved execution records with action-specific status and recovery guidance: browser handoff remains distinct from page verification. Viewing results is read-only and does not retry unknown effects. General browser interaction, arbitrary desktop execution and a native helper remain unfinished.

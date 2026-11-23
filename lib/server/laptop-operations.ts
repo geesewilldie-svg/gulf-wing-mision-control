@@ -25,7 +25,7 @@ function expire(db: Parameters<Parameters<typeof withStore>[0]>[0]) {
   db.prepare(
     "UPDATE laptop_operations SET state='unknown',message=?,updated_at=? WHERE state='running' AND expires<=?",
   ).run(
-    "No final result was recorded before the operation deadline. Check laptop logs and current services; this request will not be automatically repeated.",
+    "No final result was recorded before the operation deadline. Inspect the laptop and its logs; this request will not be automatically repeated.",
     new Date().toISOString(),
     Date.now(),
   );
@@ -80,10 +80,7 @@ export function claimLaptopOperation(
           .prepare("SELECT id FROM laptop_operations WHERE state='running'")
           .get()
       )
-        throw new SyncError(
-          409,
-          "A laptop maintenance operation is already running.",
-        );
+        throw new SyncError(409, "A laptop operation is already running.");
       const id = randomBytes(12).toString("hex"),
         at = new Date().toISOString();
       db.prepare(
@@ -138,7 +135,7 @@ export function laptopOperation(id: string): LaptopOperation {
   if (!/^[a-f0-9]{24}$/i.test(id))
     throw new SyncError(
       400,
-      "Use the operation reference shown in the maintenance response.",
+      "Use the operation reference shown in the operation response.",
     );
   return withStore((db) => {
     expire(db);
