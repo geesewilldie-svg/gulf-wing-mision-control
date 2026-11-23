@@ -362,3 +362,7 @@ Following native connection inventory acceptance, official source documentation 
 ### Pinned Copilot profile preparation — November 23, 2026
 
 Native prerequisites and normal-profile login are reported. The staged GitHub coding adapter now has separate Windows profile/cache/work directories and pinned-package validation. Version checking and explicit OAuth are the only subprocess actions; model execution and delegation remain unimplemented. Next acceptance is isolated-profile setup/sign-in, followed by a denied-tools synthetic-prompt prototype with explicit external sharing and durable quota/uncertain-result handling. Existing workshop authority is not transferred.
+
+### Fixed public Copilot acceptance probe — November 23, 2026
+
+The owner verified isolated profile OAuth. A local explicitly confirmed fixed public prompt can now test generation access using pinned CLI metadata, requested empty tools, explicit denies, disabled MCP/instructions/sync, bounded subprocess output/time, profile inspection and a durable daily no-replay reservation. This remains a diagnostic acceptance probe, not normal Nexus Copilot routing or an OS sandbox. Private-context and composed-task delegation remain unimplemented.
