@@ -1,4 +1,5 @@
 "use client";
+import SelectedFolderBrowser from "./selected-folder-browser";
 import OriginalFileLinks from "./original-file-links";
 import AnimatedFileGalaxy, { type GalaxyFile } from "./animated-file-galaxy";
 import GalaxyFileDialog from "./galaxy-file-dialog";
@@ -143,6 +144,22 @@ export default function NexusFileGalaxy({ enabled }: { enabled: boolean }) {
         Select a bright file star to zoom in, explore nearby file stars, or open
         the selected file.
       </p>
+      <SelectedFolderBrowser
+        enabled={enabled}
+        onRead={(file) => void read(file)}
+        onAccessLost={() => {
+          epoch.current++;
+          request.current?.abort();
+          setMap(null);
+          setReading(null);
+          setSelected(null);
+          setWarnings([]);
+          setBusy(false);
+          setError(
+            "Controller access is required. Private file view was cleared.",
+          );
+        }}
+      />
       <details className="memory-galaxy-tools">
         <summary>Find files and view controls</summary>
         <div className="nexus-draft-actions">

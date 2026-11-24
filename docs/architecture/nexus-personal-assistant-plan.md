@@ -30,10 +30,11 @@ Repository features and the owner's laptop observations are different evidence. 
 | Area | Existing evidence | Remaining work |
 | --- | --- | --- |
 | Conversation | Local Ollama answers and local voice reported working | Persistent cross-screen assistant, interruption polish, clearer status |
-| Knowledge | Selected laptop folder, Obsidian notes and Google snapshots searched | Broader coverage, OCR, relationship graph, fine-grained sharing |
+| Knowledge | Selected laptop folder, Obsidian notes and Google snapshots searched; explicit note links implemented | Broader coverage, OCR, evidence-based semantic links, fine-grained sharing |
+| Files | Selected-index file stars/original-byte reads and selected-folder metadata navigation fixture-tested | Drive/special-folder discovery and grants, unindexed/image viewing, folder stars, other-host/native storage |
 | Google | Two calendar accounts and six selected Drive documents reported readable | Gmail, writes, delivery, additional workflow-specific connectors |
 | Gemini | Public-only generation reported successful | Paid/private mode requires a separate reviewed change |
-| Foundation | SQLite tasks/memory and planning coordinator implemented | General execution contracts, effect reconciliation and durable work history |
+| Foundation | SQLite tasks/owner memory, local work context and planning implemented; optional work journal fixture-tested and locally enabled by owner | General execution contracts, broader effect reconciliation, verified observations and memory synchronization |
 | Coding | Codex candidate generation, checks and isolated USD utility verified in walkthrough | General skill contracts, additional verification profiles, Claude adapter, release supervisor |
 | Co-hosting | Internal lead/estimate/job rehearsal implemented | Named customer/workforce accounts, actual photos, invoices and provider reconciliation |
 | Automation | Fixed service maintenance and morning scheduling implemented | General Windows actions, browser control, monitors and tested recovery |
@@ -427,3 +428,7 @@ Confirmed Nexus snapshots now support incremental selected-index insertion using
 The conversation shell now exposes read-only journal history/issues and individual receipt inspection, with a separate hash-bound indexed-note open action. Receipts describe recorded effects, not live scheduler/file health or verified work claims; viewing them does not retry, write, index or invoke a model. Controller/local routing, bounded receipt parsing and existing current-source authorization remain governing.
 
 Selected-index original-file access is now a separate resource read beside indexed-text previews: controller-authorized, ID/hash-bound PDF/text browser links and supported original downloads (XLSX attachment). It revalidates current selected roots, path identity and content version and returns bounded exact bytes without source edits or native commands. Browser rendering is not verified by delivery. This is an initial original-resource slice; drive discovery, unindexed originals, image viewing, other hosts/storage and native app adapters remain unfinished. See `docs/nexus-original-files.md`.
+
+### First directory resource adapter
+
+The shared galaxy now includes optional lazy metadata navigation through existing selected folders: actual roots/entries, host/root/parent IDs, kind/size/mtime, signed expiring directory references, bounded paging and breadcrumbs. It lists unindexed files without reading/ingesting their contents and delegates cached previews to current hash-checked reading. Original spiral styling remains default and unchanged. This advances the Computer → Drive → Folder → File target without claiming drive discovery or broader access: volume/special-folder enumeration and grants, unindexed/image reads, folder/drive stars, other hosts and native storage/actions are still separate adapters. See `docs/nexus-folder-browser.md`.

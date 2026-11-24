@@ -29,7 +29,7 @@ export const laptopCapabilities: readonly LaptopCapability[] = [
     name: "Selected laptop files",
     implemented: true,
     description:
-      "Show connected folders, refresh their index, search, and read indexed text. Open hash-checked original PDFs/text in the browser or download indexed originals. Folder selection stays local.",
+      "Browse metadata in selected folders without indexing their contents, refresh the index, search, and read indexed text. Open hash-checked original PDFs/text in the browser or download indexed originals. Folder selection stays local.",
     effects:
       "Read approved sources; refresh the private index. No source-file edits.",
     authorization: "Paired controller and locally selected folders.",

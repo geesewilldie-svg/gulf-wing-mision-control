@@ -1,0 +1,19 @@
+# Selected-folder resource navigator
+
+The shared Memory Galaxy now has an optional **Explore selected folders** panel. The original spiral/file-star view remains the default. This panel lists the laptop's already selected roots, then one directory at a time, with folder/file labels, breadcrumbs, Back, page navigation and a **Filter this page** control. It is not a replacement graph, drive inventory or all-computer explorer.
+
+Files can appear here before indexing, including large or unsupported files. Listing a name/size does not read its body, add it to assistant memory or authorize a provider. A file with a matching cached index reference offers **Read indexed file**; that action uses the existing live ID/hash reader and its original-file controls. Metadata alone does not prove contents are current/readable. Files without an indexed preview have an honest **No saved preview** state; unindexed original/image viewing remains future work.
+
+## Resource and permission contract
+
+`POST /api/sync/files/browser` is controller-only and same-origin. It supports `roots` and `list` operations, not paths, writes, execution, arbitrary hosts or new grants. Roots are the current `local-folders.json` choices made locally; no drive discovery or automatic root expansion is performed. Responses identify this Nexus host, selected-root membership, path-based opaque entry IDs, parent identity, kind, size/mtime and available navigation/preview actions. Absolute configured paths are not returned. A phone browses this host's selected folders, not its own internal storage.
+
+Directory navigation uses domain-separated HMAC references bound to root selection and physical directory identity (device/inode/birth time), expiring after thirty minutes. Relative folder names in signed references are authenticated, not encrypted; references never replace controller authorization. Root/parent symlinks and junctions, redirected/replaced directories and revoked selections fail closed. The regular selected-file protected/hidden-name policy also applies to metadata. A root passing metadata checks is not proof that every descendant can be read.
+
+Each request inspects at most 1,000 immediate directory entries, with a soft five-second budget between filesystem operations, and returns up to 50 entries per page. Relative paths remain within 220 characters and sixteen directory levels. Hidden/protected/unavailable items are omitted and counted. Limits produce a partial-preview notice; sorting covers only the inspected subset, not an unseen whole directory. Pagination binds to the directory's current listing version; changed listings require a fresh first page. OS filesystem operations can still block on an unavailable device; no hard OS I/O timeout is claimed.
+
+Cached index metadata may be consulted for preview references; source file bodies are not opened by browsing and the index is not written. Available preview references are revalidated when read. Invalid/corrupt/absent index metadata does not require scanning or prevent metadata browsing; it simply supplies no preview reference. Failed controller checks clear this folder view and the associated galaxy's private view; late replies are ignored. Closing the panel aborts its requests, and references can be refreshed by returning to Selected folders.
+
+## Remaining architecture
+
+This delivers the first directory resource adapter over existing grants. Whole-drive/special-folder discovery and grants, unindexed original/image readers, drive/folder stars inside the spiral, additional host/storage adapters and native app actions remain unfinished. There is no new graph database, model call, folder ingestion, elevation or source-file mutation in this navigator.

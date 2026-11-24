@@ -627,3 +627,38 @@ export async function readIndexedOriginal(id: string, hash: string) {
     );
   }
 }
+
+// Metadata-only directory adapter for selected roots; no content reads.
+export async function selectedDirectory(root: FileRoot, relative = "") {
+  if (
+    relative &&
+    (!permittedRelative(relative) || relative.split("/").length > 16)
+  )
+    throw new SyncError(400, "Choose a permitted selected folder.");
+  const base = await canonicalRoot(root);
+  let target = base;
+  for (const part of relative ? relative.split("/") : []) {
+    target = path.join(target, part);
+    const stat = await fs.lstat(target);
+    if (!stat.isDirectory() || stat.isSymbolicLink())
+      throw Error("Unavailable folder");
+  }
+  const stat = await fs.lstat(target),
+    real = await fs.realpath(target);
+  if (!stat.isDirectory() || stat.isSymbolicLink() || !inside(base, real))
+    throw Error("Unavailable folder");
+  return { target, stat };
+}
+export async function cachedFileReferences(roots: FileRoot[]) {
+  const saved = await index();
+  if (!saved || saved.configHash !== configHash(roots)) return [];
+  return saved.files.map((file) => ({
+    id: file.id,
+    rootId: file.rootId,
+    name: file.name,
+    hash: file.hash,
+    size: file.size,
+    modifiedAt: file.modifiedAt,
+    sections: file.documents.length,
+  }));
+}

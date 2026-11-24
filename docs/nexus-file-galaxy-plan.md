@@ -45,12 +45,13 @@ Use a common resource service and responsive file-star interface for laptop, pho
 | Large hash-bound indexed-text preview | Implemented and fixture-tested |
 | Shared Memory, Overview Galaxy, controller ScreenPad, globe expansion | Implemented with desktop/mobile fixtures; acceptance per native device pending |
 | Selection/orientation preservation across expansion | Follow-up; current source-view remount clears selection |
-| Drive discovery and lazy directory browsing | Not implemented; next file-resource adapter |
+| Lazy metadata navigation inside selected folders | Implemented as optional navigator beside the galaxy; bounded/paged and fixture-tested |
+| Drive/special-folder discovery and all-file/folder stars | Not implemented; next broader resource/grant layer |
 | Current selected-index PDF/text originals and supported original downloads | Implemented and fixture-tested; native renderer acceptance pending |
 | Images, unindexed originals and arbitrary native opening | Not implemented |
 | Phone-native storage, additional hosts and offline recovery | Not implemented |
 
-Next work must implement the drive/directory resource layer without replacing the owner-approved visual direction. The current original-read slice is limited to the existing selected index; bind broader unindexed originals and drive/folder navigation to that resource layer later. No new graph database is required merely to render file stars. Keep the provider-request globe separate from the file-star browser and keep the unresolved Copilot generation result separate from file permissions.
+The first directory resource layer now browses selected-root metadata without indexing file bodies. Next work must extend it to drive/special-folder discovery, broader grants, unindexed original/image readers and drive/folder stars without replacing the owner-approved visual direction. The current original-read slice is limited to the existing selected index. See `nexus-folder-browser.md` for the delivered boundary. No new graph database is required merely to render file stars. Keep the provider-request globe separate from the file-star browser and keep the unresolved Copilot generation result separate from file permissions.
 
 ## Acceptance
 
