@@ -1,4 +1,5 @@
 "use client";
+import BrowsedOriginalLinks from "./browsed-original-links";
 import { useEffect, useRef, useState } from "react";
 import type {
   BrowserRoots,
@@ -249,6 +250,9 @@ export default function SelectedFolderBrowser({
                       </>
                     ) : (
                       <span>No saved preview</span>
+                    )}
+                    {entry.original && (
+                      <BrowsedOriginalLinks original={entry.original} />
                     )}
                   </li>
                 ))}

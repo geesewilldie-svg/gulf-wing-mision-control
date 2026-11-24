@@ -7,7 +7,10 @@ import {
   selectedDirectory,
   cachedFileReferences,
   permittedRelative,
+  selectedFileVersion,
+  readSelectedResource,
 } from "./local-files";
+import { resourceFormat, validateResourceBytes } from "./file-resource-format";
 import type { BrowserRoots, FolderPage } from "@/lib/folder-browser";
 const digest = (value: unknown) =>
   createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -213,6 +216,22 @@ export async function browseSelectedFolders(
                 }),
               }
             : {}),
+          ...(!folder &&
+          stat.size <= 8_000_000 &&
+          resourceFormat(relative, root.kind)
+            ? {
+                original: {
+                  view: resourceFormat(relative, root.kind)!.view,
+                  handle: seal(settings.signingSecret, {
+                    kind: "file",
+                    rootId: root.id,
+                    path: relative,
+                    selection,
+                    version: selectedFileVersion(stat),
+                  }),
+                },
+              }
+            : {}),
           ...(known
             ? {
                 indexed: {
@@ -305,4 +324,45 @@ export async function browseSelectedFolders(
           })
         : null,
   };
+}
+
+export async function readBrowsedOriginal(handle: unknown, download: boolean) {
+  const settings = await config();
+  if (!settings) throw new SyncError(503, "Laptop pairing is not configured.");
+  const reference = unseal(settings.signingSecret, handle, "file");
+  const roots = await fileRoots(),
+    selection = digest(roots);
+  if (
+    reference.selection !== selection ||
+    !/^[a-f0-9]{24}$/.test(reference.rootId) ||
+    typeof reference.path !== "string" ||
+    !permittedRelative(reference.path) ||
+    !/^[a-f0-9]{64}$/.test(reference.version)
+  )
+    throw new SyncError(
+      409,
+      "Source selection or file reference changed. Reload the folder.",
+    );
+  const root = roots.find((root) => root.id === reference.rootId);
+  if (!root) throw new SyncError(404, "Selected source is unavailable.");
+  const format = resourceFormat(reference.path, root.kind);
+  if (!format)
+    throw new SyncError(
+      415,
+      "Original viewing is not supported for this file type.",
+    );
+  let file;
+  try {
+    file = await readSelectedResource(root, reference.path, reference.version);
+  } catch (error) {
+    if (error instanceof SyncError) throw error;
+    throw new SyncError(
+      409,
+      "Original is unavailable or changed. Reload the folder.",
+    );
+  }
+  if (digest(await fileRoots()) !== selection)
+    throw new SyncError(409, "Selected sources changed during reading.");
+  validateResourceBytes(file.data, format.extension, download);
+  return { ...file, ...format };
 }

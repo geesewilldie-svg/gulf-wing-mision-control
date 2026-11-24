@@ -28,7 +28,7 @@ A browseable file need not already be indexed or provided to a model. Browsing, 
 
 ## Original files and resource contracts
 
-The main preview remains extracted indexed text, with hash-bound parts. A separate controller-only original-byte route now opens current indexed PDF/text originals in a browser tab and downloads supported indexed originals, including XLSX. Browser/OS support determines rendering or download behavior; delivering bytes is not proof that a viewer displayed every page. Image viewing, native app control and unindexed-file/whole-drive access remain future adapters. Unsupported formats must have an honest state. See `nexus-original-files.md` for the bounded original-read contract.
+The main preview remains extracted indexed text, with hash-bound parts. A separate controller-only original-byte route now opens current indexed PDF/text originals in a browser tab and downloads supported indexed originals, including XLSX. Browser/OS support determines rendering or download behavior; delivering bytes is not proof that a viewer displayed every page. Selected-folder PNG/JPEG and supported unindexed document reads are available through the folder navigator. Native app control and whole-drive access remain future adapters. Unsupported formats must have an honest state. See `nexus-original-files.md` for the bounded original-read contract.
 
 The next resource adapter should preserve host/volume, opaque entry identity, parent identity, type, label, version/freshness, availability and supported browse/preview/open actions. Revalidate path identity, link/junction handling, source selection/authority and content version before returning bytes or launching a viewer. Do not expose arbitrary shell/path execution from a star label. Format/viewer success needs its own result evidence.
 
@@ -48,10 +48,10 @@ Use a common resource service and responsive file-star interface for laptop, pho
 | Lazy metadata navigation inside selected folders | Implemented as optional navigator beside the galaxy; bounded/paged and fixture-tested |
 | Drive/special-folder discovery and all-file/folder stars | Not implemented; next broader resource/grant layer |
 | Current selected-index PDF/text originals and supported original downloads | Implemented and fixture-tested; native renderer acceptance pending |
-| Images, unindexed originals and arbitrary native opening | Not implemented |
+| Selected-folder PNG/JPEG and supported unindexed originals | Delivered through folder navigator; native opening remains pending |
 | Phone-native storage, additional hosts and offline recovery | Not implemented |
 
-The first directory resource layer now browses selected-root metadata without indexing file bodies. Next work must extend it to drive/special-folder discovery, broader grants, unindexed original/image readers and drive/folder stars without replacing the owner-approved visual direction. The current original-read slice is limited to the existing selected index. See `nexus-folder-browser.md` for the delivered boundary. No new graph database is required merely to render file stars. Keep the provider-request globe separate from the file-star browser and keep the unresolved Copilot generation result separate from file permissions.
+The first directory resource layer now browses selected-root metadata without indexing file bodies. Next work must extend it to drive/special-folder discovery, broader grants and drive/folder stars without replacing the owner-approved visual direction. Original reads cover the selected index and supported signed folder references. See `nexus-folder-browser.md` for the delivered boundary. No new graph database is required merely to render file stars. Keep the provider-request globe separate from the file-star browser and keep the unresolved Copilot generation result separate from file permissions.
 
 ## Acceptance
 

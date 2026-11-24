@@ -63,7 +63,17 @@ async function boundedJson(name: string, limit: number) {
     const stat = await handle.stat();
     if (stat.size > limit) throw Error();
     const buffer = Buffer.alloc(limit + 1);
-    const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
+    let bytesRead = 0;
+    while (bytesRead < buffer.length) {
+      const part = await handle.read(
+        buffer,
+        bytesRead,
+        buffer.length - bytesRead,
+        bytesRead,
+      );
+      if (!part.bytesRead) break;
+      bytesRead += part.bytesRead;
+    }
     if (bytesRead > limit) throw Error();
     return JSON.parse(buffer.subarray(0, bytesRead).toString("utf8"));
   } finally {
@@ -178,7 +188,17 @@ async function readSource(root: FileRoot, name: string) {
     )
       throw Error();
     const buffer = Buffer.alloc(Math.min(opened.size + 1, 2_000_001));
-    const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
+    let bytesRead = 0;
+    while (bytesRead < buffer.length) {
+      const part = await handle.read(
+        buffer,
+        bytesRead,
+        buffer.length - bytesRead,
+        bytesRead,
+      );
+      if (!part.bytesRead) break;
+      bytesRead += part.bytesRead;
+    }
     const after = await fileIdentity(root, name),
       done = await handle.stat();
     if (
@@ -661,4 +681,87 @@ export async function cachedFileReferences(roots: FileRoot[]) {
     modifiedAt: file.modifiedAt,
     sections: file.documents.length,
   }));
+}
+
+export function selectedFileVersion(stat: {
+  dev: number;
+  ino: number;
+  birthtimeMs: number;
+  size: number;
+  mtimeMs: number;
+  ctimeMs: number;
+}) {
+  return digest(
+    JSON.stringify([
+      stat.dev,
+      stat.ino,
+      stat.birthtimeMs,
+      stat.size,
+      stat.mtimeMs,
+      stat.ctimeMs,
+    ]),
+  );
+}
+export async function readSelectedResource(
+  root: FileRoot,
+  relative: string,
+  version: string,
+) {
+  if (
+    !permittedRelative(relative) ||
+    relative.split("/").length > 16 ||
+    !/^[a-f0-9]{64}$/.test(version)
+  )
+    throw new SyncError(400, "Choose a file from the folder navigator.");
+  const parent =
+    path.posix.dirname(relative) === "." ? "" : path.posix.dirname(relative);
+  const directory = await selectedDirectory(root, parent);
+  const target = path.join(directory.target, path.posix.basename(relative));
+  const before = await fs.lstat(target);
+  if (
+    !before.isFile() ||
+    before.isSymbolicLink() ||
+    selectedFileVersion(before) !== version
+  )
+    throw new SyncError(
+      409,
+      "File changed or was replaced. Reload the folder before opening it.",
+    );
+  if (before.size > 8_000_000)
+    throw new SyncError(413, "This original exceeds the 8 MB browsing limit.");
+  const handle = await fs.open(target, "r");
+  try {
+    const opened = await handle.stat();
+    if (selectedFileVersion(opened) !== version)
+      throw new SyncError(409, "File changed before reading.");
+    const buffer = Buffer.alloc(Math.min(opened.size + 1, 8_000_001));
+    let bytesRead = 0;
+    while (bytesRead < buffer.length) {
+      const part = await handle.read(
+        buffer,
+        bytesRead,
+        buffer.length - bytesRead,
+        bytesRead,
+      );
+      if (!part.bytesRead) break;
+      bytesRead += part.bytesRead;
+    }
+    const after = await fs.lstat(target),
+      done = await handle.stat(),
+      currentParent = await selectedDirectory(root, parent);
+    if (
+      bytesRead !== opened.size ||
+      after.isSymbolicLink() ||
+      selectedFileVersion(after) !== version ||
+      selectedFileVersion(done) !== version ||
+      currentParent.stat.dev !== directory.stat.dev ||
+      currentParent.stat.ino !== directory.stat.ino ||
+      currentParent.stat.birthtimeMs !== directory.stat.birthtimeMs
+    )
+      throw new SyncError(409, "File or folder changed during reading.");
+    const data = buffer.subarray(0, bytesRead);
+    return { data, hash: digest(data), name: path.posix.basename(relative) };
+  } finally {
+    await handle.close();
+  }
 }

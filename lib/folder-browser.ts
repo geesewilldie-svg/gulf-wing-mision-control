@@ -27,6 +27,7 @@ export type FolderPage = {
     size: number | null;
     modifiedAt: string;
     handle?: string;
+    original?: { handle: string; view: "picture" | "document" | "download" };
     indexed?: { id: string; hash: string; sections: number };
   }[];
   inspected: number;

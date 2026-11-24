@@ -432,3 +432,6 @@ Selected-index original-file access is now a separate resource read beside index
 ### First directory resource adapter
 
 The shared galaxy now includes optional lazy metadata navigation through existing selected folders: actual roots/entries, host/root/parent IDs, kind/size/mtime, signed expiring directory references, bounded paging and breadcrumbs. It lists unindexed files without reading/ingesting their contents and delegates cached previews to current hash-checked reading. Original spiral styling remains default and unchanged. This advances the Computer → Drive → Folder → File target without claiming drive discovery or broader access: volume/special-folder enumeration and grants, unindexed/image reads, folder/drive stars, other hosts and native storage/actions are still separate adapters. See `docs/nexus-folder-browser.md`.
+
+
+Selected-folder resource update: supported unindexed document and PNG/JPEG original reads now use short-lived signed, file-version-bound references and controller-only endpoints. Metadata browsing remains separate from indexing and model context. Whole-drive discovery, folder stars and native storage adapters remain pending; see `../nexus-folder-browser.md`.

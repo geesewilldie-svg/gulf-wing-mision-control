@@ -2,7 +2,7 @@
 
 The shared Memory Galaxy now has an optional **Explore selected folders** panel. The original spiral/file-star view remains the default. This panel lists the laptop's already selected roots, then one directory at a time, with folder/file labels, breadcrumbs, Back, page navigation and a **Filter this page** control. It is not a replacement graph, drive inventory or all-computer explorer.
 
-Files can appear here before indexing, including large or unsupported files. Listing a name/size does not read its body, add it to assistant memory or authorize a provider. A file with a matching cached index reference offers **Read indexed file**; that action uses the existing live ID/hash reader and its original-file controls. Metadata alone does not prove contents are current/readable. Files without an indexed preview have an honest **No saved preview** state; unindexed original/image viewing remains future work.
+Files can appear here before indexing, including large or unsupported files. Listing a name/size does not read its body, add it to assistant memory or authorize a provider. A file with a matching cached index reference offers **Read indexed file**; that action uses the existing live ID/hash reader and its original-file controls. Metadata alone does not prove contents are current/readable. Files without an indexed preview have an honest **No saved preview** state; supported unindexed documents and PNG/JPEG pictures now offer original-file controls.
 
 ## Resource and permission contract
 
@@ -16,4 +16,7 @@ Cached index metadata may be consulted for preview references; source file bodie
 
 ## Remaining architecture
 
-This delivers the first directory resource adapter over existing grants. Whole-drive/special-folder discovery and grants, unindexed original/image readers, drive/folder stars inside the spiral, additional host/storage adapters and native app actions remain unfinished. There is no new graph database, model call, folder ingestion, elevation or source-file mutation in this navigator.
+This delivers the first directory resource adapter over existing grants. Whole-drive/special-folder discovery and grants, drive/folder stars inside the spiral, additional host/storage adapters and native app actions remain unfinished. There is no new graph database, model call, folder ingestion, elevation or source-file mutation in this navigator.
+
+
+Supported browsed originals use controller-only `/api/sync/files/resource` references, signed for 30 minutes and bound to the selected roots and listed file metadata version. Opening rechecks the source, reads at most 8 MB and computes a response SHA-256; it does not index the file. PDF, Markdown, text and CSV can open in a tab; PNG/JPEG pictures can open in the browser. XLSX/DOCX/PPTX are downloads. Obsidian grants remain Markdown-only. Unsupported or oversized files keep metadata-only entries. Header checks reject mismatched PDF/image/Office signatures; they do not establish full document validity. Inline pictures are limited to 32 million pixels and 16,384 pixels per dimension. Native application launching and phone-local storage remain future adapters.
