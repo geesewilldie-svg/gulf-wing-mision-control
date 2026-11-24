@@ -3389,3 +3389,8 @@ body {
 .memory-star-focus > div { display:flex; flex-wrap:wrap; gap:7px; margin-top:9px; }.nexus-file-galaxy .memory-star-focus button { font-size:12px; padding:7px 10px; min-height:38px; }
 
 .memory-spiral-stage.is-file-focused .memory-spiral-label { opacity:.12; }
+
+.nexus-original-file-actions .nexus-draft-actions { display:flex; flex-wrap:wrap; gap:12px; }
+.nexus-original-file-actions a { display:inline-flex; align-items:center; min-height:44px; padding:10px 14px; border:1px solid #355b73; border-radius:9px; background:#102d41; color:#e0f4ff; line-height:1.4; text-decoration:none; }
+.nexus-original-file-actions a:hover, .nexus-original-file-actions a:focus-visible { background:#173f5b; border-color:#78e8ff; }
+@media (max-width:600px) { .nexus-original-file-actions a { width:100%; } }

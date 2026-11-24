@@ -1,4 +1,5 @@
 "use client";
+import OriginalFileLinks from "./original-file-links";
 import AnimatedFileGalaxy, { type GalaxyFile } from "./animated-file-galaxy";
 import GalaxyFileDialog from "./galaxy-file-dialog";
 import { useEffect, useRef, useState } from "react";
@@ -240,13 +241,20 @@ export default function NexusFileGalaxy({ enabled }: { enabled: boolean }) {
               {selected.name}
             </h4>
             <p>
-              Indexed text preview; original document viewing is not implemented
-              here.
+              Indexed text preview. Use the original-file controls to open or
+              download the unchanged source.
             </p>
             {busy ? (
               <p>Reading current indexed text…</p>
             ) : (
               <pre className="nexus-galaxy-text">{reading?.answer}</pre>
+            )}
+            {reading?.fileRead && (
+              <OriginalFileLinks
+                id={reading.fileRead.id}
+                hash={reading.fileRead.hash}
+                name={selected.name}
+              />
             )}
             <div className="nexus-draft-actions">
               {reading?.fileRead &&

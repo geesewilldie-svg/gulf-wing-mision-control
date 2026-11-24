@@ -1,4 +1,5 @@
 "use client";
+import OriginalFileLinks from "./original-file-links";
 import JournalReceipt from "./journal-receipt";
 import type { JournalReceiptView } from "@/lib/work-journal";
 import { NexusSourceMap } from "./nexus-source-map";
@@ -49,6 +50,7 @@ type Answer = {
   operationDetail?: LaptopOperationFeedback;
   fileChoices?: { id: string; hash: string; name: string }[];
   fileRead?: {
+    name?: string;
     id: string;
     hash: string;
     part: number;
@@ -482,6 +484,13 @@ export default function NexusAssistant({
                     Read file: {file.name}
                   </button>
                 ))}
+                {answer.fileRead && (
+                  <OriginalFileLinks
+                    id={answer.fileRead.id}
+                    hash={answer.fileRead.hash}
+                    name={answer.fileRead.name}
+                  />
+                )}
                 {answer.fileRead &&
                   answer.fileRead.part < answer.fileRead.totalParts && (
                     <button

@@ -80,6 +80,7 @@ export function readIndexedFile(
     sources: [source],
     fileChoices: [],
     fileRead: {
+      name: file.name,
       id: file.id,
       hash: file.hash,
       part: intent.part,

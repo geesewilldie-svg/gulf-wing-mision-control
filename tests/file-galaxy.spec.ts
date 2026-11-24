@@ -149,6 +149,24 @@ test("real file nodes read exact versions and remain usable when expanded", asyn
   await expect(
     page.getByRole("region", { name: "Indexed file viewer" }),
   ).toContainText("part 2");
+  const originalActions = page.getByRole("region", {
+    name: "Original file actions",
+  });
+  await expect(
+    originalActions.getByRole("link", {
+      name: "Open original text",
+      exact: true,
+    }),
+  ).toHaveAttribute("href", `/api/sync/files/original?id=${id}&hash=${hash}`);
+  const originalDownload = originalActions.getByRole("link", {
+    name: "Download original file",
+    exact: true,
+  });
+  await originalDownload.focus();
+  await page.keyboard.press("Tab");
+  await expect(
+    page.getByRole("button", { name: "Close file", exact: true }),
+  ).toBeFocused();
   expect(reads).toEqual([
     { action: "read-indexed", id, hash, part: 1 },
     { action: "read-indexed", id, hash, part: 1 },

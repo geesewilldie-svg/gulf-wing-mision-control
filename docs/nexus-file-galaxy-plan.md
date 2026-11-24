@@ -28,7 +28,7 @@ A browseable file need not already be indexed or provided to a model. Browsing, 
 
 ## Original files and resource contracts
 
-The current preview is extracted indexed text, with hash-bound parts. It is not original PDF rendering, image viewing, native app launching or proof that all content was extracted. The full target retains direct image/PDF viewing where supported, and explicit native opening for supported other types. Unsupported formats must have an honest state.
+The main preview remains extracted indexed text, with hash-bound parts. A separate controller-only original-byte route now opens current indexed PDF/text originals in a browser tab and downloads supported indexed originals, including XLSX. Browser/OS support determines rendering or download behavior; delivering bytes is not proof that a viewer displayed every page. Image viewing, native app control and unindexed-file/whole-drive access remain future adapters. Unsupported formats must have an honest state. See `nexus-original-files.md` for the bounded original-read contract.
 
 The next resource adapter should preserve host/volume, opaque entry identity, parent identity, type, label, version/freshness, availability and supported browse/preview/open actions. Revalidate path identity, link/junction handling, source selection/authority and content version before returning bytes or launching a viewer. Do not expose arbitrary shell/path execution from a star label. Format/viewer success needs its own result evidence.
 
@@ -46,10 +46,11 @@ Use a common resource service and responsive file-star interface for laptop, pho
 | Shared Memory, Overview Galaxy, controller ScreenPad, globe expansion | Implemented with desktop/mobile fixtures; acceptance per native device pending |
 | Selection/orientation preservation across expansion | Follow-up; current source-view remount clears selection |
 | Drive discovery and lazy directory browsing | Not implemented; next file-resource adapter |
-| Original PDF/image viewing and supported native opening | Not implemented |
+| Current selected-index PDF/text originals and supported original downloads | Implemented and fixture-tested; native renderer acceptance pending |
+| Images, unindexed originals and arbitrary native opening | Not implemented |
 | Phone-native storage, additional hosts and offline recovery | Not implemented |
 
-Next work must implement the drive/directory resource layer without replacing the owner-approved visual direction. Then bind drive/folder navigation and original-file viewing to that layer. No new graph database is required merely to render file stars. Keep the provider-request globe separate from the file-star browser and keep the unresolved Copilot generation result separate from file permissions.
+Next work must implement the drive/directory resource layer without replacing the owner-approved visual direction. The current original-read slice is limited to the existing selected index; bind broader unindexed originals and drive/folder navigation to that resource layer later. No new graph database is required merely to render file stars. Keep the provider-request globe separate from the file-star browser and keep the unresolved Copilot generation result separate from file permissions.
 
 ## Acceptance
 

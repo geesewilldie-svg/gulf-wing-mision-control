@@ -582,3 +582,48 @@ export async function indexSavedSnapshot(
     updating = false;
   }
 }
+
+export async function readIndexedOriginal(id: string, hash: string) {
+  if (!/^[a-f0-9]{24}$/i.test(id) || !/^[a-f0-9]{64}$/i.test(hash))
+    throw new SyncError(400, "Choose a current indexed file.");
+  const roots = await fileRoots();
+  const saved = await index();
+  if (!saved || saved.configHash !== configHash(roots))
+    throw new SyncError(
+      409,
+      "Folder selection or index changed. Refresh the index before opening originals.",
+    );
+  const file = saved.files.find((file) => file.id === id.toLowerCase());
+  if (!file)
+    throw new SyncError(
+      404,
+      "That original file is not in the selected index.",
+    );
+  if (file.hash !== hash.toLowerCase())
+    throw new SyncError(
+      409,
+      "The file version changed. Select the current file again.",
+    );
+  const root = roots.find((root) => root.id === file.rootId);
+  if (!root) throw new SyncError(404, "The selected source is unavailable.");
+  try {
+    const read = await readSource(root, file.name);
+    if (
+      read.stat.size !== file.size ||
+      read.stat.mtime.toISOString() !== file.modifiedAt ||
+      digest(read.data) !== file.hash ||
+      configHash(await fileRoots()) !== saved.configHash
+    )
+      throw Error();
+    return {
+      data: read.data,
+      name: path.posix.basename(file.name),
+      extension: path.posix.extname(file.name).toLowerCase(),
+    };
+  } catch {
+    throw new SyncError(
+      409,
+      "The original file changed or is unavailable. Refresh the index and select it again.",
+    );
+  }
+}

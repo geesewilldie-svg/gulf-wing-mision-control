@@ -27,7 +27,7 @@ export default function GalaxyFileDialog({
       } else if (event.key === "Tab") {
         const controls = Array.from(
           panel.current?.querySelectorAll<HTMLElement>(
-            'button:not([disabled]),[tabindex="0"]',
+            'button:not([disabled]),a[href],[tabindex="0"]',
           ) || [],
         ).filter((node) => node.getClientRects().length);
         if (!controls.length) return;

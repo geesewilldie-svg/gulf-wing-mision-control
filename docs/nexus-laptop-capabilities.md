@@ -11,3 +11,5 @@ The read-only lookup checks local folder-selection configuration and maintenance
 The same static capability facts are supplied to local answer prompts and planning prompts. No dynamic private configuration or owner memory is newly shared with external providers. This helps ground descriptions but does not guarantee a small local model follows them or verifies its own actions. Neither answering models nor planning workers gain execution tools.
 
 This is an initial architecture registry slice for the bounded laptop adapters. General schemas/plugin activation, Windows helper/desktop takeover, arbitrary-effect reconciliation and further services remain unfinished. No database migration or new permission is required.
+
+The selected-files description now includes a bounded original-file read: open current indexed PDFs/text through the browser or download supported indexed originals. Actual rendering depends on browser/OS support; this does not implement drive discovery, unindexed/image browsing, native app control or arbitrary execution. Existing controller, selection, size and hash checks govern each original request.
