@@ -28,7 +28,7 @@ const excluded = new Set([
   "business-backups",
 ]);
 const privateNames =
-  /^(?:credentials?|secrets?|tokens?|passwords?|client[_-]?secret|google-oauth|sync-config|local-folders|local-file-index)(?:[._-]|$)/i;
+  /^(?:credentials?|secrets?|tokens?|passwords?|client[_-]?secret|google-oauth|sync-config|local-folders|local-file-index|storage-browse)(?:[._-]|$)/i;
 const supported = new Set([".md", ".txt", ".pdf", ".xlsx"]);
 const inside = (root: string, target: string) => {
   const relative = path.relative(root, target);

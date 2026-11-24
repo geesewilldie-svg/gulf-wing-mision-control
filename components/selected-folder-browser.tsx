@@ -104,8 +104,10 @@ export default function SelectedFolderBrowser({
       {open && (
         <section aria-label="Selected folder explorer">
           <p>
-            Browse folders on your laptop. Only locally selected folders appear
-            here. Listing names does not add file contents to Nexus.
+            Browse folders on your laptop. Only locally selected folders and
+            browse-only storage appear here. Listing names does not add file
+            contents to Nexus. Use Setup-Nexus-Storage.cmd on the laptop to add
+            or remove browse-only locations.
           </p>
           <nav aria-label="Folder breadcrumbs" className="nexus-folder-actions">
             <button disabled={busy} onClick={() => void load()}>
@@ -143,9 +145,11 @@ export default function SelectedFolderBrowser({
                 <li key={root.id}>
                   <strong>{root.name}</strong>
                   <span>
-                    {root.kind === "obsidian"
-                      ? "Obsidian vault"
-                      : "Selected folder"}
+                    {root.browseOnly
+                      ? `${root.storageType === "drive" ? "Drive" : "Folder"} · browse-only; not indexed automatically`
+                      : root.kind === "obsidian"
+                        ? "Obsidian vault"
+                        : "Selected folder"}
                   </span>
                   {root.available && root.handle ? (
                     <button

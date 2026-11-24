@@ -7,6 +7,8 @@ export type BrowserRoots = {
     name: string;
     kind: "folder" | "obsidian";
     available: boolean;
+    browseOnly?: boolean;
+    storageType?: "drive" | "folder";
     handle?: string;
   }[];
 };

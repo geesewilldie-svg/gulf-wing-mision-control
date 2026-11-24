@@ -187,7 +187,7 @@ This section and [the consolidated file-star plan](../nexus-file-galaxy-plan.md)
 | Area | Current implemented scope | Remaining required work |
 | --- | --- | --- |
 | Galaxy appearance and interaction | Original-style spiral, line-free indexed file stars, focus neighborhoods, Back/Return and enlarged text previews; fixture checks passed | Owner acceptance of latest focus behavior; whole-computer resource navigation |
-| Source coverage | Selected-folder/Obsidian index, lazy selected-folder metadata browsing and local Windows drive/common-folder discovery command | Browse-only drive grants, drive/folder stars and multi-host storage adapters |
+| Source coverage | Selected-folder/Obsidian index, lazy directory browsing, local Windows drive/common-folder discovery and separate browse-only storage grants | Drive/folder stars, native availability checks and multi-host storage adapters |
 | File viewing | Hash-bound indexed text, selected-folder PDF/text and PNG/JPEG browser views, supported Office downloads | Broader format/native opening adapters and native device acceptance |
 | Device surfaces | Shared desktop/mobile Memory UI, Overview Galaxy and controller ScreenPad; globe expansion | Native acceptance per device, offline/unavailable-host states and each additional base's storage adapter |
 
@@ -441,3 +441,6 @@ Galaxy expansion update: dashboard and shared visual wrappers retain one mounted
 
 
 Storage discovery update: `Discover-Nexus-Storage.cmd` reports local Windows logical-drive metadata and configured common-folder paths without scanning contents or changing grants. The paired resource service remains bounded to selected folders until a separate browse-only storage grant layer is implemented. See `../nexus-storage-discovery.md`.
+
+
+Browse-only storage update: the local Windows setup command can add/remove discovered drive or common-folder grants in a separate bounded configuration. The shared resource browser checks physical root identity and current grants, while indexing remains restricted to existing knowledge selections. Drive/folder star integration remains pending. See `../nexus-storage-browse.md`.

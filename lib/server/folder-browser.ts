@@ -4,12 +4,12 @@ import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { config, SyncError } from "./sync-store";
 import {
   fileRoots,
-  selectedDirectory,
   cachedFileReferences,
   permittedRelative,
   selectedFileVersion,
   readSelectedResource,
 } from "./local-files";
+import { browserRoots, browserDirectory } from "./storage-browse";
 import { resourceFormat, validateResourceBytes } from "./file-resource-format";
 import type { BrowserRoots, FolderPage } from "@/lib/folder-browser";
 const digest = (value: unknown) =>
@@ -88,7 +88,7 @@ export async function browseSelectedFolders(
     );
   const settings = await config();
   if (!settings) throw new SyncError(503, "Laptop pairing is not configured.");
-  const roots = await fileRoots(),
+  const roots = await browserRoots(),
     selection = digest(roots);
   if (body.action === "roots") {
     const result: BrowserRoots = {
@@ -100,13 +100,16 @@ export async function browseSelectedFolders(
     };
     for (const root of roots) {
       try {
-        const current = await selectedDirectory(root);
+        const current = await browserDirectory(root);
         result.roots.push({
           id: idFor(root.id, ""),
           rootId: root.id,
           name: root.label,
           kind: root.kind,
           available: true,
+          ...(root.browseOnly
+            ? { browseOnly: true, storageType: root.storageType }
+            : {}),
           handle: seal(settings.signingSecret, {
             kind: "folder",
             rootId: root.id,
@@ -122,6 +125,9 @@ export async function browseSelectedFolders(
           name: root.label,
           kind: root.kind,
           available: false,
+          ...(root.browseOnly
+            ? { browseOnly: true, storageType: root.storageType }
+            : {}),
         });
       }
     }
@@ -144,7 +150,7 @@ export async function browseSelectedFolders(
   if (!root) throw new SyncError(404, "Selected folder is unavailable.");
   let directory;
   try {
-    directory = await selectedDirectory(root, reference.path);
+    directory = await browserDirectory(root, reference.path);
   } catch {
     throw new SyncError(
       409,
@@ -156,7 +162,7 @@ export async function browseSelectedFolders(
       409,
       "Folder identity changed. Start from selected folders again.",
     );
-  const indexed = await cachedFileReferences(roots).catch(() => []);
+  const indexed = await cachedFileReferences(await fileRoots()).catch(() => []);
   const entries: FolderPage["entries"] = [];
   let inspected = 0,
     omitted = 0,
@@ -246,11 +252,11 @@ export async function browseSelectedFolders(
         omitted++;
       }
     }
-    const after = await selectedDirectory(root, reference.path);
+    const after = await browserDirectory(root, reference.path);
     if (
       identity(after.stat) !== reference.identity ||
       after.stat.mtimeMs !== directory.stat.mtimeMs ||
-      digest(await fileRoots()) !== selection
+      digest(await browserRoots()) !== selection
     )
       throw Error("Changed folder");
   } catch {
@@ -330,7 +336,7 @@ export async function readBrowsedOriginal(handle: unknown, download: boolean) {
   const settings = await config();
   if (!settings) throw new SyncError(503, "Laptop pairing is not configured.");
   const reference = unseal(settings.signingSecret, handle, "file");
-  const roots = await fileRoots(),
+  const roots = await browserRoots(),
     selection = digest(roots);
   if (
     reference.selection !== selection ||
@@ -353,7 +359,9 @@ export async function readBrowsedOriginal(handle: unknown, download: boolean) {
     );
   let file;
   try {
+    await browserDirectory(root);
     file = await readSelectedResource(root, reference.path, reference.version);
+    await browserDirectory(root);
   } catch (error) {
     if (error instanceof SyncError) throw error;
     throw new SyncError(
@@ -361,7 +369,7 @@ export async function readBrowsedOriginal(handle: unknown, download: boolean) {
       "Original is unavailable or changed. Reload the folder.",
     );
   }
-  if (digest(await fileRoots()) !== selection)
+  if (digest(await browserRoots()) !== selection)
     throw new SyncError(409, "Selected sources changed during reading.");
   validateResourceBytes(file.data, format.extension, download);
   return { ...file, ...format };

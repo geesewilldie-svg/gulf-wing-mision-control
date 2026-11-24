@@ -402,3 +402,10 @@ Verification: production build (webpack) and TypeScript passed; 32 desktop/mobil
 ### Local Windows storage inventory
 
 Added `Discover-Nexus-Storage.cmd` to report logical-drive type/capacity and configured common-folder/Downloads/OneDrive paths locally. No recursive scanning, source reads, index writes, provider calls or access-setting changes. Four direct Node fixture tests passed, including exact fixed query and invalid-path handling; Windows-native execution is still unverified on this Linux workspace. Browse-only grants, API navigation and drive/folder stars remain separate pending work.
+
+
+### Separate browse-only storage grants
+
+`Setup-Nexus-Storage.cmd` now offers locally discovered Windows drive/common-folder choices, exact-path review, explicit enable and removal. Resource navigation merges browse roots with knowledge roots without passing them to indexing. Versioned grants are identity-bound, atomic and bounded to twelve; removal invalidates old references and replaced roots stay unavailable. The original spiral remains unchanged; drive/folder stars are the next visual layer.
+
+Production webpack build, TypeScript, three direct grant-library tests and 32 desktop/mobile regression checks passed, including real unindexed document opening, zero automatic indexing and grant revocation. Additional overlap checks verify that separate knowledge previews survive browse-grant removal. Automated fixtures changed no owner settings; native interactive setup is not yet observed.

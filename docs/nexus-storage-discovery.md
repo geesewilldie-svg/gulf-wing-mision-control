@@ -8,4 +8,6 @@ No directory recursion, file-content reads, indexing, model invocation, provider
 
 `node scripts/storage-discovery.test.mjs` verifies parsing, redirected folders, unknown capacity, invalid/device paths and the exact fixed PowerShell invocation. These fixture tests do not establish Windows runtime compatibility; run the discovery command on the Windows host to observe its native inventory. It is intentionally separate from the paired file browser's current selected-root grants.
 
-Next: a distinct browse-only storage selection/grant layer, then drive/folder representations inside the original spiral and shared host-backed navigation. Do not silently add discovered drives to the knowledge index or grant remote controllers access to everything reported here. Phone-local storage and other hosts still require independent adapters.
+Browse-only storage selection is now available through `Setup-Nexus-Storage.cmd`; see `nexus-storage-browse.md`. Next are drive/folder representations inside the original spiral and shared host-backed navigation. Do not silently add discovered drives to the knowledge index or grant remote controllers access to everything reported here. Phone-local storage and other hosts still require independent adapters.
+
+The owner ran discovery successfully on Windows: reported C: and G: (Google Drive), redirected OneDrive common folders and Downloads. This confirms metadata discovery on that installation, not descendant access or cloud-file availability.

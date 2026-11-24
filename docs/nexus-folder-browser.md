@@ -1,12 +1,12 @@
 # Selected-folder resource navigator
 
-The shared Memory Galaxy now has an optional **Explore selected folders** panel. The original spiral/file-star view remains the default. This panel lists the laptop's already selected roots, then one directory at a time, with folder/file labels, breadcrumbs, Back, page navigation and a **Filter this page** control. It is not a replacement graph, drive inventory or all-computer explorer.
+The shared Memory Galaxy now has an optional **Explore selected folders** panel. The original spiral/file-star view remains the default. This panel lists the laptop's locally selected knowledge roots and separate browse-only storage locations, then one directory at a time, with folder/file labels, breadcrumbs, Back, page navigation and a **Filter this page** control. It is not a replacement graph or automatic all-computer grant.
 
 Files can appear here before indexing, including large or unsupported files. Listing a name/size does not read its body, add it to assistant memory or authorize a provider. A file with a matching cached index reference offers **Read indexed file**; that action uses the existing live ID/hash reader and its original-file controls. Metadata alone does not prove contents are current/readable. Files without an indexed preview have an honest **No saved preview** state; supported unindexed documents and PNG/JPEG pictures now offer original-file controls.
 
 ## Resource and permission contract
 
-`POST /api/sync/files/browser` is controller-only and same-origin. It supports `roots` and `list` operations, not paths, writes, execution, arbitrary hosts or new grants. Roots are the current `local-folders.json` choices made locally; no drive discovery or automatic root expansion is performed. Responses identify this Nexus host, selected-root membership, path-based opaque entry IDs, parent identity, kind, size/mtime and available navigation/preview actions. Absolute configured paths are not returned. A phone browses this host's selected folders, not its own internal storage.
+`POST /api/sync/files/browser` is controller-only and same-origin. It supports `roots` and `list` operations, not paths, writes, execution, arbitrary hosts or new grants. Roots combine the current `local-folders.json` knowledge choices and `storage-browse.json` browse-only grants made locally. `Setup-Nexus-Storage.cmd` offers discovered Windows locations; no automatic root expansion is performed. Responses identify this Nexus host, selected-root membership, path-based opaque entry IDs, parent identity, kind, size/mtime and available navigation/preview actions. Absolute configured paths are not returned. A phone browses this host's selected folders, not its own internal storage.
 
 Directory navigation uses domain-separated HMAC references bound to root selection and physical directory identity (device/inode/birth time), expiring after thirty minutes. Relative folder names in signed references are authenticated, not encrypted; references never replace controller authorization. Root/parent symlinks and junctions, redirected/replaced directories and revoked selections fail closed. The regular selected-file protected/hidden-name policy also applies to metadata. A root passing metadata checks is not proof that every descendant can be read.
 
@@ -16,7 +16,9 @@ Cached index metadata may be consulted for preview references; source file bodie
 
 ## Remaining architecture
 
-This delivers the first directory resource adapter over existing grants. Whole-drive/special-folder discovery and grants, drive/folder stars inside the spiral, additional host/storage adapters and native app actions remain unfinished. There is no new graph database, model call, folder ingestion, elevation or source-file mutation in this navigator.
+This delivers the first directory resource adapter over existing grants. Local drive/special-folder discovery and explicit browse grants are delivered; drive/folder stars inside the spiral, additional host/storage adapters and native app actions remain unfinished. There is no new graph database, model call, folder ingestion, elevation or source-file mutation in this navigator.
 
 
 Supported browsed originals use controller-only `/api/sync/files/resource` references, signed for 30 minutes and bound to the selected roots and listed file metadata version. Opening rechecks the source, reads at most 8 MB and computes a response SHA-256; it does not index the file. PDF, Markdown, text and CSV can open in a tab; PNG/JPEG pictures can open in the browser. XLSX/DOCX/PPTX are downloads. Obsidian grants remain Markdown-only. Unsupported or oversized files keep metadata-only entries. Header checks reject mismatched PDF/image/Office signatures; they do not establish full document validity. Inline pictures are limited to 32 million pixels and 16,384 pixels per dimension. Native application launching and phone-local storage remain future adapters.
+
+See `nexus-storage-browse.md` for independent browse grants and revocation. Browse-only roots are never passed to the knowledge indexer.
