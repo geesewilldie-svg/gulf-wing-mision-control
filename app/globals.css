@@ -3403,3 +3403,8 @@ body {
 .nexus-folder-entries strong, .nexus-folder-actions button { overflow-wrap:anywhere; max-width:100%; }
 .nexus-folder-entries span { color:#a9c2d0; font-size:14px; }
 .nexus-folder-browser input { display:block; width:100%; min-height:44px; margin:8px 0; }
+
+/* Distinct resource objects retain the original spiral and avoid graph lines. */
+.memory-file-star.is-resource-folder i { width:15px; height:12px; border-radius:3px; background:#ffce75; box-shadow:0 0 12px #ffce75; }
+.memory-file-star.is-resource-drive i { width:19px; height:19px; border:3px double #bba5ff; background:#281e4f; box-shadow:0 0 16px #bba5ff; }
+.memory-file-star:disabled { opacity:.4; cursor:default; }

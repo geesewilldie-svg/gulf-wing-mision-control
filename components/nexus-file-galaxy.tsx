@@ -10,7 +10,8 @@ export default function NexusFileGalaxy({ enabled }: { enabled: boolean }) {
   const [map, setMap] = useState<SourceMap | null>(null),
     [error, setError] = useState(""),
     [filter, setFilter] = useState(""),
-    [zoom, setZoom] = useState(1);
+    [zoom, setZoom] = useState(1),
+    [storageMode, setStorageMode] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]),
     [reading, setReading] = useState<{
       answer: string;
@@ -144,7 +145,24 @@ export default function NexusFileGalaxy({ enabled }: { enabled: boolean }) {
         Select a bright file star to zoom in, explore nearby file stars, or open
         the selected file.
       </p>
+      <div
+        className="nexus-draft-actions"
+        role="group"
+        aria-label="Galaxy source view"
+      >
+        <button
+          aria-pressed={!storageMode}
+          onClick={() => setStorageMode(false)}
+        >
+          Knowledge stars
+        </button>
+        <button aria-pressed={storageMode} onClick={() => setStorageMode(true)}>
+          Storage galaxy
+        </button>
+      </div>
       <SelectedFolderBrowser
+        key={storageMode ? "storage" : "selected-list"}
+        galaxy={storageMode}
         enabled={enabled}
         onRead={(file) => void read(file)}
         onAccessLost={() => {
@@ -160,86 +178,88 @@ export default function NexusFileGalaxy({ enabled }: { enabled: boolean }) {
           );
         }}
       />
-      <details className="memory-galaxy-tools">
-        <summary>Find files and view controls</summary>
-        <div className="nexus-draft-actions">
-          <label>
-            Find files
-            <input
-              type="search"
-              value={filter}
-              onChange={(event) => setFilter(event.target.value)}
-            />
-          </label>
-          <button
-            onClick={() => {
-              epoch.current++;
-              request.current?.abort();
-              setReload((value) => value + 1);
-            }}
-          >
-            Reload sources
-          </button>
-          <button
-            aria-label="Zoom in file galaxy"
-            onClick={() => setZoom((value) => Math.min(2.5, value + 0.25))}
-          >
-            Zoom in
-          </button>
-          <button
-            aria-label="Zoom out file galaxy"
-            onClick={() => setZoom((value) => Math.max(0.75, value - 0.25))}
-          >
-            Zoom out
-          </button>
-          <button
-            onClick={() => {
-              setZoom(1);
-              setFilter("");
-            }}
-          >
-            Reset view
-          </button>
-        </div>
-      </details>
-      {error && <p role="status">{error}</p>}
-      {warnings.map((warning, i) => (
-        <p key={i}>{warning}</p>
-      ))}
-      {!map && !error && <p>Loading selected sources…</p>}
-      {map && (
-        <>
-          <p>
-            {shown.length} indexed file stars available · {map.withheld} changed
-            or unavailable files withheld
-            {map.omitted
-              ? ` · ${map.omitted} more indexed files outside this view`
-              : ""}
-          </p>
-          {!shown.length && (
+      <div hidden={storageMode}>
+        <details className="memory-galaxy-tools">
+          <summary>Find files and view controls</summary>
+          <div className="nexus-draft-actions">
+            <label>
+              Find files
+              <input
+                type="search"
+                value={filter}
+                onChange={(event) => setFilter(event.target.value)}
+              />
+            </label>
+            <button
+              onClick={() => {
+                epoch.current++;
+                request.current?.abort();
+                setReload((value) => value + 1);
+              }}
+            >
+              Reload sources
+            </button>
+            <button
+              aria-label="Zoom in file galaxy"
+              onClick={() => setZoom((value) => Math.min(2.5, value + 0.25))}
+            >
+              Zoom in
+            </button>
+            <button
+              aria-label="Zoom out file galaxy"
+              onClick={() => setZoom((value) => Math.max(0.75, value - 0.25))}
+            >
+              Zoom out
+            </button>
+            <button
+              onClick={() => {
+                setZoom(1);
+                setFilter("");
+              }}
+            >
+              Reset view
+            </button>
+          </div>
+        </details>
+        {error && <p role="status">{error}</p>}
+        {warnings.map((warning, i) => (
+          <p key={i}>{warning}</p>
+        ))}
+        {!map && !error && <p>Loading selected sources…</p>}
+        {map && (
+          <>
             <p>
-              No current files match this view. Choose folders locally or
-              refresh the selected-file index.
+              {shown.length} indexed file stars available · {map.withheld}{" "}
+              changed or unavailable files withheld
+              {map.omitted
+                ? ` · ${map.omitted} more indexed files outside this view`
+                : ""}
             </p>
-          )}
-          <AnimatedFileGalaxy
-            files={shown}
-            selectedId={selected?.id}
-            zoom={zoom}
-            onRead={(file) => void read(file)}
-          />
-          <details>
-            <summary>Browse file list</summary>
-            <div className="nexus-draft-actions">
-              {shown.map((node) => (
-                <button key={node.id} onClick={() => void read(node)}>
-                  {node.folder} / {node.name}
-                </button>
-              ))}
-            </div>
-          </details>
-        </>
-      )}
+            {!shown.length && (
+              <p>
+                No current files match this view. Choose folders locally or
+                refresh the selected-file index.
+              </p>
+            )}
+            <AnimatedFileGalaxy
+              files={shown}
+              selectedId={selected?.id}
+              zoom={zoom}
+              onRead={(file) => void read(file)}
+            />
+            <details>
+              <summary>Browse file list</summary>
+              <div className="nexus-draft-actions">
+                {shown.map((node) => (
+                  <button key={node.id} onClick={() => void read(node)}>
+                    {node.folder} / {node.name}
+                  </button>
+                ))}
+              </div>
+            </details>
+          </>
+        )}
+      </div>
       {(busy || reading) && selected && (
         <GalaxyFileDialog
           onClose={() => {

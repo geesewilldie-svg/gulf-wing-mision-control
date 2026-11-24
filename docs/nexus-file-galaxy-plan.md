@@ -46,12 +46,12 @@ Use a common resource service and responsive file-star interface for laptop, pho
 | Shared Memory, Overview Galaxy, controller ScreenPad, globe expansion | Implemented with desktop/mobile fixtures; acceptance per native device pending |
 | Selection/orientation preservation across expansion | Implemented with a stable visual host; desktop/mobile regression coverage |
 | Lazy metadata navigation inside selected folders | Implemented as optional navigator beside the galaxy; bounded/paged and fixture-tested |
-| Drive/special-folder discovery and all-file/folder stars | Local Windows discovery and explicit browse-only grants delivered; drive/folder stars remain pending |
+| Drive/special-folder discovery and resource objects | Local Windows discovery, explicit browse-only grants and paged storage spiral delivered; unrestricted all-file coverage remains outside current limits |
 | Current selected-index PDF/text originals and supported original downloads | Implemented and fixture-tested; native renderer acceptance pending |
 | Selected-folder PNG/JPEG and supported unindexed originals | Delivered through folder navigator; native opening remains pending |
 | Phone-native storage, additional hosts and offline recovery | Not implemented |
 
-The first directory resource layer now browses selected-root metadata without indexing file bodies. Local Windows discovery and browse-only grants now extend the resource service beyond knowledge selections. Next work must add drive/folder stars without replacing the owner-approved visual direction. Original reads cover the selected index and supported signed folder references. See `nexus-folder-browser.md` for the delivered boundary. No new graph database is required merely to render file stars. Keep the provider-request globe separate from the file-star browser and keep the unresolved Copilot generation result separate from file permissions.
+The first directory resource layer now browses selected-root metadata without indexing file bodies. Local Windows discovery and browse-only grants now extend the resource service beyond knowledge selections. Storage galaxy now renders the current selected-location or directory page in the original spiral, with distinct drive/folder objects and file actions. See `nexus-storage-galaxy.md`. Original reads cover the selected index and supported signed folder references. See `nexus-folder-browser.md` for the delivered boundary. No new graph database is required merely to render file stars. Keep the provider-request globe separate from the file-star browser and keep the unresolved Copilot generation result separate from file permissions.
 
 ## Acceptance
 

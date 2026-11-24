@@ -7,6 +7,8 @@ export type GalaxyFile = {
   name: string;
   folder: string;
   rootId: string;
+  resourceKind?: "drive" | "folder" | "file";
+  resourceAvailable?: boolean;
   noteLinks?: { links: { id: string }[] } | null;
 };
 const TAU = Math.PI * 2,
@@ -30,7 +32,9 @@ export default function AnimatedFileGalaxy({
   selectedId,
   zoom,
   onRead,
+  resourceMode = false,
 }: {
+  resourceMode?: boolean;
   files: GalaxyFile[];
   selectedId?: string;
   zoom: number;
@@ -269,7 +273,11 @@ export default function AnimatedFileGalaxy({
   return (
     <div className="memory-spiral-shell">
       <div className="memory-spiral-controls">
-        <span>MEMORY / FILE CONSTELLATION</span>
+        <span>
+          {resourceMode
+            ? "STORAGE / RESOURCE CONSTELLATION"
+            : "MEMORY / FILE CONSTELLATION"}
+        </span>
         <button onClick={() => setPaused((value) => !value)}>
           {paused ? "Resume galaxy" : "Pause galaxy"}
         </button>
@@ -313,19 +321,32 @@ export default function AnimatedFileGalaxy({
           <div
             className="memory-star-focus"
             role="region"
-            aria-label="Selected file star"
+            aria-label={
+              resourceMode ? "Selected storage object" : "Selected file star"
+            }
           >
             <strong>{focused.name}</strong>
             <p>
-              {neighborhood.nearby.length} nearby file{" "}
+              {neighborhood.nearby.length} nearby{" "}
+              {resourceMode ? "resource" : "file"}{" "}
               {neighborhood.nearby.length === 1 ? "star" : "stars"}
               {neighborhood.omitted
                 ? ` · ${neighborhood.omitted} more in the file list`
                 : ""}
             </p>
-            <small>Same folder or an explicit note link.</small>
+            <small>
+              {resourceMode
+                ? "Other entries in this directory page or selected-location list."
+                : "Same folder or an explicit note link."}
+            </small>
             <div>
-              <button onClick={() => onRead(focused)}>Open file</button>
+              <button onClick={() => onRead(focused)}>
+                {resourceMode
+                  ? focused.resourceKind === "file"
+                    ? "Show file actions"
+                    : `Enter ${focused.resourceKind || "folder"}`
+                  : "Open file"}
+              </button>
               {trail.length > 1 && (
                 <button
                   onClick={() => setTrail((previous) => previous.slice(0, -1))}
@@ -344,8 +365,9 @@ export default function AnimatedFileGalaxy({
               if (element) buttons.current.set(file.id, element);
               else buttons.current.delete(file.id);
             }}
-            className={`memory-file-star ${selectedId === file.id || focused?.id === file.id ? "is-selected" : ""}`}
-            aria-label={`${focused?.id === file.id ? "Open file star" : "Focus file star"}: ${file.folder} / ${file.name}`}
+            disabled={file.resourceAvailable === false}
+            className={`memory-file-star ${resourceMode ? `is-resource-${file.resourceKind || "file"}` : ""} ${selectedId === file.id || focused?.id === file.id ? "is-selected" : ""}`}
+            aria-label={`${focused?.id === file.id ? "Open" : "Focus"} ${resourceMode ? file.resourceKind || "file" : "file"} star: ${file.folder} / ${file.name}${file.resourceAvailable === false ? " (unavailable)" : ""}`}
             title={`${file.folder} / ${file.name}`}
             onPointerEnter={() => setPaused(true)}
             onFocus={() => setPaused(true)}
@@ -357,9 +379,11 @@ export default function AnimatedFileGalaxy({
         ))}
       </div>
       <p className="memory-spiral-key">
-        Select a file star to zoom into its neighborhood, then open it or
-        explore a nearby file star. The faint background stars are decorative.
-        Drag the background to rotate.
+        {resourceMode
+          ? "Select a drive, folder or file object to focus it, then enter the location or show file actions. Only the current directory page is shown."
+          : "Select a file star to zoom into its neighborhood, then open it or explore a nearby file star."}{" "}
+        The faint background stars are decorative. Drag the background to
+        rotate.
       </p>
     </div>
   );

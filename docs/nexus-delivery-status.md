@@ -409,3 +409,10 @@ Added `Discover-Nexus-Storage.cmd` to report logical-drive type/capacity and con
 `Setup-Nexus-Storage.cmd` now offers locally discovered Windows drive/common-folder choices, exact-path review, explicit enable and removal. Resource navigation merges browse roots with knowledge roots without passing them to indexing. Versioned grants are identity-bound, atomic and bounded to twelve; removal invalidates old references and replaced roots stay unavailable. The original spiral remains unchanged; drive/folder stars are the next visual layer.
 
 Production webpack build, TypeScript, three direct grant-library tests and 32 desktop/mobile regression checks passed, including real unindexed document opening, zero automatic indexing and grant revocation. Additional overlap checks verify that separate knowledge previews survive browse-grant removal. Automated fixtures changed no owner settings; native interactive setup is not yet observed.
+
+
+### Storage navigation in the original spiral
+
+Added Knowledge stars / Storage galaxy view controls. Storage navigation reuses the approved animated spiral with distinct drive/folder markers and real current-page file stars. Focus does not read content; entering a directory requests metadata, while Show file actions opens a bounded metadata/original-action dialog. Existing breadcrumbs, page controls, filters and list alternatives remain. Expansion preserves the mounted storage navigator. No new grants, source writes, indexing or model calls were added.
+
+Production webpack build, TypeScript and 32 desktop/mobile regression checks passed, including a real disposable drive → folder → file path, PNG decoding, zero original reads before explicit open, expansion, breadcrumbs and grant removal. Additional keyboard and unsupported-format assertions are included. Native owner acceptance of this new visual layer is not yet observed.

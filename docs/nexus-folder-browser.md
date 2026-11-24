@@ -16,9 +16,11 @@ Cached index metadata may be consulted for preview references; source file bodie
 
 ## Remaining architecture
 
-This delivers the first directory resource adapter over existing grants. Local drive/special-folder discovery and explicit browse grants are delivered; drive/folder stars inside the spiral, additional host/storage adapters and native app actions remain unfinished. There is no new graph database, model call, folder ingestion, elevation or source-file mutation in this navigator.
+This delivers the first directory resource adapter over existing grants. Local drive/special-folder discovery and explicit browse grants are delivered; paged drive/folder/file objects are available in Storage galaxy; additional host/storage adapters and native app actions remain unfinished. There is no new graph database, model call, folder ingestion, elevation or source-file mutation in this navigator.
 
 
 Supported browsed originals use controller-only `/api/sync/files/resource` references, signed for 30 minutes and bound to the selected roots and listed file metadata version. Opening rechecks the source, reads at most 8 MB and computes a response SHA-256; it does not index the file. PDF, Markdown, text and CSV can open in a tab; PNG/JPEG pictures can open in the browser. XLSX/DOCX/PPTX are downloads. Obsidian grants remain Markdown-only. Unsupported or oversized files keep metadata-only entries. Header checks reject mismatched PDF/image/Office signatures; they do not establish full document validity. Inline pictures are limited to 32 million pixels and 16,384 pixels per dimension. Native application launching and phone-local storage remain future adapters.
 
 See `nexus-storage-browse.md` for independent browse grants and revocation. Browse-only roots are never passed to the knowledge indexer.
+
+The optional **Storage galaxy** mode uses this same navigator/service to display real current-page resource objects in the original spiral. Conventional breadcrumbs, page controls and the list remain available. See `nexus-storage-galaxy.md`.

@@ -187,7 +187,7 @@ This section and [the consolidated file-star plan](../nexus-file-galaxy-plan.md)
 | Area | Current implemented scope | Remaining required work |
 | --- | --- | --- |
 | Galaxy appearance and interaction | Original-style spiral, line-free indexed file stars, focus neighborhoods, Back/Return and enlarged text previews; fixture checks passed | Owner acceptance of latest focus behavior; whole-computer resource navigation |
-| Source coverage | Selected-folder/Obsidian index, lazy directory browsing, local Windows drive/common-folder discovery and separate browse-only storage grants | Drive/folder stars, native availability checks and multi-host storage adapters |
+| Source coverage | Selected-folder/Obsidian index, lazy directory browsing, local Windows drive/common-folder discovery and separate browse-only storage grants | Broader native availability checks and multi-host storage adapters |
 | File viewing | Hash-bound indexed text, selected-folder PDF/text and PNG/JPEG browser views, supported Office downloads | Broader format/native opening adapters and native device acceptance |
 | Device surfaces | Shared desktop/mobile Memory UI, Overview Galaxy and controller ScreenPad; globe expansion | Native acceptance per device, offline/unavailable-host states and each additional base's storage adapter |
 
@@ -434,7 +434,7 @@ Selected-index original-file access is now a separate resource read beside index
 The shared galaxy now includes optional lazy metadata navigation through existing selected folders: actual roots/entries, host/root/parent IDs, kind/size/mtime, signed expiring directory references, bounded paging and breadcrumbs. It lists unindexed files without reading/ingesting their contents and delegates cached previews to current hash-checked reading. Original spiral styling remains default and unchanged. This advances the Computer → Drive → Folder → File target without claiming drive discovery or broader access: volume/special-folder enumeration and grants, unindexed/image reads, folder/drive stars, other hosts and native storage/actions are still separate adapters. See `docs/nexus-folder-browser.md`.
 
 
-Selected-folder resource update: supported unindexed document and PNG/JPEG original reads now use short-lived signed, file-version-bound references and controller-only endpoints. Metadata browsing remains separate from indexing and model context. Whole-drive discovery, folder stars and native storage adapters remain pending; see `../nexus-folder-browser.md`.
+Selected-folder resource update: supported unindexed document and PNG/JPEG original reads now use short-lived signed, file-version-bound references and controller-only endpoints. Metadata browsing remains separate from indexing and model context. Local drive discovery, explicit browse grants and current-page folder/file stars are now delivered in subsequent resource slices; native storage adapters remain pending. See `../nexus-folder-browser.md`.
 
 
 Galaxy expansion update: dashboard and shared visual wrappers retain one mounted portal host during expansion/collapse, preserving the file-star selection, animation state and browser controls. Moving the view does not refetch the map or read a file. Storage adapters and source permissions remain separate.
@@ -443,4 +443,7 @@ Galaxy expansion update: dashboard and shared visual wrappers retain one mounted
 Storage discovery update: `Discover-Nexus-Storage.cmd` reports local Windows logical-drive metadata and configured common-folder paths without scanning contents or changing grants. The paired resource service remains bounded to selected folders until a separate browse-only storage grant layer is implemented. See `../nexus-storage-discovery.md`.
 
 
-Browse-only storage update: the local Windows setup command can add/remove discovered drive or common-folder grants in a separate bounded configuration. The shared resource browser checks physical root identity and current grants, while indexing remains restricted to existing knowledge selections. Drive/folder star integration remains pending. See `../nexus-storage-browse.md`.
+Browse-only storage update: the local Windows setup command can add/remove discovered drive or common-folder grants in a separate bounded configuration. The shared resource browser checks physical root identity and current grants, while indexing remains restricted to existing knowledge selections. Drive/folder objects now use the paged Storage galaxy view. See `../nexus-storage-browse.md`.
+
+
+Storage Galaxy update: the shared file Galaxy now switches between indexed knowledge stars and paged storage navigation in the same original spiral style. Distinct drive/folder objects enter real directories; file stars focus before showing metadata/original actions. Browse and knowledge permissions remain separate; no automatic indexing or provider request occurs. Breadcrumbs and the conventional list remain. See `../nexus-storage-galaxy.md` for current-page coverage, interaction and verification.

@@ -6,24 +6,31 @@ import type {
   FolderPage,
   FolderReference,
 } from "@/lib/folder-browser";
-import type { GalaxyFile } from "./animated-file-galaxy";
+import AnimatedFileGalaxy, { type GalaxyFile } from "./animated-file-galaxy";
+import GalaxyFileDialog from "./galaxy-file-dialog";
 export default function SelectedFolderBrowser({
   enabled,
   onRead,
   onAccessLost,
+  galaxy = false,
 }: {
+  galaxy?: boolean;
   enabled: boolean;
   onRead: (file: GalaxyFile) => void;
   onAccessLost?: () => void;
 }) {
-  const [open, setOpen] = useState(false),
+  const [open, setOpen] = useState(galaxy),
     [roots, setRoots] = useState<BrowserRoots | null>(null),
     [page, setPage] = useState<FolderPage | null>(null),
     [trail, setTrail] = useState<FolderReference[]>([]),
     [cursors, setCursors] = useState<(string | null)[]>([null]),
     [filter, setFilter] = useState(""),
     [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [inspect, setInspect] = useState<FolderPage["entries"][number] | null>(
+      null,
+    ),
+    [zoom, setZoom] = useState(1);
   const sequence = useRef(0),
     pending = useRef<AbortController | null>(null);
   async function load(
@@ -37,6 +44,7 @@ export default function SelectedFolderBrowser({
     setBusy(true);
     setError("");
     setPage(null);
+    setInspect(null);
     setTrail(nextTrail);
     setCursors(nextCursors);
     setFilter("");
@@ -81,6 +89,7 @@ export default function SelectedFolderBrowser({
     else {
       setRoots(null);
       setPage(null);
+      setInspect(null);
       setTrail([]);
       setError("");
       setBusy(false);
@@ -95,9 +104,45 @@ export default function SelectedFolderBrowser({
     page?.entries.filter((entry) =>
       entry.name.toLowerCase().includes(filter.toLowerCase()),
     ) || [];
+  const objects: GalaxyFile[] = page
+    ? entries.map((entry) => ({
+        id: entry.id,
+        hash: "",
+        name: entry.name,
+        folder: page.location.name,
+        rootId: page.location.id,
+        resourceKind: entry.kind,
+        resourceAvailable: entry.kind === "file" || !!entry.handle,
+      }))
+    : (roots?.roots || []).map((root) => ({
+        id: root.id,
+        hash: "",
+        name: root.name,
+        folder: roots!.host.label,
+        rootId: roots!.host.id,
+        resourceKind: root.storageType === "drive" ? "drive" : "folder",
+        resourceAvailable: root.available && !!root.handle,
+      }));
+  function openObject(object: GalaxyFile) {
+    if (busy) return;
+    if (!page) {
+      const root = roots?.roots.find((root) => root.id === object.id);
+      if (root?.available && root.handle)
+        void load([{ id: root.id, name: root.name, handle: root.handle }]);
+    } else {
+      const entry = page.entries.find((entry) => entry.id === object.id);
+      if (entry?.kind === "folder" && entry.handle)
+        void load([
+          ...trail,
+          { id: entry.id, name: entry.name, handle: entry.handle },
+        ]);
+      else if (entry?.kind === "file") setInspect(entry);
+    }
+  }
   return (
     <details
       className="nexus-folder-browser"
+      open={open}
       onToggle={(event) => setOpen(event.currentTarget.open)}
     >
       <summary>Explore selected folders</summary>
@@ -138,6 +183,80 @@ export default function SelectedFolderBrowser({
             </button>
           </div>
           {busy && <p role="status">Loading folder metadata…</p>}
+          {galaxy && !busy && !error && (roots || page) && (
+            <section aria-label="Storage galaxy navigator">
+              <p>
+                {objects.length} resources on this page. Drives and folders are
+                navigation objects; file stars are files. Nothing is indexed by
+                this view.
+              </p>
+              <div className="nexus-draft-actions">
+                <button
+                  aria-label="Zoom in storage galaxy"
+                  onClick={() =>
+                    setZoom((value) => Math.min(2.5, value + 0.25))
+                  }
+                >
+                  Zoom in
+                </button>
+                <button
+                  aria-label="Zoom out storage galaxy"
+                  onClick={() =>
+                    setZoom((value) => Math.max(0.75, value - 0.25))
+                  }
+                >
+                  Zoom out
+                </button>
+              </div>
+              <AnimatedFileGalaxy
+                key={`${page?.location.id || "roots"}:${cursors.at(-1) || "first"}`}
+                resourceMode
+                files={objects}
+                zoom={zoom}
+                onRead={openObject}
+              />
+            </section>
+          )}
+          {inspect && page && (
+            <GalaxyFileDialog onClose={() => setInspect(null)}>
+              <section aria-label="Storage file actions">
+                <h4 tabIndex={-1}>{inspect.name}</h4>
+                <p>
+                  {inspect.size ?? "Unknown"} bytes · Listed modification time:{" "}
+                  {inspect.modifiedAt}
+                </p>
+                <p>
+                  This is directory metadata. Original access is checked when
+                  opened; it does not index the file or share it with a model.
+                </p>
+                {inspect.original ? (
+                  <BrowsedOriginalLinks original={inspect.original} />
+                ) : (
+                  <p>
+                    No supported original view is available for this file or
+                    size.
+                  </p>
+                )}
+                {inspect.indexed && (
+                  <button
+                    onClick={() => {
+                      setInspect(null);
+                      onRead({
+                        id: inspect.indexed!.id,
+                        hash: inspect.indexed!.hash,
+                        name: inspect.relativeName,
+                        folder: page.location.rootLabel,
+                        rootId: page.location.rootId,
+                      });
+                    }}
+                  >
+                    Read indexed file
+                  </button>
+                )}
+              </section>
+            </GalaxyFileDialog>
+          )}
+
           {error && <p role="status">{error}</p>}
           {!trail.length && roots && (
             <ul className="nexus-folder-entries">
