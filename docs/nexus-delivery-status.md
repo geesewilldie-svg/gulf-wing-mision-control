@@ -397,3 +397,8 @@ Validation: Next 16.4.6 production build completed with webpack (Turbopack hit a
 Dashboard hologram and shared Galaxy/globe expansion now move the same portal host rather than remounting the visual. File focus/history, pause/rotation, filters, folder navigation and pending state survive expansion/collapse. Expanded focus traps include original-file links and form controls. No new source grant or model call is involved.
 
 Verification: production build (webpack) and TypeScript passed; 32 desktop/mobile Galaxy, hologram, ScreenPad and original-file checks passed. Expansion regressions assert the same canvas identity, retained selected star/pause/filter and no extra source-map fetch or file read.
+
+
+### Local Windows storage inventory
+
+Added `Discover-Nexus-Storage.cmd` to report logical-drive type/capacity and configured common-folder/Downloads/OneDrive paths locally. No recursive scanning, source reads, index writes, provider calls or access-setting changes. Four direct Node fixture tests passed, including exact fixed query and invalid-path handling; Windows-native execution is still unverified on this Linux workspace. Browse-only grants, API navigation and drive/folder stars remain separate pending work.

@@ -46,7 +46,7 @@ Use a common resource service and responsive file-star interface for laptop, pho
 | Shared Memory, Overview Galaxy, controller ScreenPad, globe expansion | Implemented with desktop/mobile fixtures; acceptance per native device pending |
 | Selection/orientation preservation across expansion | Implemented with a stable visual host; desktop/mobile regression coverage |
 | Lazy metadata navigation inside selected folders | Implemented as optional navigator beside the galaxy; bounded/paged and fixture-tested |
-| Drive/special-folder discovery and all-file/folder stars | Not implemented; next broader resource/grant layer |
+| Drive/special-folder discovery and all-file/folder stars | Local Windows metadata discovery command delivered; browse grants and drive/folder stars remain pending |
 | Current selected-index PDF/text originals and supported original downloads | Implemented and fixture-tested; native renderer acceptance pending |
 | Selected-folder PNG/JPEG and supported unindexed originals | Delivered through folder navigator; native opening remains pending |
 | Phone-native storage, additional hosts and offline recovery | Not implemented |
@@ -56,3 +56,5 @@ The first directory resource layer now browses selected-root metadata without in
 ## Acceptance
 
 Use synthetic files to verify real star counts, no drawn file connections, centering, zero content-read requests on focus, neighbor evidence/caps, star-to-star exploration, Back/Return, exact preview identity/version and explicit open behavior. Test stale/revoked sources, duplicate names, auth loss, empty folders, pagination, unsupported originals, fullscreen failure, keyboard/touch, reduced motion and selection persistence. Extend native acceptance to actual drive discovery, directories, image/PDF/native viewers and each host/device before marking whole-computer access delivered.
+
+Local storage discovery is available through `Discover-Nexus-Storage.cmd`; see `nexus-storage-discovery.md`. It reports configured locations without expanding file-browser grants or indexing anything.

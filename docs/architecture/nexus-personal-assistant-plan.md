@@ -187,8 +187,8 @@ This section and [the consolidated file-star plan](../nexus-file-galaxy-plan.md)
 | Area | Current implemented scope | Remaining required work |
 | --- | --- | --- |
 | Galaxy appearance and interaction | Original-style spiral, line-free indexed file stars, focus neighborhoods, Back/Return and enlarged text previews; fixture checks passed | Owner acceptance of latest focus behavior; whole-computer resource navigation |
-| Source coverage | Currently authorized selected-folder/Obsidian index, with explicit version checks | Host drive discovery, lazy directory browsing, real special folders, unindexed files and multi-host identity |
-| File viewing | Hash-bound indexed text and part navigation | Original image/PDF viewing and explicit native opening for supported other formats |
+| Source coverage | Selected-folder/Obsidian index, lazy selected-folder metadata browsing and local Windows drive/common-folder discovery command | Browse-only drive grants, drive/folder stars and multi-host storage adapters |
+| File viewing | Hash-bound indexed text, selected-folder PDF/text and PNG/JPEG browser views, supported Office downloads | Broader format/native opening adapters and native device acceptance |
 | Device surfaces | Shared desktop/mobile Memory UI, Overview Galaxy and controller ScreenPad; globe expansion | Native acceptance per device, offline/unavailable-host states and each additional base's storage adapter |
 
 Track the Explorer work under milestone 4's file/resource adapters and the responsive visual contract under milestone 1. Do not mark the full file-star requirement complete merely because the initial selected-index galaxy is usable.
@@ -438,3 +438,6 @@ Selected-folder resource update: supported unindexed document and PNG/JPEG origi
 
 
 Galaxy expansion update: dashboard and shared visual wrappers retain one mounted portal host during expansion/collapse, preserving the file-star selection, animation state and browser controls. Moving the view does not refetch the map or read a file. Storage adapters and source permissions remain separate.
+
+
+Storage discovery update: `Discover-Nexus-Storage.cmd` reports local Windows logical-drive metadata and configured common-folder paths without scanning contents or changing grants. The paired resource service remains bounded to selected folders until a separate browse-only storage grant layer is implemented. See `../nexus-storage-discovery.md`.
