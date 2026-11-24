@@ -103,6 +103,7 @@ export async function workJournalTick(
         version: 1,
         taskId: row.id,
         revision: row.revision,
+        workspace: row.scope,
         at: new Date().toISOString(),
         state: "started",
       };

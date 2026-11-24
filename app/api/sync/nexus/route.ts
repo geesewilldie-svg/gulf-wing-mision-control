@@ -1,3 +1,5 @@
+import { journalIntent } from "@/lib/journal-intent";
+import { conversationJournal } from "@/lib/server/conversation-journal";
 import {
   workContextStamp,
   workMemoryContext,
@@ -186,6 +188,16 @@ export async function POST(request: Request) {
           data.resetHistory === true,
       });
     };
+    const journalCommand = journalIntent(body.query);
+    if (journalCommand) {
+      if (!["auto", "local"].includes(body.mode as string))
+        throw new SyncError(
+          403,
+          "Journal history is local-only. Choose Auto or local mode.",
+        );
+      request.signal.throwIfAborted();
+      return reply(await conversationJournal(journalCommand));
+    }
     if (connectionIntent(body.query)) {
       if (!["auto", "local"].includes(body.mode as string))
         throw new SyncError(

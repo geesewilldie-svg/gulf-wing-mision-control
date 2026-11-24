@@ -1,4 +1,6 @@
 "use client";
+import JournalReceipt from "./journal-receipt";
+import type { JournalReceiptView } from "@/lib/work-journal";
 import { NexusSourceMap } from "./nexus-source-map";
 import type { SourceMap } from "../lib/source-map";
 import type { LaptopOperationFeedback } from "../lib/laptop-operation-feedback";
@@ -19,6 +21,8 @@ const AssistantContext = createContext({
 export const useNexusAssistant = () => useContext(AssistantContext);
 type Answer = {
   engine: string;
+  journalEntries?: JournalReceiptView[];
+  journalEntry?: JournalReceiptView;
   workReferences?: {
     reference: string;
     id: string;
@@ -518,6 +522,36 @@ export default function NexusAssistant({
                     Memory reference: {answer.memory.id}. Review saved memory in
                     Foundation.
                   </p>
+                )}
+                {answer.journalEntries?.map((entry) => (
+                  <JournalReceipt
+                    key={entry.reference}
+                    entry={entry}
+                    busy={disabled || busy}
+                    view={() => {
+                      void ask(`Show journal entry ${entry.reference}`).catch(
+                        () => {},
+                      );
+                    }}
+                    open={() => {}}
+                  />
+                ))}
+                {answer.journalEntry && (
+                  <JournalReceipt
+                    entry={answer.journalEntry}
+                    detail
+                    busy={disabled || busy}
+                    view={() => {}}
+                    open={() => {
+                      const file = answer.journalEntry!.indexedFile!;
+                      void ask(
+                        `Read laptop file ${file.id}@${file.hash} part 1`,
+                        [],
+                        undefined,
+                        "Open indexed journal note",
+                      ).catch(() => {});
+                    }}
+                  />
                 )}
                 {!!answer.taskChoices?.length && (
                   <p>Select a task below before saying “that task”.</p>
