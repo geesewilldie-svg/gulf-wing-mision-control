@@ -3,6 +3,7 @@ import NexusFileGalaxy from "./nexus-file-galaxy";
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useVisualHost } from "./use-visual-host";
 import { Maximize2, Pause, Play, RotateCcw, ScanLine } from "lucide-react";
 import { agents } from "@/lib/demo";
 
@@ -180,6 +181,7 @@ export default function HolographicCore({
   const [paused, setPaused] = useState(false);
   const [reduced, setReduced] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const { slot, host } = useVisualHost(expanded);
   const expandButton = useRef<HTMLButtonElement>(null);
   const expandedPanel = useRef<HTMLDivElement>(null);
   const nativeFullscreen = useRef(false);
@@ -394,7 +396,7 @@ export default function HolographicCore({
       observer.disconnect();
       document.removeEventListener("visibilitychange", visibility);
     };
-  }, [mode, paused, reduced, selected, activeColor, expanded, revision]);
+  }, [mode, paused, reduced, selected, activeColor, expanded, revision, host]);
 
   const content = (
     <div
@@ -407,7 +409,7 @@ export default function HolographicCore({
         if (!expanded || e.key !== "Tab") return;
         const controls = Array.from(
           e.currentTarget.querySelectorAll<HTMLElement>(
-            'button:not([disabled]),input,summary,[tabindex="0"]',
+            'button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),summary,[tabindex="0"]',
           ),
         ).filter((element) => element.getClientRects().length > 0);
         const first = controls[0],
@@ -613,5 +615,10 @@ export default function HolographicCore({
       </div>
     </div>
   );
-  return expanded ? createPortal(content, document.body) : content;
+  return (
+    <>
+      <div ref={slot} />
+      {host && createPortal(content, host)}
+    </>
+  );
 }

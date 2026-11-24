@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { useVisualHost } from "./use-visual-host";
 export default function ExpandableVisual({
   name,
   children,
@@ -10,6 +11,7 @@ export default function ExpandableVisual({
 }) {
   const [expanded, setExpanded] = useState(false),
     [message, setMessage] = useState("");
+  const { slot, host } = useVisualHost(expanded);
   const trigger = useRef<HTMLButtonElement>(null),
     panel = useRef<HTMLDivElement>(null),
     native = useRef(false);
@@ -56,7 +58,7 @@ export default function ExpandableVisual({
         if (!expanded || event.key !== "Tab") return;
         const targets = Array.from(
           event.currentTarget.querySelectorAll<HTMLElement>(
-            'button:not([disabled]),input,summary,[tabindex="0"]',
+            'button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),summary,[tabindex="0"]',
           ),
         ).filter((element) => element.getClientRects().length > 0);
         const first = targets[0],
@@ -101,7 +103,8 @@ export default function ExpandableVisual({
       <button ref={trigger} onClick={() => setExpanded(true)}>
         Expand {name}
       </button>
-      {expanded ? createPortal(content, document.body) : content}
+      <div ref={slot} />
+      {host && createPortal(content, host)}
     </>
   );
 }

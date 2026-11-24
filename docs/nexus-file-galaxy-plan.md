@@ -12,7 +12,7 @@ The earliest saved reconciliation, commit 735bd96, already required broad file c
 2. No visible lines connect file stars. Original scanner rings/ticks may remain part of the established galaxy styling.
 3. First click/tap/keyboard selection zooms and centers a file star without reading its content. Nearby real file stars appear as a neighborhood, like selecting a galaxy/planet and seeing neighboring bodies. Selecting a neighbor changes focus; provide Back and Return to galaxy.
 4. Open file or selecting the centered star again opens a large, readable source viewer. In-app Escape closes the preview before its parent galaxy. Keep explicit close controls, pagination where needed, focus return and keyboard/list alternatives.
-5. Keep independent galaxy and request-globe expansion/fullscreen with a browser-fullscreen attempt and expanded fallback. Retain pause/resume, rotation, zoom, reduced motion and appropriate touch targets. Preserve selection/zoom/orientation across expansion where possible; the current remount resets these and needs follow-up.
+5. Keep independent galaxy and request-globe expansion/fullscreen with a browser-fullscreen attempt and expanded fallback. Retain pause/resume, rotation, zoom, reduced motion and appropriate touch targets. Preserve selection/zoom/orientation across expansion by keeping the same mounted visual and moving its portal host.
 
 ## What neighborhoods mean
 
@@ -44,7 +44,7 @@ Use a common resource service and responsive file-star interface for laptop, pho
 | No connecting lines; focus/zoom neighborhoods; Back/Return | Implemented and fixture-tested; latest native acceptance pending |
 | Large hash-bound indexed-text preview | Implemented and fixture-tested |
 | Shared Memory, Overview Galaxy, controller ScreenPad, globe expansion | Implemented with desktop/mobile fixtures; acceptance per native device pending |
-| Selection/orientation preservation across expansion | Follow-up; current source-view remount clears selection |
+| Selection/orientation preservation across expansion | Implemented with a stable visual host; desktop/mobile regression coverage |
 | Lazy metadata navigation inside selected folders | Implemented as optional navigator beside the galaxy; bounded/paged and fixture-tested |
 | Drive/special-folder discovery and all-file/folder stars | Not implemented; next broader resource/grant layer |
 | Current selected-index PDF/text originals and supported original downloads | Implemented and fixture-tested; native renderer acceptance pending |

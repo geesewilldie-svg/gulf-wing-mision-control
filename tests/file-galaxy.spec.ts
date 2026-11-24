@@ -9,11 +9,13 @@ test("real file nodes read exact versions and remain usable when expanded", asyn
     other = "b".repeat(24),
     hash = "c".repeat(64);
   const reads: any[] = [];
+  let maps = 0;
   let denyRead = false;
   await page.route("**/api/sync/files", (route) => {
     if (route.request().method() !== "POST") return route.continue();
     const data = route.request().postDataJSON();
-    if (data.action === "map")
+    if (data.action === "map") {
+      maps++;
       return route.fulfill({
         json: {
           map: {
@@ -45,6 +47,7 @@ test("real file nodes read exact versions and remain usable when expanded", asyn
           warnings: [],
         },
       });
+    }
     if (denyRead)
       return route.fulfill({
         status: 403,
@@ -111,6 +114,37 @@ test("real file nodes read exact versions and remain usable when expanded", asyn
     dialog.getByRole("region", { name: "Selected file star", exact: true }),
   ).toContainText("Start.md");
   expect(reads).toEqual([]);
+  const mapsBeforeExpansion = maps;
+  // Expansion moves the same canvas and React subtree, preserving focus state.
+  await spiral.evaluate((canvas) =>
+    canvas.setAttribute("data-preservation-check", "same-canvas"),
+  );
+  await dialog
+    .getByRole("button", { name: "Collapse hologram", exact: true })
+    .click();
+  await expect(
+    page.getByRole("region", { name: "Selected file star", exact: true }),
+  ).toContainText("Start.md");
+  await expect(spiral).toHaveAttribute(
+    "data-preservation-check",
+    "same-canvas",
+  );
+  await expect(
+    page.getByRole("button", { name: "Resume galaxy", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Expand hologram", exact: true })
+    .click();
+  await expect(
+    dialog.getByRole("region", { name: "Selected file star", exact: true }),
+  ).toContainText("Start.md");
+  await expect(spiral).toHaveAttribute(
+    "data-preservation-check",
+    "same-canvas",
+  );
+  expect(reads).toEqual([]);
+  expect(maps).toBe(mapsBeforeExpansion);
+
   await expect
     .poll(async () => {
       const star = await dialog
@@ -303,6 +337,12 @@ test("Memory Galaxy is available on the shared Nexus surface for desktop and pho
   await expect(
     page.getByRole("heading", { name: "Memory Galaxy", exact: true }),
   ).toBeVisible();
+  const filter = page.getByRole("searchbox", {
+    name: "Find files",
+    exact: true,
+  });
+  await page.getByText("Find files and view controls", { exact: true }).click();
+  await filter.fill("keep this filter");
   await page
     .getByRole("button", { name: "Expand memory galaxy", exact: true })
     .click();
@@ -318,6 +358,7 @@ test("Memory Galaxy is available on the shared Nexus surface for desktop and pho
   ).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(dialog).toHaveCount(0);
+  await expect(filter).toHaveValue("keep this filter");
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,

@@ -390,3 +390,10 @@ Verification: production build and TypeScript passed; all 62 final desktop/mobil
 The lazy folder navigator now offers version-bound original reads without indexing: PDF/text/CSV and PNG/JPEG browser views, plus supported Office downloads, within an 8 MB limit. Controller, origin, selection, file identity and format checks apply. Obsidian roots retain Markdown-only reads. No drive discovery, native app launch, provider call or source modification was added.
 
 Validation: Next 16.4.6 production build completed with webpack (Turbopack hit an environment-internal port restriction), TypeScript passed, and 28 desktop/mobile file-browser, galaxy, neighborhood and original-file tests passed. The picture test opens a real PNG from a disposable selected folder through the rendered control and verifies browser decoding. No owner files or provider calls were used.
+
+
+### Persistent Galaxy expansion
+
+Dashboard hologram and shared Galaxy/globe expansion now move the same portal host rather than remounting the visual. File focus/history, pause/rotation, filters, folder navigation and pending state survive expansion/collapse. Expanded focus traps include original-file links and form controls. No new source grant or model call is involved.
+
+Verification: production build (webpack) and TypeScript passed; 32 desktop/mobile Galaxy, hologram, ScreenPad and original-file checks passed. Expansion regressions assert the same canvas identity, retained selected star/pause/filter and no extra source-map fetch or file read.

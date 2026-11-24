@@ -186,7 +186,7 @@ This section and [the consolidated file-star plan](../nexus-file-galaxy-plan.md)
 
 | Area | Current implemented scope | Remaining required work |
 | --- | --- | --- |
-| Galaxy appearance and interaction | Original-style spiral, line-free indexed file stars, focus neighborhoods, Back/Return and enlarged text previews; fixture checks passed | Owner acceptance of latest focus behavior; stable selection/orientation across expansion |
+| Galaxy appearance and interaction | Original-style spiral, line-free indexed file stars, focus neighborhoods, Back/Return and enlarged text previews; fixture checks passed | Owner acceptance of latest focus behavior; whole-computer resource navigation |
 | Source coverage | Currently authorized selected-folder/Obsidian index, with explicit version checks | Host drive discovery, lazy directory browsing, real special folders, unindexed files and multi-host identity |
 | File viewing | Hash-bound indexed text and part navigation | Original image/PDF viewing and explicit native opening for supported other formats |
 | Device surfaces | Shared desktop/mobile Memory UI, Overview Galaxy and controller ScreenPad; globe expansion | Native acceptance per device, offline/unavailable-host states and each additional base's storage adapter |
@@ -435,3 +435,6 @@ The shared galaxy now includes optional lazy metadata navigation through existin
 
 
 Selected-folder resource update: supported unindexed document and PNG/JPEG original reads now use short-lived signed, file-version-bound references and controller-only endpoints. Metadata browsing remains separate from indexing and model context. Whole-drive discovery, folder stars and native storage adapters remain pending; see `../nexus-folder-browser.md`.
+
+
+Galaxy expansion update: dashboard and shared visual wrappers retain one mounted portal host during expansion/collapse, preserving the file-star selection, animation state and browser controls. Moving the view does not refetch the map or read a file. Storage adapters and source permissions remain separate.
