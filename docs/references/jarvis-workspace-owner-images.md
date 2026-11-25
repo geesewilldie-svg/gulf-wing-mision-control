@@ -1,6 +1,6 @@
 # Additional owner images: JARVIS memory workspace
 
-Received November 25, 2026: five images supplied directly in the conversation. Four show a desktop workspace at `localhost:4719`; the fifth shows the video presentation on a phone. The phone image displays the title **“I Gave JARVIS an Uncensored AI Brain (INSANE Results!)”** and channel **“Zubair Trabzada | AI Workshop”**. These are image observations, not independently retrieved video metadata or a verified association with the earlier YouTube URL. No new video URL or transcript accompanies these images.
+Received November 25, 2026: five images supplied directly in the conversation. Four show a desktop workspace at `localhost:4719`; the fifth shows the video presentation on a phone. The phone image displays the title **“I Gave JARVIS an Uncensored AI Brain (INSANE Results!)”** and channel **“Zubair Trabzada | AI Workshop”**. These are image observations, not independently retrieved video metadata. The owner subsequently confirmed https://www.youtube.com/watch?v=xW77SSvuto0 for this reference and supplied its thirteen-chapter transcript through 14:05; see [the transcript index](jarvis-video-owner-transcript.md). This is separate from the hour-long Obsidian excerpt.
 
 The screenshots are reference evidence rather than runnable software or proof of how its controls work. No screenshot file has been copied into the repository; the original source remains the images in the conversation.
 

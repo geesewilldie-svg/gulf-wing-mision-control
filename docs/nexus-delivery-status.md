@@ -435,3 +435,10 @@ Source video: https://www.youtube.com/watch?v=xW77SSvuto0 . Full-caption retriev
 ### Additional JARVIS workspace image interpretation
 
 Recorded five newly supplied reference images separately from the earlier video excerpt. Added requirements for a Galaxy-dominant workspace, collapsible search/inspector, real category filters/counts, fit controls, optional evidence-backed hubs and compact actual assistant status. Preserve the original spiral, no visible file connections and contextual names. Pictured capture/automation controls are unverified reference ideas, not enabled features. Documentation-only update; internal references and whitespace checks verified. No runtime or owner settings changed.
+
+
+### Supplied JARVIS transcript applied and source attribution corrected
+
+The owner supplied the JARVIS video's thirteen chapters from 0:00 through 14:05, resolving the missing-transcript gap for that video. Added a timestamped chapter/evidence index and a capability plan covering model routing with memory continuity, tool contracts, actual file/folder visualization, bounded public-site inspection/testing, model asset records, hosted inference, capture and telephony. These adapters remain planned where not implemented; no model, account, download or effect was enabled.
+
+Corrected the earlier temporary URL association: `xW77SSvuto0` is the owner-confirmed fourteen-minute JARVIS video; the earlier 57:37–1:00:36 Obsidian course excerpt has no established URL. Updated the governing architecture/shared-memory/reference links accordingly. Source material remains owner-supplied, not independently fetched YouTube captions. Documentation references and whitespace checks passed; no runtime build was needed.

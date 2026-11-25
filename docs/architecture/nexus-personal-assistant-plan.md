@@ -2,7 +2,7 @@
 
 ## Owner video and Galaxy reference — November 25, 2026
 
-The governing interpretation of the supplied second-brain video excerpt and four screenshots is [Applied video and screenshot contract](../nexus-second-brain-reference.md), with [timestamped source evidence](../references/second-brain-video-owner-excerpt.md). The complete YouTube transcript was not retrieved: the current workspace network policy blocks YouTube. Do not represent the owner-supplied excerpt as a verified full transcript.
+The governing interpretation of the supplied second-brain video excerpt and four screenshots is [Applied video and screenshot contract](../nexus-second-brain-reference.md), with [timestamped source evidence](../references/second-brain-video-owner-excerpt.md). Direct YouTube caption retrieval is blocked. The owner has now supplied the JARVIS transcript through 14:05; the earlier hour-long Obsidian source remains an excerpt. Keep these sources separate and do not describe supplied text as independently fetched captions.
 
 Build toward model-independent, provenance-bearing shared memory and the luminous purple/indigo, white/lilac-core, cyan-arm spiral shown in the pictures. Preserve the owner's later explicit choices: no visible file-connection lines, contextual names, freely rotatable views and fullscreen with state preservation. The Obsidian graph image describes relationships, not the default Galaxy appearance.
 
@@ -462,3 +462,6 @@ Visual exploration refinement: direct Fullscreen controls cover Core, Galaxy/Mem
 
 
 Additional JARVIS image reconciliation — November 25, 2026: the owner supplied a desktop memory-field layout with search/inspector, colored clusters, filters/counts, fit/layout controls and a compact assistant indicator. Add these as progressive workspace improvements around the existing spiral, with collapsible rails on laptop and drawers/sheets on phone. Keep the explicit no-lines/quiet-label requirements. Search-to-star, truthful hub/category metrics and assistant display modes require real implementation; the pictured EYES/HOLO/FOCUS/REFLEX labels do not confer capture or execution capability. See `../nexus-second-brain-reference.md` and `../references/jarvis-workspace-owner-images.md`.
+
+
+JARVIS transcript application — November 25, 2026: the owner supplied all thirteen chapters through 14:05 and confirmed its URL. [Applied capability plan](../nexus-jarvis-capability-plan.md) maps model switching, file/folder visualization, tool adapters, public-site inspection/testing, model assets, hosted inference, telephony and capture into separate milestones. Model selection must preserve scoped memory and truthful active-adapter status; it does not broaden provider or execution authority. The source model/version, licensing, hardware and repository claims remain unverified. This fourteen-minute source is distinct from the earlier Obsidian course excerpt; its supplied text resolves the JARVIS transcript gap.

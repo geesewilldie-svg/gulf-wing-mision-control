@@ -1,10 +1,10 @@
 # Second-brain video: supplied transcript evidence
 
-Video supplied by the owner: https://www.youtube.com/watch?v=xW77SSvuto0
+Source: the earlier hour-long course screenshots and transcript excerpt supplied in this conversation. Its video URL is not established. The subsequently supplied URL `xW77SSvuto0` belongs to the separate fourteen-minute JARVIS video; see [its transcript record](jarvis-video-owner-transcript.md). The earlier temporary association of that URL with this excerpt was incorrect and is corrected here.
 
 The screenshots show the title “GPT 6 Astra AI Full COURSE 1 HOUR (Build & Automate Anything)” and the chapter “Second Brain With Obsidian”. These are labels visible in the owner's screenshots, not independently retrieved video metadata. The owner supplied a transcript covering approximately **57:37–1:00:36**. Timestamps and model/product names may contain speech-transcription errors.
 
-On November 25, 2026, direct caption/page retrieval was attempted but the managed workspace's enforced outbound allowlist blocked `www.youtube.com` with HTTP CONNECT 403. The complete video transcript has **not** been downloaded or independently verified. This record preserves the supplied excerpt's requirements; it must not be presented as the full transcript.
+On November 25, 2026, fetching the subsequently supplied JARVIS URL was blocked by the managed workspace's outbound allowlist (`www.youtube.com`, CONNECT 403). That request did not establish this hour-long video's identity. Its complete transcript has **not** been downloaded or independently verified. This record preserves the supplied excerpt's requirements; it must not be presented as the full transcript.
 
 ## Timestamped evidence from the supplied excerpt
 

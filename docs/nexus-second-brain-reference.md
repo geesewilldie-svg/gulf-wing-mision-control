@@ -1,12 +1,12 @@
 # Applied video and screenshot contract for Nexus memory
 
-This document applies the owner's supplied video excerpt and four screenshots to the build. Source: [video and timestamped evidence](references/second-brain-video-owner-excerpt.md), [YouTube link](https://www.youtube.com/watch?v=xW77SSvuto0). Full-caption retrieval is blocked by the current workspace network policy; the source record distinguishes the supplied excerpt from an independently fetched transcript.
+This document applies two separate owner-supplied references: the hour-long course's [Obsidian excerpt and images](references/second-brain-video-owner-excerpt.md), whose URL is not established, and the fourteen-minute JARVIS video's [transcript chapter index](references/jarvis-video-owner-transcript.md) and [workspace images](references/jarvis-workspace-owner-images.md). The owner confirmed [this YouTube link](https://www.youtube.com/watch?v=xW77SSvuto0) for JARVIS and supplied its transcript through 14:05. Direct YouTube retrieval is blocked, but that supplied transcript is now available. The references have different time ranges and must not be merged into one video. See [the applied JARVIS capability plan](nexus-jarvis-capability-plan.md).
 
 The owner wants one lasting second brain that permitted agents can read and improve, explored through a luminous, rotatable Galaxy of real files and notes. Changing an agent/model must not discard the work history. The latest explicit owner choices govern the interface: keep the original spiral, no drawn file connections, quiet names, fullscreen and free rotation.
 
 ## Additional JARVIS workspace images — November 25, 2026
 
-The owner subsequently supplied five images of another memory workspace. [The image evidence record](references/jarvis-workspace-owner-images.md) distinguishes visible controls from unverified behavior and from the earlier video/transcript. Apply the following as a workspace refinement around the Galaxy:
+The owner subsequently supplied five images of the JARVIS memory workspace. [The image evidence record](references/jarvis-workspace-owner-images.md) distinguishes visible controls from unverified behavior and from the earlier video/transcript. Apply the following as a workspace refinement around the Galaxy:
 
 | Observed element | Nexus requirement | Implementation boundary |
 | --- | --- | --- |
@@ -69,7 +69,7 @@ The owner also requested Computer → Drive → Folder → File access. Browse-o
 
 | Stage | Concrete deliverable | Completion evidence |
 | --- | --- | --- |
-| 1. Governing reference | Record the source excerpt, screenshot interpretation, owner overrides and delivered/pending distinctions. | This document and the linked source record; full transcript remains unavailable pending network access. |
+| 1. Governing reference | Record the source excerpt, screenshot interpretation, owner overrides and delivered/pending distinctions. | This document and the linked source record; the JARVIS transcript is owner-supplied; the separate hour-long source is still excerpt-only. |
 | 2. Visual match | Refine the existing spiral's indigo/purple atmosphere, white/lilac center, cyan outer arms and depth, keeping quiet labels, no connections, selection and fullscreen. | Desktop/mobile captures compared to the supplied pictures, reduced-motion checks, contrast/touch checks and no regressions in real file opening. Do not substitute a new flat graph. |
 | 3. Shared memory service | One adapter-facing retrieval envelope and work-note write receipt contract with workspace/current-version checks. | Two permitted adapter fixtures reuse the same current work note; denied scopes/providers cannot receive it; model identity changes without losing source provenance. |
 | 4. Current-note lifecycle | Stable note identity, revisions, external-edit conflict detection and explicit supersession/correction/forgetting behavior. | Restart, external edit, conflict, delete/correct and uncertain-write tests; historical snapshots remain visibly historical. |
