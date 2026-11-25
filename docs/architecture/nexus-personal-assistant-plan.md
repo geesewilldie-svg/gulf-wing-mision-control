@@ -1,5 +1,14 @@
 # Nexus personal assistant: reconciled architecture and build plan
 
+## Owner video and Galaxy reference — November 25, 2026
+
+The governing interpretation of the supplied second-brain video excerpt and four screenshots is [Applied video and screenshot contract](../nexus-second-brain-reference.md), with [timestamped source evidence](../references/second-brain-video-owner-excerpt.md). The complete YouTube transcript was not retrieved: the current workspace network policy blocks YouTube. Do not represent the owner-supplied excerpt as a verified full transcript.
+
+Build toward model-independent, provenance-bearing shared memory and the luminous purple/indigo, white/lilac-core, cyan-arm spiral shown in the pictures. Preserve the owner's later explicit choices: no visible file-connection lines, contextual names, freely rotatable views and fullscreen with state preservation. The Obsidian graph image describes relationships, not the default Galaxy appearance.
+
+Current slices already deliver portable snapshots, the opt-in completed-task journal, local work-context retrieval, original-file controls, separate browse-only storage navigation and the original-style spiral. They do not yet deliver universal agent memory, continuous conflict-aware note synchronization, global-memory metrics or exact reference-image lighting. The linked contract defines the next visual, memory-service, note-lifecycle and search/scale stages with acceptance evidence. Existing permission boundaries and enabled journal authorization remain in force.
+
+
 Original reconciliation: November 11, 2026. Memory Galaxy requirements consolidated November 23, 2026. This is an architecture/build plan, not a claim that all proposed capability is delivered. The owner reuploaded the 50-section architecture specification and requested reconciliation before further implementation. Nexus replaces JARVIS throughout. Sample scenarios are not live work orders and are not included as operational tasks here.
 
 ## Product and established decisions

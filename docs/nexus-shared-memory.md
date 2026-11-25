@@ -1,5 +1,12 @@
 # Portable shared memory and Obsidian
 
+## Video-driven second-brain contract
+
+The owner's supplied transcript and screenshots are now mapped to concrete requirements in [Applied video and screenshot contract](nexus-second-brain-reference.md). Durable Markdown notes and a shared retrieval/write-receipt contract must carry relevant authorized work between permitted agents and future models. This is context reuse, not model training. Full transcript retrieval is blocked; the source record preserves the supplied excerpt with its provenance.
+
+Existing snapshots and the completed-task journal are the first delivered slices. The next memory stages are a common adapter-facing retrieval envelope, authorized agent work-note receipts, stable current-note identity/revisions and explicit conflict/supersession/correction/forgetting semantics. Keep SQLite authoritative for owner facts/instructions, tasks, permissions and receipts; historical snapshots must not become current fact authority. A browse-only file does not become assistant memory simply because its star is visible.
+
+
 The owner wants a lasting second brain shared across permitted agents and future models. Markdown knowledge should remain useful when a model changes; this supplies context rather than training a model. The animated Memory Galaxy is its visual entry point, with real file stars, zoom, nearby notes and explicit opening. Decorative stars do not represent invented memories.
 
 ## First delivered step

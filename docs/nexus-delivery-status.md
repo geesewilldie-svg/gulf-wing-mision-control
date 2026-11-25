@@ -423,3 +423,10 @@ Production webpack build, TypeScript and 32 desktop/mobile regression checks pas
 Added direct Fullscreen buttons for hologram modes and shared visual wrappers, preserving expanded fallback and state. Native fullscreen is exited when closing the expanded view. Removed the Galaxy pitch and terrain tilt clamps; Galaxy now supports arrow-key rotation as well as background dragging. File names default to hover/focus/selection with an explicit Show all file names option; full accessible names and lists remain. Updated Memory wording to reflect delivered storage navigation.
 
 Production webpack build and TypeScript passed. All 26 desktop/mobile Chromium checks passed, covering actual native fullscreen entry/exit for Core, Galaxy, Graph and shared Memory, forced fullscreen rejection/fallback, rotation beyond old pitch bounds, focused/idle labels and all-names toggling, plus existing file-access and storage navigation regressions. Native owner-device acceptance remains pending.
+
+
+### Video and screenshot architecture reconciliation — November 25, 2026
+
+Recorded the owner's supplied second-brain video excerpt and four screenshots with timestamped provenance and linked them from the main architecture, shared-memory plan and governing Galaxy plan. Added an explicit visual/behavior contract, delivered-versus-pending matrix, target memory-service data flow and acceptance cases. The visual target is a purple/indigo luminous spiral with a white/lilac core, cyan outer arms, sparse labels, no visible file connections and preserved full-screen orbit. The functional target is portable notes with current scoped retrieval and authorized provenance-bearing agent write-back, not model training or automatic unrestricted sharing.
+
+Source video: https://www.youtube.com/watch?v=xW77SSvuto0 . Full-caption retrieval was attempted and blocked by the managed network allowlist (YouTube CONNECT 403); only the owner-supplied excerpt and conversation screenshots were applied. No full-transcript completion claim is made. This update changes architecture documentation only, with no runtime, source-data, provider or permission changes.

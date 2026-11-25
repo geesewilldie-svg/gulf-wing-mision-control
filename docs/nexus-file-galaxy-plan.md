@@ -1,5 +1,10 @@
 # Memory Galaxy and file stars: governing plan
 
+## Visual source of truth
+
+Use the owner's four video screenshots as interpreted in [the applied reference](nexus-second-brain-reference.md) and [source record](references/second-brain-video-owner-excerpt.md). The target is a luminous oblique spiral in indigo/purple space, with a white/lilac center, cyan outer arms and sparse labels. Preserve the original Nexus spiral structure, no visible file connections, hover/focus/selection names, free orbit and explicit file opening. The dense Obsidian Graph screenshot is relationship evidence, not permission to restore a connected node web. Richer lighting/depth and unified search-to-star remain pending refinements.
+
+
 Consolidated November 23, 2026 after comparison with the original saved architecture and the owner's later corrections. This is the current requirement; older progress notes describing a flat chart, connecting stems or immediate opening on first click are superseded. Implemented means code/fixture verification, not blanket native acceptance.
 
 ## Original architecture and the clarification
