@@ -459,3 +459,6 @@ Storage Galaxy update: the shared file Galaxy now switches between indexed knowl
 
 
 Visual exploration refinement: direct Fullscreen controls cover Core, Galaxy/Memory and Graph, using browser fullscreen with an expanded fallback. Unrestricted two-axis rotation replaces the earlier Galaxy/terrain pitch clamps. File/resource names are contextual (hover, focus or selection) with an optional all-names toggle; accessible button names and the list remain. This is navigation/presentation only and grants no file or provider permissions.
+
+
+Additional JARVIS image reconciliation — November 25, 2026: the owner supplied a desktop memory-field layout with search/inspector, colored clusters, filters/counts, fit/layout controls and a compact assistant indicator. Add these as progressive workspace improvements around the existing spiral, with collapsible rails on laptop and drawers/sheets on phone. Keep the explicit no-lines/quiet-label requirements. Search-to-star, truthful hub/category metrics and assistant display modes require real implementation; the pictured EYES/HOLO/FOCUS/REFLEX labels do not confer capture or execution capability. See `../nexus-second-brain-reference.md` and `../references/jarvis-workspace-owner-images.md`.

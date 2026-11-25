@@ -11,6 +11,10 @@ Consolidated November 23, 2026 after comparison with the original saved architec
 
 The earliest saved reconciliation, commit 735bd96, already required broad file capability, authoritative assistant memory, and a knowledge graph backed by real sources that opens underlying evidence. It did not explicitly specify Galaxy/file stars, the original spiral look, no connecting lines, zoom-before-open or whole-computer star navigation. These are now explicit interface/resource requirements under the same architecture; they do not replace its ownership, provenance or permission model.
 
+## Workspace arrangement from the additional images
+
+The later JARVIS workspace screenshots add a collapsible search/inspector rail, compact source/category filters, Fit and navigation controls, optional evidence-based hub shortcuts and an unobtrusive assistant indicator. The center remains the original spiral with real file/memory objects. Use drawers/bottom sheets on phones rather than permanently occupying the Galaxy with sidebars. Interpret details through [the applied reference](nexus-second-brain-reference.md); no-lines and contextual names remain the owner's current explicit requirements. Pictured EYES/HOLO/FOCUS/REFLEX labels are not implemented Nexus actions or runtime grants.
+
 ## Required appearance and interaction
 
 1. Retain the original animated spiral Galaxy in the main Mission Control dashboard and use that style across shared Memory surfaces. Do not substitute a flat node-map diagram. Brighter file stars are real files; decorative ambient stars do not imply additional documents. Names appear on hover, focus or selection by default, with an optional Show all file names control and the list alternative.

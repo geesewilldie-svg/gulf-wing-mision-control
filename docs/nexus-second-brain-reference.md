@@ -4,6 +4,25 @@ This document applies the owner's supplied video excerpt and four screenshots to
 
 The owner wants one lasting second brain that permitted agents can read and improve, explored through a luminous, rotatable Galaxy of real files and notes. Changing an agent/model must not discard the work history. The latest explicit owner choices govern the interface: keep the original spiral, no drawn file connections, quiet names, fullscreen and free rotation.
 
+## Additional JARVIS workspace images — November 25, 2026
+
+The owner subsequently supplied five images of another memory workspace. [The image evidence record](references/jarvis-workspace-owner-images.md) distinguishes visible controls from unverified behavior and from the earlier video/transcript. Apply the following as a workspace refinement around the Galaxy:
+
+| Observed element | Nexus requirement | Implementation boundary |
+| --- | --- | --- |
+| Central full-screen field with differently colored clusters and small captions | Let the Galaxy dominate the screen. Reuse the spiral with real grouped file/memory objects, quiet labels and free orbit/zoom. | Preserve the existing no-lines instruction. Colors must correspond to known categories or explicit grouping; never invent records or relationships. |
+| Left search and selected-node inspector | A collapsible library/inspector rail: find a real record, focus its star, inspect source/type/workspace/version, and explicitly open it. | Focusing remains metadata-only. Search-to-star focus across the full memory catalog is pending; current page/index-name filtering is not global search. |
+| Top-hubs list | Optional real navigation shortcuts to highly linked notes or frequently used locations. | Link degree must come from resolved explicit links within a stated catalog. Usage ranking requires its own recorded usage basis. Do not fabricate popularity or copy demo rankings. |
+| Right category filters and counts | Compact filters for actual sources/types/workspaces with current counts and coverage. | The pictured Router/Wiki/Skills/etc. categories are examples; Nexus may show only categories it actually stores. Provider/account permissions must still filter private results. |
+| Fit and layout controls | Fit current visible objects; offer meaningful layout-spacing controls where implemented, plus reset/orbit/zoom. | A control must change the real layout. A Link length control is unnecessary when no connection lines are drawn. |
+| Assistant ring and status/model area | Optional compact assistant presence with the real local/provider state and explicit permitted controls. | Configured, signed in, live ready, listening and active are distinct states. No copied ONLINE/model badges. This indicator must not obstruct file access. |
+| EYES / HOLO / FOCUS / REFLEX controls | Treat as ideas to define separately, not existing capabilities. A display-only focus mode could hide peripheral UI. | Screen/camera capture, background listening and autonomous actions need their own implemented contracts and actual permissions. Image labels enable none of them. |
+| Bottom command bar | Keep typed/voice Nexus commands reachable in expanded views without covering the selected star. | Microphone status and provider-sharing choices stay explicit. A visual command bar does not add new execution authority. |
+
+On laptop/fullscreen, the target arrangement is **collapsible library/inspector at left → large Galaxy in the center → compact filters/assistant status at right**. On a phone, use drawers or bottom sheets and large touch targets; do not shrink both desktop sidebars into the Galaxy. Keep breadcrumbs, a conventional list and direct source-opening actions available.
+
+These images add navigation and workspace requirements. The earlier spiral reference still supplies the visual base; the owner's explicit no-lines and contextual-label choices remain current. Neither reference demonstrates that the current Nexus has a complete multi-agent memory service, a camera feature or unrestricted background automation.
+
 ## What the pictures mean for appearance
 
 | Picture feature | Build requirement | Current gap or constraint |
