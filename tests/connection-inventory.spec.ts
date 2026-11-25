@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { tmpdir } from "node:os";
+import { plannedConnectionTargets } from "../lib/connection-targets";
 import { connectionInventory } from "../lib/server/connection-inventory";
 import { connectionIntent } from "../lib/connection-intent";
 import { fixtureRole } from "./helpers/access";
@@ -68,6 +69,12 @@ test("connection inventory separates public/private setup, selected vaults, save
   expect(card("google-drive").status).toBe("No saved authorization");
   expect(card("github-copilot").status).toBe("Integration not built");
   expect(card("microsoft-copilot").status).toBe("Integration not built");
+  for (const id of ["rea", "hugging-face", "venice"]) {
+    expect(card(id).status).toBe("Planned — not connected");
+    expect(card(id).authorization).toBeTruthy();
+    expect(card(id).detail).not.toContain("Enabled");
+  }
+  expect(result.routing.selected).toEqual([]);
   expect(JSON.stringify(result)).not.toContain("private@example.test");
   expect(JSON.stringify(result)).not.toContain("PRIVATE_VAULT_PATH");
   expect(connectionIntent("Nexus, please show my connections.")).toBe(true);
@@ -151,7 +158,7 @@ test("connection setup command is controller-only, same-origin and local-only", 
   ).toBe(403);
   const result = await context.request.post("/api/sync/nexus", { data });
   expect(result.status()).toBe(200);
-  expect((await result.json()).capabilities).toHaveLength(11);
+  expect((await result.json()).capabilities).toHaveLength(14);
 });
 
 test("connection setup cards remain readable on controller screens", async ({
@@ -167,6 +174,7 @@ test("connection setup cards remain readable on controller screens", async ({
         answer: "Saved settings, not live service tests",
         sources: [],
         capabilities: [
+          ...plannedConnectionTargets,
           {
             id: "obsidian",
             name: "Obsidian selected vaults",
@@ -201,6 +209,11 @@ test("connection setup cards remain readable on controller screens", async ({
   await expect(
     page.getByRole("region", { name: "Microsoft Copilot", exact: true }),
   ).toContainText("Integration not built");
+  for (const target of plannedConnectionTargets) {
+    await expect(
+      page.getByRole("region", { name: target.name, exact: true }),
+    ).toContainText("Planned — not connected");
+  }
   await page
     .getByRole("region", { name: "Microsoft Copilot", exact: true })
     .screenshot({

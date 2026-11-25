@@ -465,3 +465,6 @@ Additional JARVIS image reconciliation — November 25, 2026: the owner supplied
 
 
 JARVIS transcript application — November 25, 2026: the owner supplied all thirteen chapters through 14:05 and confirmed its URL. [Applied capability plan](../nexus-jarvis-capability-plan.md) maps model switching, file/folder visualization, tool adapters, public-site inspection/testing, model assets, hosted inference, telephony and capture into separate milestones. Model selection must preserve scoped memory and truthful active-adapter status; it does not broaden provider or execution authority. The source model/version, licensing, hardware and repository claims remain unverified. This fourteen-minute source is distinct from the earlier Obsidian course excerpt; its supplied text resolves the JARVIS transcript gap.
+
+
+REA / Hugging Face / Venice connection layer — November 25, 2026: [reference connector plan](../nexus-reference-connections.md) separates inspection tools, model-asset acquisition and hosted inference. REA repository/package/license and runtime requirements were verified; Hub/Venice live access remains unverified due to network policy. Setup inventory now lists all three as planned and not connected; no provider/router capability is enabled. Implement runtime/configuration, bounded fixtures and explicit local setup before claiming ready status.

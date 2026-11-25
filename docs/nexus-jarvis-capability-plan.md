@@ -51,3 +51,8 @@ The assistant ring should distinguish microphone off/listening, model configured
 - Capture and telephony controls have real lifecycle and delivery checks before being labelled ready; current microphone and provider-sharing preferences persist independently of model switching.
 
 This plan changes documentation, not runtime configuration. Existing authorized task journaling continues; no provider, model download, camera, telephony service, external account, browser-inspection target or unattended tool execution is enabled by the video or this document.
+
+
+## Concrete connection destinations supplied by the owner
+
+The owner supplied `github.com/morluto/rea`, `huggingface.co` and `venice.ai`. [Reference connection architecture](nexus-reference-connections.md) now pins the verified REA source/package, documents runtime and browser constraints, and defines separate Hub model-asset and Venice hosted-inference adapters. The three appear in setup inventory as planned targets, not connected runtime providers. The general REA repository uncertainty above is resolved by the source review; target-specific execution and model/provider availability remain separate verification.

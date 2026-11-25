@@ -12,3 +12,5 @@ Ask Nexus **Show my connections** or **Show connection setup** using Auto or Loc
 Settings failures are isolated and labelled Settings unavailable, never converted to a connected status. Raw errors, keys, account emails and absolute vault paths are excluded from the returned cards. Existing settings are preserved. This read uses existing same-origin/controller and local-mode boundaries. No new grant, migration or remote setup endpoint is added.
 
 Connected work, visible remains a request-activity display rather than a complete inventory. Its Obsidian node now recognizes selected Obsidian roots. Ask the connection command for setup details; neither display proves live readiness.
+
+REA inspection tools, Hugging Face Model Hub and Venice hosted inference are now retained target cards with **Planned — not connected** status. They perform no install, runtime probe, account discovery, Hub download or inference request. They are not executable provider/router entries. See `nexus-reference-connections.md` for verified REA version/runtime prerequisites and separate model-asset/hosted-provider milestones.

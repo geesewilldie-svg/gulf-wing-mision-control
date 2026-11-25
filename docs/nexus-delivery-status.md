@@ -442,3 +442,12 @@ Recorded five newly supplied reference images separately from the earlier video 
 The owner supplied the JARVIS video's thirteen chapters from 0:00 through 14:05, resolving the missing-transcript gap for that video. Added a timestamped chapter/evidence index and a capability plan covering model routing with memory continuity, tool contracts, actual file/folder visualization, bounded public-site inspection/testing, model asset records, hosted inference, capture and telephony. These adapters remain planned where not implemented; no model, account, download or effect was enabled.
 
 Corrected the earlier temporary URL association: `xW77SSvuto0` is the owner-confirmed fourteen-minute JARVIS video; the earlier 57:37–1:00:36 Obsidian course excerpt has no established URL. Updated the governing architecture/shared-memory/reference links accordingly. Source material remains owner-supplied, not independently fetched YouTube captions. Documentation references and whitespace checks passed; no runtime build was needed.
+
+
+### REA, Hugging Face and Venice connection targets
+
+Added three explicit planned/not-connected setup cards and separate architecture contracts for REA inspection, Hub model catalogs/downloads and Venice hosted inference. REA source revision `0f4ec6231828ec0af1807f2d093d94e5d103a553`, published package 6.10.1, MIT license, npm integrity and Node engine were verified read-only. REA browser observation is passive CDP evidence, not a general browser-control adapter. Current cloud Node 24.19.0 is below its required 24.22.1 range; Windows patch compatibility is unverified.
+
+Hugging Face/Venice direct requests were blocked by network policy; no account, API/model list, pricing or model file was verified. No package was installed/executed, client configuration modified, model downloaded or provider enabled. The inventory still performs no remote calls. Integration execution remains pending local setup and bounded verification.
+
+Validation: production webpack build, TypeScript and all 16 desktop/mobile inventory/Copilot regression checks passed. The tests verify truthful planned status, controller/same-origin restrictions, zero inventory network requests and readable target cards. This does not verify REA execution or Hub/Venice live connectivity.

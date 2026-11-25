@@ -1,3 +1,4 @@
+import { plannedConnectionTargets } from "../connection-targets";
 import { copilotPreparation } from "./copilot-preparation";
 import { providerStatus } from "./agent-router";
 import { publicGeminiStatus } from "./gemini-public";
@@ -150,6 +151,7 @@ export async function connectionInventory(
       authorization:
         "No Nexus adapter, account access or unattended execution is supplied. Microsoft Graph access alone would not constitute a Copilot connection.",
     });
+  cards.push(...plannedConnectionTargets);
   const githubCard = cards.find((card) => card.id === "github-copilot")!;
   const preparation = copilot.status === "fulfilled" ? copilot.value : null;
   if (!preparation || preparation.warning) {
