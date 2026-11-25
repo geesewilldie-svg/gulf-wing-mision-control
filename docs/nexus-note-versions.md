@@ -39,3 +39,11 @@ Only new saves passing this version's registration hook are tracked. Older expor
 ## Verification
 
 Disposable fixtures verify shared logical identity, owner corrections, source supersession, external edits preserved byte-for-byte, deleted task versus deleted file, root revocation and replacement, mid-read source changes, corrupt catalog behavior, idempotent registration, wrong binding rejection, bounded pagination, scope isolation, route authorization and removal of private UI results after access denial. Existing journal anti-replay, snapshot indexing and private-context tests remain required. No owner note or permission is altered by these tests.
+
+## Review a separate current copy
+
+After inspection, a changed, missing or historical tracked note can offer **Review a separate current copy** when the original selected source remains available and its live Nexus record still exists. A historical note already superseded by a tracked current-source copy does not offer another copy. Removed tasks and revoked/replaced roots do not expose this action.
+
+This opens the existing reviewed vault-save workflow. The preview comes from the current SQLite owner records or task artifact, not from the external file's edits. Opening the controls and cancelling never writes a note. Confirmation creates a new independent snapshot in the configured destination; a changed source invalidates the preview. Existing files and edits remain intact. Inspect again after saving to update the list. Destination permissions are checked again by the existing preview/save handler.
+
+This is an explicit keep-both review path, not an automatic merge, file replacement, import or ongoing synchronization. No conflict is silently resolved and no historical file becomes current owner memory. External edits must still be reconciled deliberately. Metadata recovery, legacy adoption, managed current notes and broader agent write-back remain later stages.

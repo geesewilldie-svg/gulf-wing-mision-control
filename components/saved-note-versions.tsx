@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import VaultNoteReview from "./vault-note-review";
 import type { Scope } from "@/lib/foundation/contracts";
 type Inspection = {
   workspace: Scope;
@@ -18,6 +19,10 @@ type Inspection = {
     fileState: string;
     sourceState: string;
     superseded: boolean;
+    reviewTarget?: {
+      kind: "owner-memory" | "work-note";
+      taskId?: string;
+    } | null;
   }[];
 };
 const fileLabels: Record<string, string> = {
@@ -129,6 +134,21 @@ export default function SavedNoteVersions({ workspace }: { workspace: Scope }) {
                 <p>
                   Stable note identity: <code>{row.noteId}</code>
                 </p>
+                {row.reviewTarget && (
+                  <details>
+                    <summary>Review a separate current copy</summary>
+                    <p>
+                      The existing note is retained. This previews the current
+                      Nexus source record, excluding external edits to the saved
+                      file. Confirm only if you want an additional snapshot.
+                      Inspect again after saving to update this list.
+                    </p>
+                    <VaultNoteReview
+                      workspace={workspace}
+                      taskId={row.reviewTarget.taskId}
+                    />
+                  </details>
+                )}
                 {row.superseded && (
                   <p>
                     A separate saved copy matches the current source version.

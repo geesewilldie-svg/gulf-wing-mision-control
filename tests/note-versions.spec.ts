@@ -86,7 +86,10 @@ test("snapshots retain one logical identity, flag supersession and external edit
       kind: "fact",
       content: "QUARTZ owner corrected",
     });
-    expect((await inspect()).rows[0].sourceState).toBe("historical-version");
+    expect((await inspect()).rows[0]).toMatchObject({
+      sourceState: "historical-version",
+      reviewTarget: { kind: "owner-memory" },
+    });
     const second = await save();
     expect(second.tracking).toBe("tracked");
     const versions = await inspect();
@@ -117,7 +120,10 @@ test("snapshots retain one logical identity, flag supersession and external edit
     const revoked = await inspect();
     expect(
       revoked.rows.every(
-        (row) => row.fileState === "unavailable" && row.name === null,
+        (row) =>
+          row.fileState === "unavailable" &&
+          row.name === null &&
+          row.reviewTarget === null,
       ),
     ).toBe(true);
     const replacement = path.join(dir, "replacement-vault");
@@ -140,7 +146,10 @@ test("snapshots retain one logical identity, flag supersession and external edit
     );
     expect(
       (await inspect()).rows.every(
-        (row) => row.fileState === "unavailable" && row.name === null,
+        (row) =>
+          row.fileState === "unavailable" &&
+          row.name === null &&
+          row.reviewTarget === null,
       ),
     ).toBe(true);
   }));
@@ -288,6 +297,54 @@ test("catalog registration is idempotent and page coverage stays bounded", () =>
     await expect(inspect()).rejects.toMatchObject({ status: 503 });
   }));
 
+test("reviewing a separate current copy preserves external edits and rejects a stale preview", () =>
+  fixture(async (_dir, vault) => {
+    const id = saveMemory({
+      scope: "Personal",
+      kind: "fact",
+      content: "Original value",
+    });
+    const first = await save();
+    const target = path.join(vault, ...first.file.name.split("/"));
+    await fs.writeFile(target, "My Obsidian edits");
+    const row = (await inspect()).rows[0];
+    expect(row.reviewTarget).toEqual({ kind: "owner-memory" });
+    const preview = await memoryVault({
+      op: "memory.vault.preview",
+      scope: "Personal",
+      ...row.reviewTarget,
+    });
+    if (!("markdown" in preview)) throw Error("Expected current source preview");
+    expect(preview.markdown).toContain("Original value");
+    expect(preview.markdown).not.toContain("My Obsidian edits");
+    saveMemory({
+      id,
+      revision: 0,
+      scope: "Personal",
+      kind: "fact",
+      content: "Corrected current value",
+    });
+    await expect(
+      memoryVault({
+        ...preview,
+        scope: "Personal",
+        op: "memory.vault.save",
+        confirm: true,
+      }),
+    ).rejects.toMatchObject({ status: 409 });
+    const second = await save();
+    expect(second.file.name).not.toBe(first.file.name);
+    expect(await fs.readFile(target, "utf8")).toBe("My Obsidian edits");
+    const historical = (await inspect()).rows.find(
+      (item) => item.name === first.filename,
+    );
+    expect(historical).toMatchObject({
+      superseded: true,
+      reviewTarget: null,
+      fileState: "externally-changed",
+    });
+  }));
+
 test("saved-note inspection is controller-only and same-origin", async ({
   context,
 }) => {
@@ -384,4 +441,94 @@ test("version inspection stays beside its controls and clears private results af
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+});
+
+test("changed-note review previews before save and can be cancelled", async ({
+  page,
+  context,
+}) => {
+  await fixtureRole(context);
+  const operations: string[] = [];
+  await page.route("**/api/sync/foundation", (route) => {
+    if (route.request().method() !== "POST") return route.continue();
+    const body = route.request().postDataJSON();
+    if (
+      ![
+        "memory.notes.inspect",
+        "memory.vault.preview",
+        "memory.vault.save",
+      ].includes(body.op)
+    )
+      return route.continue();
+    operations.push(body.op);
+    if (body.op === "memory.notes.inspect")
+      return route.fulfill({
+        json: {
+          workspace: "Personal",
+          total: 1,
+          offset: 0,
+          nextOffset: null,
+          checkedAt: "2026-11-25T10:00:00.000Z",
+          notice: "Existing edits retained.",
+          rows: [
+            {
+              id: "a".repeat(64),
+              noteId: "b".repeat(64),
+              name: "edited.md",
+              kind: "owner-memory",
+              producer: "reviewed",
+              savedAt: "2026-11-25T09:00:00.000Z",
+              fileState: "externally-changed",
+              sourceState: "historical-version",
+              superseded: false,
+              reviewTarget: { kind: "owner-memory" },
+            },
+          ],
+        },
+      });
+    if (body.op === "memory.vault.preview")
+      return route.fulfill({
+        json: {
+          workspace: "Personal",
+          markdown: "# Current source preview",
+          sha256: "c".repeat(64),
+          exportedAt: "2026-11-25T10:00:00.000Z",
+        },
+      });
+    expect(body.confirm).toBe(true);
+    expect(body.sha256).toBe("c".repeat(64));
+    return route.fulfill({
+      json: {
+        filename: "separate-copy.md",
+        indexing: "indexed",
+        tracking: "tracked",
+      },
+    });
+  });
+  await page.goto("/nexus");
+  await page.getByRole("button", { name: "Foundation", exact: true }).click();
+  const panel = page.locator(".saved-note-versions");
+  await panel.locator("summary").first().click();
+  await panel
+    .getByRole("button", { name: "Inspect Personal saved notes" })
+    .click();
+  await panel
+    .getByText("Review a separate current copy", { exact: true })
+    .click();
+  expect(operations).toEqual(["memory.notes.inspect"]);
+  await panel
+    .getByRole("button", { name: "Review Personal snapshot for vault" })
+    .click();
+  await expect(panel.locator("pre")).toContainText("Current source preview");
+  await panel.getByRole("button", { name: "Cancel vault snapshot" }).click();
+  await expect(panel.locator("pre")).toHaveCount(0);
+  expect(operations).not.toContain("memory.vault.save");
+  await panel
+    .getByRole("button", { name: "Review Personal snapshot for vault" })
+    .click();
+  await panel
+    .getByRole("button", { name: "Confirm and save new vault snapshot" })
+    .click();
+  await expect(panel.getByRole("status")).toContainText("separate-copy.md");
+  expect(operations.filter((op) => op === "memory.vault.save")).toHaveLength(1);
 });

@@ -329,6 +329,20 @@ export async function inspectNoteVersions(body: any) {
           fileState = "missing";
       }
     const currentSource = noteSource(workspace, entry.kind, entry.taskId);
+    const superseded =
+      currentSource !== null &&
+      currentSource !== entry.sourceVersion &&
+      entries.some(
+        (other) =>
+          other.noteId === entry.noteId &&
+          other.sourceVersion === currentSource,
+      );
+    const reviewable =
+      visibleSource &&
+      fileState !== "unavailable" &&
+      currentSource !== null &&
+      !superseded &&
+      (currentSource !== entry.sourceVersion || fileState !== "unchanged");
     rows.push({
       id: entry.id,
       noteId: entry.noteId,
@@ -344,14 +358,13 @@ export async function inspectNoteVersions(body: any) {
           : currentSource === entry.sourceVersion
             ? "matches-current-record"
             : "historical-version",
-      superseded:
-        currentSource !== null &&
-        currentSource !== entry.sourceVersion &&
-        entries.some(
-          (other) =>
-            other.noteId === entry.noteId &&
-            other.sourceVersion === currentSource,
-        ),
+      superseded,
+      reviewTarget: reviewable
+        ? {
+            kind: entry.kind,
+            ...(entry.kind === "work-note" ? { taskId: entry.taskId } : {}),
+          }
+        : null,
     });
   }
   if (
