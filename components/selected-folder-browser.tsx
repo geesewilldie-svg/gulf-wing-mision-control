@@ -213,6 +213,7 @@ export default function SelectedFolderBrowser({
                 resourceMode
                 files={objects}
                 zoom={zoom}
+                onFit={() => setZoom(1)}
                 onRead={openObject}
               />
             </section>

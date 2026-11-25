@@ -27,11 +27,11 @@ These images add navigation and workspace requirements. The earlier spiral refer
 
 | Picture feature | Build requirement | Current gap or constraint |
 | --- | --- | --- |
-| Dark indigo/purple space, glowing lilac/white core and cyan/magenta outer arms | A deep luminous spiral with layered depth and soft glow, not a flat graph or a grid of cards. Retain the recognizable Nexus spiral geometry. | Current renderer uses the original blue/cyan holographic palette. Closer purple/white lighting, particle depth and arm glow need a dedicated visual refinement. |
+| Dark indigo/purple space, glowing lilac/white core and cyan/magenta outer arms | A deep luminous spiral with layered depth and soft glow, not a flat graph or a grid of cards. Retain the recognizable Nexus spiral geometry. | The first indigo/purple and lilac-core lighting refinement is delivered, with type-colored real stars. Further visual matching and richer depth remain incremental refinements. |
 | Bright individual points among faint background particles | Real notes/files have distinct selectable stars; ambient dust is decorative and never counted as stored memory. | Delivered distinction; coverage is bounded by the actual source view. |
 | Only a handful of floating names | Default names appear on hover, focus or selected objects; show full names in an inspector/list, and offer an optional all-names switch. | Delivered by the latest label update; do not restore a label on every idle star. |
 | Oblique perspective changes between screenshots | Free two-axis orbit/rotation, zoom and stable orientation during expansion; mobile drag and keyboard alternatives. | Rotation, zoom, persistent expansion and direct fullscreen delivered. Smooth target-to-target camera travel and richer depth remain refinements. |
-| Explore/search and expand controls | Search should find a real record and focus it; fullscreen should keep the current selection and navigation. | Existing page/index name filters and list alternatives are delivered. Unified full-memory search-to-star focus is pending. |
+| Explore/search and expand controls | Search should find a real record and focus it; fullscreen should keep the current selection and navigation. | Loaded-view name/type/source search-to-star focus and list alternatives are delivered. Unified full-memory catalog search remains pending. |
 | Graph groups and note edges in the first screenshot | Preserve real relationships as data and in the inspector: explicit links, folder membership, or separately verified semantic evidence. | Explicit wiki links and folder neighborhoods exist. Visible connecting lines remain off by the owner's explicit preference. |
 | Memory/connection counts | Counts must describe current real records and verified links, with freshness/coverage limits. | Existing file counts are bounded source counts, not a complete global second-brain count. Verified global memory/link metrics are pending. |
 
@@ -85,3 +85,7 @@ These are implementation requirements, not permission to enable providers, chang
 - The default scene reads as the supplied glowing spiral at laptop and phone sizes; labels do not obscure the arms. There are no visible file-connection lines.
 - A browse-only folder can be explored and an original opened without being added to the knowledge index or model context.
 - Unsupported, denied, removed, changed or offline resources have an honest result; a saved integration setting is not shown as verified cross-agent readiness.
+
+## Delivered next-phase slices
+
+The Galaxy workspace now has current-view search/type/source filters, a selected-record rail, actual category counts, fit/reset and reference-inspired indigo/lilac lighting; see `nexus-galaxy-workspace.md`. Global catalog search and top-hub metrics remain pending. The first internal shared local-memory retrieval envelope is used by local answers with provenance/current-version boundaries; see `nexus-shared-memory-context.md`. This does not yet connect every agent or synchronize vault notes. `Update-Nexus.cmd` automates the native update sequence after its first local acquisition.

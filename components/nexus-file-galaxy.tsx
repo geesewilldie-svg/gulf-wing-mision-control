@@ -245,6 +245,7 @@ export default function NexusFileGalaxy({ enabled }: { enabled: boolean }) {
               files={shown}
               selectedId={selected?.id}
               zoom={zoom}
+              onFit={() => setZoom(1)}
               onRead={(file) => void read(file)}
             />
             <details>

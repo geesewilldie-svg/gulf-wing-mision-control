@@ -1,9 +1,7 @@
 import { journalIntent } from "@/lib/journal-intent";
 import { conversationJournal } from "@/lib/server/conversation-journal";
-import {
-  workContextStamp,
-  workMemoryContext,
-} from "@/lib/server/work-memory-context";
+import { workContextStamp } from "@/lib/server/work-memory-context";
+import { sharedMemoryContext } from "@/lib/server/shared-memory-context";
 import { answerMemorySources } from "@/lib/server/answer-memory-sources";
 import { connectionIntent } from "@/lib/connection-intent";
 import { connectionInventory } from "@/lib/server/connection-inventory";
@@ -60,10 +58,7 @@ import { searchDocuments } from "@/lib/nexus";
 import { ventureKnowledge } from "@/lib/server/venture-store";
 import { businessKnowledge } from "@/lib/server/business-knowledge";
 import { parseHistory } from "@/lib/conversation";
-import {
-  memoryContext,
-  ownerContextRevision,
-} from "@/lib/server/foundation/store";
+import { ownerContextRevision } from "@/lib/server/foundation/store";
 import { scopes } from "@/lib/foundation/contracts";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -456,12 +451,17 @@ export async function POST(request: Request) {
         ? "\nThis is a live voice conversation. Give a direct answer in one or two short sentences by default, then offer to expand. If the user explicitly asks for detail, provide it. Keep necessary qualifications and source citations. Avoid headings, long lists and repeating the question."
         : "");
     // Local-only owner memory is never appended to external provider prompts.
-    const ownerMemory = selected.includes("local")
-      ? memoryContext((body.workspaceScope as string) || "Personal", body.query)
-      : "";
-    const workMemory = selected.includes("local")
-      ? workMemoryContext(workScope, body.query)
-      : { records: [], context: "" };
+    const memoryEnvelope = sharedMemoryContext(
+      workScope,
+      body.query,
+      selected.includes("local") ? "local" : "external",
+    );
+    const ownerMemory = memoryEnvelope.owner.context;
+    const workMemory = memoryEnvelope.work;
+    if (memoryEnvelope.owner.truncated)
+      warnings.push(
+        "Some matching owner memories were shortened for this answer. Owner instructions were retained.",
+      );
     if (workMemory.records.length)
       warnings.push(
         "Relevant saved work excerpts were supplied only to the local model. Task outputs are unverified history, not owner facts or proof of execution.",

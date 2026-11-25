@@ -1,4 +1,5 @@
 "use client";
+import { galaxyCatalog, galaxyType, galaxyTypes } from "@/lib/galaxy-catalog";
 import { galaxyNeighborhood } from "@/lib/galaxy-neighborhood";
 import { useEffect, useRef, useState } from "react";
 export type GalaxyFile = {
@@ -12,8 +13,8 @@ export type GalaxyFile = {
   noteLinks?: { links: { id: string }[] } | null;
 };
 const TAU = Math.PI * 2,
-  colors = ["#52dbff", "#bba5ff", "#64efcf", "#ffc48d"];
-// Same three-arm geometry and palette as the original Mission Control Galaxy.
+  colors = ["#77dfff", "#c7a4ff", "#ffb3e1", "#e5d4ff"];
+// Preserve the original three-arm geometry; lighting follows the owner reference.
 const stars = Array.from({ length: 1050 }, (_, i) => {
   const u = (i + 0.5) / 1050,
     seed = Math.sin(i * 127.1 + 31.7) * 43758.5453,
@@ -28,18 +29,29 @@ const stars = Array.from({ length: 1050 }, (_, i) => {
   };
 });
 export default function AnimatedFileGalaxy({
-  files,
+  files: catalogFiles,
   selectedId,
   zoom,
   onRead,
   resourceMode = false,
+  onFit,
 }: {
+  onFit?: () => void;
   resourceMode?: boolean;
   files: GalaxyFile[];
   selectedId?: string;
   zoom: number;
   onRead: (file: GalaxyFile) => void;
 }) {
+  const [query, setQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [sourceFilter, setSourceFilter] = useState("all");
+  const [railOpen, setRailOpen] = useState(false);
+  useEffect(() => {
+    setRailOpen(!matchMedia("(max-width: 700px)").matches);
+  }, []);
+  const catalog = galaxyCatalog(catalogFiles, query, typeFilter, sourceFilter);
+  const files = catalog.files;
   const stage = useRef<HTMLDivElement>(null),
     canvas = useRef<HTMLCanvasElement>(null),
     buttons = useRef(new Map<string, HTMLButtonElement>());
@@ -61,6 +73,7 @@ export default function AnimatedFileGalaxy({
       return;
     }
     focusZoom.current = 1;
+    setRailOpen(true);
     setPaused(true);
     setTrail((previous) => [...previous, file.id]);
   }
@@ -86,13 +99,19 @@ export default function AnimatedFileGalaxy({
       height = 0,
       frame = 0,
       last = 0;
-    const groups = [...new Set(files.map((file) => file.rootId))];
     const draw = () => {
       const cx = width / 2,
         cy = height / 2,
         scale =
           Math.min(width * 0.29, height * 0.34) * zoom * focusZoom.current;
       ctx.clearRect(0, 0, width, height);
+      const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, scale * 1.3);
+      glow.addColorStop(0, "#eadcff66");
+      glow.addColorStop(0.13, "#b382e83c");
+      glow.addColorStop(0.5, "#5e36991c");
+      glow.addColorStop(1, "#110d2900");
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, width, height);
       const yaw = rotation.current.y + time.current * 0.13,
         tilt = rotation.current.x;
       const project = (point: { x: number; y: number; z: number }) => {
@@ -210,7 +229,7 @@ export default function AnimatedFileGalaxy({
           button.style.top = `${point.y}px`;
           button.style.setProperty(
             "--file-glow",
-            colors[groups.indexOf(point.file.rootId) % colors.length],
+            galaxyTypes[galaxyType(point.file)].color,
           );
         }
       }
@@ -279,6 +298,21 @@ export default function AnimatedFileGalaxy({
           {paused ? "Resume galaxy" : "Pause galaxy"}
         </button>
         <button
+          onClick={() => {
+            setQuery("");
+            setTypeFilter("all");
+            setSourceFilter("all");
+            setTrail([]);
+            rotation.current = { x: -0.85, y: 0 };
+            time.current = 0;
+            setPaused(true);
+            setRevision((value) => value + 1);
+            onFit?.();
+          }}
+        >
+          Fit all stars
+        </button>
+        <button
           aria-pressed={allNames}
           onClick={() => setAllNames((value) => !value)}
         >
@@ -295,115 +329,220 @@ export default function AnimatedFileGalaxy({
           Reset rotation
         </button>
       </div>
-      <div
-        className={`memory-spiral-stage ${focused ? "is-file-focused" : ""}`}
-        ref={stage}
-        onPointerDown={(event) => {
-          if (event.target !== canvas.current) return;
-          drag.current = { x: event.clientX, y: event.clientY };
-          event.currentTarget.setPointerCapture(event.pointerId);
-        }}
-        onPointerUp={() => {
-          drag.current = null;
-        }}
-        onPointerCancel={() => {
-          drag.current = null;
-        }}
-      >
-        <canvas
-          ref={canvas}
-          tabIndex={0}
-          onKeyDown={(event) => {
-            if (
-              !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(
-                event.key,
-              )
-            )
-              return;
-            event.preventDefault();
-            rotation.current.y +=
-              event.key === "ArrowRight"
-                ? 0.15
-                : event.key === "ArrowLeft"
-                  ? -0.15
-                  : 0;
-            rotation.current.x +=
-              event.key === "ArrowDown"
-                ? 0.15
-                : event.key === "ArrowUp"
-                  ? -0.15
-                  : 0;
-            setPaused(true);
-            setRevision((value) => value + 1);
-          }}
-          role="img"
-          aria-label="Original animated spiral galaxy style with selectable file stars"
-        />
-        <div className="memory-spiral-label" aria-hidden="true">
-          <small>GULF WING</small>
-          <strong>M E M O R Y</strong>
-          <span>{reduced ? "REDUCED MOTION" : "FILE CONSTELLATION"}</span>
-        </div>
-        {focused && (
-          <div
-            className="memory-star-focus"
-            role="region"
-            aria-label={
-              resourceMode ? "Selected storage object" : "Selected file star"
-            }
-          >
-            <strong>{focused.name}</strong>
+      <div className="memory-galaxy-workspace">
+        <details
+          className="memory-galaxy-inspector"
+          open={railOpen}
+          onToggle={(event) => setRailOpen(event.currentTarget.open)}
+        >
+          <summary>Search and inspect Galaxy</summary>
+          <div className="memory-galaxy-library">
+            <label>
+              Search Galaxy names
+              <input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Find in this loaded view"
+              />
+            </label>
+            <label>
+              Galaxy file type
+              <select
+                value={typeFilter}
+                onChange={(event) => setTypeFilter(event.target.value)}
+              >
+                <option value="all">All types ({catalogFiles.length})</option>
+                {[...catalog.counts].map(([kind, count]) => (
+                  <option key={kind} value={kind}>
+                    {galaxyTypes[kind].label} ({count})
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Galaxy source
+              <select
+                value={sourceFilter}
+                onChange={(event) => setSourceFilter(event.target.value)}
+              >
+                <option value="all">All loaded sources</option>
+                {[...catalog.sources].map(([id, source]) => (
+                  <option key={id} value={id}>
+                    {source.label} ({source.count})
+                  </option>
+                ))}
+              </select>
+            </label>
             <p>
-              {neighborhood.nearby.length} nearby{" "}
-              {resourceMode ? "resource" : "file"}{" "}
-              {neighborhood.nearby.length === 1 ? "star" : "stars"}
-              {neighborhood.omitted
-                ? ` · ${neighborhood.omitted} more in the file list`
-                : ""}
+              {files.length} of {catalogFiles.length} loaded objects match.
+              Counts cover this view, not all storage.
             </p>
-            <small>
-              {resourceMode
-                ? "Other entries in this directory page or selected-location list."
-                : "Same folder or an explicit note link."}
-            </small>
-            <div>
-              <button onClick={() => onRead(focused)}>
-                {resourceMode
-                  ? focused.resourceKind === "file"
-                    ? "Show file actions"
-                    : `Enter ${focused.resourceKind || "folder"}`
-                  : "Open file"}
-              </button>
-              {trail.length > 1 && (
-                <button
-                  onClick={() => setTrail((previous) => previous.slice(0, -1))}
-                >
-                  Back
-                </button>
-              )}
-              <button onClick={() => setTrail([])}>Return to galaxy</button>
+            <div className="memory-galaxy-legend">
+              {[...catalog.counts].map(([kind, count]) => (
+                <span key={kind}>
+                  <i style={{ background: galaxyTypes[kind].color }} />
+                  {galaxyTypes[kind].label}: {count}
+                </span>
+              ))}
             </div>
+            <details>
+              <summary>Matching objects ({files.length})</summary>
+              <div className="memory-galaxy-results">
+                {files.map((file) => (
+                  <button
+                    key={file.id}
+                    disabled={file.resourceAvailable === false}
+                    onClick={() => {
+                      setPaused(true);
+                      setRailOpen(true);
+                      focusZoom.current = 1;
+                      setTrail((previous) =>
+                        previous.at(-1) === file.id
+                          ? previous
+                          : [...previous, file.id],
+                      );
+                    }}
+                  >
+                    Focus {file.name}
+                  </button>
+                ))}
+              </div>
+            </details>
+            {!files.length && (
+              <p>
+                No matching objects in this view. Clear filters or use another
+                directory page.
+              </p>
+            )}
+            {!focused && (
+              <p>
+                Select a star or search result to inspect it. Selection does not
+                read its file.
+              </p>
+            )}
+            {focused && (
+              <div
+                className="memory-star-focus"
+                role="region"
+                aria-label={
+                  resourceMode
+                    ? "Selected storage object"
+                    : "Selected file star"
+                }
+              >
+                <strong>{focused.name}</strong>
+                <p>
+                  {galaxyTypes[galaxyType(focused)].label} · {focused.folder}
+                </p>
+                <small>
+                  Listed identity; current access is checked when opened.
+                </small>
+                <p>
+                  {neighborhood.nearby.length} nearby{" "}
+                  {resourceMode ? "resource" : "file"}{" "}
+                  {neighborhood.nearby.length === 1 ? "star" : "stars"}
+                  {neighborhood.omitted
+                    ? ` · ${neighborhood.omitted} more in the file list`
+                    : ""}
+                </p>
+                <small>
+                  {resourceMode
+                    ? "Other entries in this directory page or selected-location list."
+                    : "Same folder or an explicit note link."}
+                </small>
+                <div>
+                  <button onClick={() => onRead(focused)}>
+                    {resourceMode
+                      ? focused.resourceKind === "file"
+                        ? "Show file actions"
+                        : `Enter ${focused.resourceKind || "folder"}`
+                      : "Open file"}
+                  </button>
+                  {trail.length > 1 && (
+                    <button
+                      onClick={() =>
+                        setTrail((previous) => previous.slice(0, -1))
+                      }
+                    >
+                      Back
+                    </button>
+                  )}
+                  <button onClick={() => setTrail([])}>Return to galaxy</button>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-        {visible.map((file) => (
-          <button
-            key={file.id}
-            ref={(element) => {
-              if (element) buttons.current.set(file.id, element);
-              else buttons.current.delete(file.id);
+        </details>
+        <div
+          className={`memory-spiral-stage ${focused ? "is-file-focused" : ""}`}
+          ref={stage}
+          onPointerDown={(event) => {
+            if (event.target !== canvas.current) return;
+            drag.current = { x: event.clientX, y: event.clientY };
+            event.currentTarget.setPointerCapture(event.pointerId);
+          }}
+          onPointerUp={() => {
+            drag.current = null;
+          }}
+          onPointerCancel={() => {
+            drag.current = null;
+          }}
+        >
+          <canvas
+            ref={canvas}
+            tabIndex={0}
+            onKeyDown={(event) => {
+              if (
+                !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(
+                  event.key,
+                )
+              )
+                return;
+              event.preventDefault();
+              rotation.current.y +=
+                event.key === "ArrowRight"
+                  ? 0.15
+                  : event.key === "ArrowLeft"
+                    ? -0.15
+                    : 0;
+              rotation.current.x +=
+                event.key === "ArrowDown"
+                  ? 0.15
+                  : event.key === "ArrowUp"
+                    ? -0.15
+                    : 0;
+              setPaused(true);
+              setRevision((value) => value + 1);
             }}
-            disabled={file.resourceAvailable === false}
-            className={`memory-file-star ${resourceMode ? `is-resource-${file.resourceKind || "file"}` : ""} ${selectedId === file.id || focused?.id === file.id ? "is-selected" : ""}`}
-            aria-label={`${focused?.id === file.id ? "Open" : "Focus"} ${resourceMode ? file.resourceKind || "file" : "file"} star: ${file.folder} / ${file.name}${file.resourceAvailable === false ? " (unavailable)" : ""}`}
-            title={`${file.folder} / ${file.name}`}
-            onPointerEnter={() => setPaused(true)}
-            onFocus={() => setPaused(true)}
-            onClick={() => focusStar(file)}
-          >
-            <i aria-hidden="true" />
-            <span>{file.name}</span>
-          </button>
-        ))}
+            role="img"
+            aria-label="Original animated spiral galaxy style with selectable file stars"
+          />
+          <div className="memory-spiral-label" aria-hidden="true">
+            <small>GULF WING</small>
+            <strong>M E M O R Y</strong>
+            <span>{reduced ? "REDUCED MOTION" : "FILE CONSTELLATION"}</span>
+          </div>
+          {visible.map((file) => (
+            <button
+              key={file.id}
+              ref={(element) => {
+                if (element) buttons.current.set(file.id, element);
+                else buttons.current.delete(file.id);
+              }}
+              disabled={file.resourceAvailable === false}
+              className={`memory-file-star ${resourceMode ? `is-resource-${file.resourceKind || "file"}` : ""} ${selectedId === file.id || focused?.id === file.id ? "is-selected" : ""}`}
+              aria-label={`${focused?.id === file.id ? "Open" : "Focus"} ${resourceMode ? file.resourceKind || "file" : "file"} star: ${file.folder} / ${file.name}${file.resourceAvailable === false ? " (unavailable)" : ""}`}
+              title={`${file.folder} / ${file.name}`}
+              onPointerEnter={() => setPaused(true)}
+              onFocus={() => setPaused(true)}
+              onClick={() => focusStar(file)}
+            >
+              <i aria-hidden="true" />
+              <span>{file.name}</span>
+            </button>
+          ))}
+        </div>
       </div>
       <p className="memory-spiral-key">
         {resourceMode

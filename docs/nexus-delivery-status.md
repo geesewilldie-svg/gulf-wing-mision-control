@@ -451,3 +451,13 @@ Added three explicit planned/not-connected setup cards and separate architecture
 Hugging Face/Venice direct requests were blocked by network policy; no account, API/model list, pricing or model file was verified. No package was installed/executed, client configuration modified, model downloaded or provider enabled. The inventory still performs no remote calls. Integration execution remains pending local setup and bounded verification.
 
 Validation: production webpack build, TypeScript and all 16 desktop/mobile inventory/Copilot regression checks passed. The tests verify truthful planned status, controller/same-origin restrictions, zero inventory network requests and readable target cards. This does not verify REA execution or Hub/Venice live connectivity.
+
+### Galaxy workspace, common local-memory envelope and native update automation
+
+Implemented loaded-view search/type/source filters, real category counts/colors, focus-only matching-object shortcuts, selected-file inspector, fit/reset and indigo/purple/lilac scene lighting. The rail moves below the scene on phone widths; expansion preserves it. Existing private file routes and source limits remain.
+
+Added an internal versioned memory retrieval envelope to local answers: current owner IDs/revisions/hashes, explicit local-only provenance, bounded relevant facts and separate unverified task context. In-budget owner instructions are fully retained; external contexts remain empty. Existing correction/deletion/generation fences are preserved. No provider/worker memory grant or schema migration is introduced.
+
+Added `Update-Nexus.cmd` with branch/dirty-worktree guards, exact repo-owned Next process matching, free-port checks, locked dependency refresh, build, existing launcher restart and local CSS/JS response checks. It avoids rebuilding under the running server, the condition consistent with the owner's earlier mismatched static assets. Six platform-neutral updater tests pass; Windows-native execution still needs the first local invocation. No owner settings, sources, model downloads or agent accounts were changed.
+
+Validation: production webpack build and TypeScript passed. All 50 combined desktop/mobile Galaxy, file, privacy and memory regression checks passed, followed by two additional real production CSS/JavaScript checks (52 distinct project checks). All six updater unit scenarios passed. Desktop and phone captures were reviewed. Remaining native limitation: cloud tests cannot execute the updater against the owner's Windows processes; the initial one-command laptop invocation is still required.

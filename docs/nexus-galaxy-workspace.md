@@ -1,0 +1,11 @@
+# Galaxy workspace: search, inspect and fit
+
+The original spiral now includes a collapsible **Search and inspect Galaxy** rail. It provides name search, type and source filters, actual loaded-view counts, a category-color legend and matching-object shortcuts. Search terms match the loaded object's name/source label; selecting a result focuses the same real star without reading its contents. The inspector shows the selected name, real category, source membership and explicit open/enter actions. It sits beside the scene on laptop and below it as a collapsible section on narrow screens, keeping text out of the sky.
+
+Categories are derived from actual file extensions or drive/folder resource kinds: drives, folders, text/Markdown, PDFs, spreadsheets, pictures, other supported documents and other files. Counts and filters describe only objects loaded into this view. They are not a global storage search, complete link metric or inferred semantic taxonomy. Existing source-map limits, selected locations, directory pages, changed/unavailable states and protected-name rules still apply.
+
+**Fit all stars** clears the local view filters and focused neighborhood, resets the orbit and returns the parent zoom to one. It reveals the actual current input objects rather than scanning additional directories or creating decorative file records. The conventional lists and name filters remain available. Existing fullscreen preserves the mounted search/inspector/navigation state.
+
+Lighting now follows the supplied visual reference more closely: indigo/purple space, a soft lilac/white center, cyan/pink outer-arm particles and type-colored real stars. The original three-arm geometry, quiet labels and no-file-connection-lines requirement remain. Ambient particles and scanner rings are decorative, not additional files or relationships. Reduced-motion mode keeps a static frame until a deliberate control changes the view.
+
+Validation covers real current category counts, combined name/type/source filters, no read on result focus, explicit versioned opening, empty matches, fit reset, fullscreen, phone overflow and existing storage/knowledge routes. This slice does not yet implement global search-to-star across every device or a verified top-hub ranking.
