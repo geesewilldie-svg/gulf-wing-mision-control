@@ -2,7 +2,7 @@
 import NexusFileGalaxy from "./nexus-file-galaxy";
 
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import { useVisualHost } from "./use-visual-host";
 import { Maximize2, Pause, Play, RotateCcw, ScanLine } from "lucide-react";
 import { agents } from "@/lib/demo";
@@ -55,7 +55,7 @@ function drawTerrain(
   const size = 40;
   const scale = Math.min(width * 0.27, height * 0.36);
   const yaw = rotation.y + 0.55;
-  const tilt = Math.max(0.25, Math.min(1.15, 0.58 + rotation.x));
+  const tilt = 0.58 + rotation.x;
   const peaks = [
     [-0.65, -0.5],
     [0.55, -0.5],
@@ -186,6 +186,19 @@ export default function HolographicCore({
   const expandedPanel = useRef<HTMLDivElement>(null);
   const nativeFullscreen = useRef(false);
   const [fullscreenMessage, setFullscreenMessage] = useState("");
+  async function enterFullscreen() {
+    flushSync(() => setExpanded(true));
+    try {
+      if (!expandedPanel.current?.requestFullscreen) throw Error();
+      await expandedPanel.current.requestFullscreen();
+      nativeFullscreen.current = true;
+      setFullscreenMessage("");
+    } catch {
+      setFullscreenMessage(
+        "Browser fullscreen is unavailable. Expanded view remains available.",
+      );
+    }
+  }
   const previousExpanded = useRef(false);
   useEffect(() => {
     if (previousExpanded.current !== expanded)
@@ -207,6 +220,7 @@ export default function HolographicCore({
 
   useEffect(() => {
     if (!expanded) return;
+    const activePanel = expandedPanel.current;
     const close = (event: KeyboardEvent) => {
       if (event.key === "Escape") setExpanded(false);
     };
@@ -228,6 +242,9 @@ export default function HolographicCore({
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("fullscreenchange", fullscreenChanged);
       window.removeEventListener("keydown", close);
+      nativeFullscreen.current = false;
+      if (document.fullscreenElement === activePanel)
+        void document.exitFullscreen().catch(() => {});
     };
   }, [expanded]);
 
@@ -443,6 +460,7 @@ export default function HolographicCore({
           {fullscreenMessage && <p role="status">{fullscreenMessage}</p>}
         </div>
       )}
+      <button onClick={() => void enterFullscreen()}>Fullscreen {mode}</button>
       <div className="holo-toolbar">
         <div className="view-tabs" role="group" aria-label="Hologram view">
           {(["Core", "Galaxy", "Graph"] as const).map((view) => (

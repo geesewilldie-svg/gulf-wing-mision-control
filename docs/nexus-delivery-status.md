@@ -416,3 +416,10 @@ Production webpack build, TypeScript, three direct grant-library tests and 32 de
 Added Knowledge stars / Storage galaxy view controls. Storage navigation reuses the approved animated spiral with distinct drive/folder markers and real current-page file stars. Focus does not read content; entering a directory requests metadata, while Show file actions opens a bounded metadata/original-action dialog. Existing breadcrumbs, page controls, filters and list alternatives remain. Expansion preserves the mounted storage navigator. No new grants, source writes, indexing or model calls were added.
 
 Production webpack build, TypeScript and 32 desktop/mobile regression checks passed, including a real disposable drive → folder → file path, PNG decoding, zero original reads before explicit open, expansion, breadcrumbs and grant removal. Additional keyboard and unsupported-format assertions are included. Native owner acceptance of this new visual layer is not yet observed.
+
+
+### Fullscreen rotation and quieter file labels
+
+Added direct Fullscreen buttons for hologram modes and shared visual wrappers, preserving expanded fallback and state. Native fullscreen is exited when closing the expanded view. Removed the Galaxy pitch and terrain tilt clamps; Galaxy now supports arrow-key rotation as well as background dragging. File names default to hover/focus/selection with an explicit Show all file names option; full accessible names and lists remain. Updated Memory wording to reflect delivered storage navigation.
+
+Production webpack build and TypeScript passed. All 26 desktop/mobile Chromium checks passed, covering actual native fullscreen entry/exit for Core, Galaxy, Graph and shared Memory, forced fullscreen rejection/fallback, rotation beyond old pitch bounds, focused/idle labels and all-names toggling, plus existing file-access and storage navigation regressions. Native owner-device acceptance remains pending.

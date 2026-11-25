@@ -150,9 +150,9 @@ export default function NexusConsole() {
         <section className="nexus-card">
           <h2>Memory Galaxy</h2>
           <p>
-            Files belong to this connected Nexus host. This first view shows
-            selected indexed sources; drive and folder browsing is still being
-            built.
+            Files belong to this connected Nexus host. Choose Knowledge stars
+            for indexed sources or Storage galaxy to explore your selected
+            locations. Use fullscreen and drag or arrow keys to rotate.
           </p>
           <ExpandableVisual name="memory galaxy">
             <NexusFileGalaxy enabled={!disabled} />

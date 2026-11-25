@@ -8,11 +8,11 @@ The earliest saved reconciliation, commit 735bd96, already required broad file c
 
 ## Required appearance and interaction
 
-1. Retain the original animated spiral Galaxy in the main Mission Control dashboard and use that style across shared Memory surfaces. Do not substitute a flat node-map diagram. Brighter labelled file stars are real files; decorative ambient stars do not imply additional documents.
+1. Retain the original animated spiral Galaxy in the main Mission Control dashboard and use that style across shared Memory surfaces. Do not substitute a flat node-map diagram. Brighter file stars are real files; decorative ambient stars do not imply additional documents. Names appear on hover, focus or selection by default, with an optional Show all file names control and the list alternative.
 2. No visible lines connect file stars. Original scanner rings/ticks may remain part of the established galaxy styling.
 3. First click/tap/keyboard selection zooms and centers a file star without reading its content. Nearby real file stars appear as a neighborhood, like selecting a galaxy/planet and seeing neighboring bodies. Selecting a neighbor changes focus; provide Back and Return to galaxy.
 4. Open file or selecting the centered star again opens a large, readable source viewer. In-app Escape closes the preview before its parent galaxy. Keep explicit close controls, pagination where needed, focus return and keyboard/list alternatives.
-5. Keep independent galaxy and request-globe expansion/fullscreen with a browser-fullscreen attempt and expanded fallback. Retain pause/resume, rotation, zoom, reduced motion and appropriate touch targets. Preserve selection/zoom/orientation across expansion by keeping the same mounted visual and moving its portal host.
+5. Keep independent galaxy and request-globe expansion/fullscreen with a browser-fullscreen attempt and expanded fallback. Retain pause/resume, unrestricted two-axis rotation, zoom, reduced motion and appropriate touch targets. Direct Fullscreen controls request browser fullscreen with an expanded fallback. Preserve selection/zoom/orientation across expansion by keeping the same mounted visual and moving its portal host.
 
 ## What neighborhoods mean
 
@@ -58,3 +58,5 @@ The first directory resource layer now browses selected-root metadata without in
 Use synthetic files to verify real star counts, no drawn file connections, centering, zero content-read requests on focus, neighbor evidence/caps, star-to-star exploration, Back/Return, exact preview identity/version and explicit open behavior. Test stale/revoked sources, duplicate names, auth loss, empty folders, pagination, unsupported originals, fullscreen failure, keyboard/touch, reduced motion and selection persistence. Extend native acceptance to actual drive discovery, directories, image/PDF/native viewers and each host/device before marking whole-computer access delivered.
 
 Local storage discovery is available through `Discover-Nexus-Storage.cmd`; see `nexus-storage-discovery.md`. It reports configured locations without expanding file-browser grants or indexing anything. Separate `Setup-Nexus-Storage.cmd` selections can explicitly extend browsing; see `nexus-storage-browse.md`.
+
+Rotation and label refinement: Core, Galaxy and Graph provide direct Fullscreen controls. Galaxy pitch and terrain viewing tilt are no longer clamped to the old narrow range; dragging or arrow keys rotate the view through either axis. The file-name default is contextual to keep the sky visible, while full accessible button names remain available.

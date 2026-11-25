@@ -447,3 +447,6 @@ Browse-only storage update: the local Windows setup command can add/remove disco
 
 
 Storage Galaxy update: the shared file Galaxy now switches between indexed knowledge stars and paged storage navigation in the same original spiral style. Distinct drive/folder objects enter real directories; file stars focus before showing metadata/original actions. Browse and knowledge permissions remain separate; no automatic indexing or provider request occurs. Breadcrumbs and the conventional list remain. See `../nexus-storage-galaxy.md` for current-page coverage, interaction and verification.
+
+
+Visual exploration refinement: direct Fullscreen controls cover Core, Galaxy/Memory and Graph, using browser fullscreen with an expanded fallback. Unrestricted two-axis rotation replaces the earlier Galaxy/terrain pitch clamps. File/resource names are contextual (hover, focus or selection) with an optional all-names toggle; accessible button names and the list remain. This is navigation/presentation only and grants no file or provider permissions.

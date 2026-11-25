@@ -47,6 +47,7 @@ export default function AnimatedFileGalaxy({
     time = useRef(0),
     drag = useRef<{ x: number; y: number } | null>(null);
   const [revision, setRevision] = useState(0);
+  const [allNames, setAllNames] = useState(false);
   const [trail, setTrail] = useState<string[]>([]);
   const focusId = trail.at(-1);
   const neighborhood = galaxyNeighborhood(files, focusId);
@@ -245,13 +246,7 @@ export default function AnimatedFileGalaxy({
     const rotate = (event: PointerEvent) => {
       if (!drag.current) return;
       rotation.current.y += (event.clientX - drag.current.x) * 0.007;
-      rotation.current.x = Math.max(
-        -1.35,
-        Math.min(
-          -0.2,
-          rotation.current.x + (event.clientY - drag.current.y) * 0.005,
-        ),
-      );
+      rotation.current.x += (event.clientY - drag.current.y) * 0.005;
       drag.current = { x: event.clientX, y: event.clientY };
       draw();
     };
@@ -271,7 +266,9 @@ export default function AnimatedFileGalaxy({
     };
   }, [files, zoom, paused, reduced, selectedId, focusId, revision]);
   return (
-    <div className="memory-spiral-shell">
+    <div
+      className={`memory-spiral-shell ${allNames ? "show-all-file-names" : ""}`}
+    >
       <div className="memory-spiral-controls">
         <span>
           {resourceMode
@@ -280,6 +277,12 @@ export default function AnimatedFileGalaxy({
         </span>
         <button onClick={() => setPaused((value) => !value)}>
           {paused ? "Resume galaxy" : "Pause galaxy"}
+        </button>
+        <button
+          aria-pressed={allNames}
+          onClick={() => setAllNames((value) => !value)}
+        >
+          {allNames ? "Hide extra file names" : "Show all file names"}
         </button>
         <button
           onClick={() => {
@@ -309,6 +312,30 @@ export default function AnimatedFileGalaxy({
       >
         <canvas
           ref={canvas}
+          tabIndex={0}
+          onKeyDown={(event) => {
+            if (
+              !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(
+                event.key,
+              )
+            )
+              return;
+            event.preventDefault();
+            rotation.current.y +=
+              event.key === "ArrowRight"
+                ? 0.15
+                : event.key === "ArrowLeft"
+                  ? -0.15
+                  : 0;
+            rotation.current.x +=
+              event.key === "ArrowDown"
+                ? 0.15
+                : event.key === "ArrowUp"
+                  ? -0.15
+                  : 0;
+            setPaused(true);
+            setRevision((value) => value + 1);
+          }}
           role="img"
           aria-label="Original animated spiral galaxy style with selectable file stars"
         />
@@ -382,8 +409,9 @@ export default function AnimatedFileGalaxy({
         {resourceMode
           ? "Select a drive, folder or file object to focus it, then enter the location or show file actions. Only the current directory page is shown."
           : "Select a file star to zoom into its neighborhood, then open it or explore a nearby file star."}{" "}
-        The faint background stars are decorative. Drag the background to
-        rotate.
+        The faint background stars are decorative. Drag in any direction to
+        rotate, or focus the background and use arrow keys. Names appear on
+        hover, focus or selection; the file list is always available.
       </p>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import { useVisualHost } from "./use-visual-host";
 export default function ExpandableVisual({
   name,
@@ -15,8 +15,22 @@ export default function ExpandableVisual({
   const trigger = useRef<HTMLButtonElement>(null),
     panel = useRef<HTMLDivElement>(null),
     native = useRef(false);
+  async function enterFullscreen() {
+    flushSync(() => setExpanded(true));
+    try {
+      if (!panel.current?.requestFullscreen) throw Error();
+      await panel.current.requestFullscreen();
+      native.current = true;
+      setMessage("");
+    } catch {
+      setMessage(
+        "Browser fullscreen is unavailable. Expanded view remains available.",
+      );
+    }
+  }
   useEffect(() => {
     if (!expanded) return;
+    const activePanel = panel.current;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const app = document.querySelector<HTMLElement>(".app-shell"),
@@ -42,7 +56,8 @@ export default function ExpandableVisual({
       if (app) app.inert = !!inert;
       document.removeEventListener("keydown", key);
       document.removeEventListener("fullscreenchange", change);
-      if (document.fullscreenElement === panel.current)
+      native.current = false;
+      if (document.fullscreenElement === activePanel)
         void document.exitFullscreen().catch(() => {});
       trigger.current?.focus();
     };
@@ -103,6 +118,7 @@ export default function ExpandableVisual({
       <button ref={trigger} onClick={() => setExpanded(true)}>
         Expand {name}
       </button>
+      <button onClick={() => void enterFullscreen()}>Fullscreen {name}</button>
       <div ref={slot} />
       {host && createPortal(content, host)}
     </>
