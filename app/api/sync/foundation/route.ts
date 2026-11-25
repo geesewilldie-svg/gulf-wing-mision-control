@@ -1,3 +1,4 @@
+import { inspectNoteVersions } from "@/lib/server/note-versions";
 import {
   previewUtilityActivation,
   activateUtility,
@@ -62,6 +63,8 @@ export async function POST(request: Request) {
       throw new SyncError(400, "Choose a supported foundation operation.");
     try {
       switch (body.op) {
+        case "memory.notes.inspect":
+          return response(await inspectNoteVersions(body));
         case "memory.journal.disable":
         case "memory.vault.status":
         case "memory.vault.disable":

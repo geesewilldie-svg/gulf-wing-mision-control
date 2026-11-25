@@ -1,3 +1,4 @@
+import { taskNoteVersion, trackSavedNote } from "./note-versions";
 import fs from "node:fs/promises";
 import { indexSavedSnapshot } from "./local-files";
 import path from "node:path";
@@ -162,17 +163,26 @@ export async function workJournalTick(
           await receipt(ledger, name, { ...claim, state: "skipped" });
           break;
         }
+        const sourceVersion = taskNoteVersion(task);
         const saved = await writeSnapshot(
           root,
           portableWorkNote(task, claim.at, true),
           "journal-" + task.scope.toLowerCase().replace(/ /g, "-"),
           since,
         );
+        const tracking = await trackSavedNote(saved, {
+          workspace: task.scope,
+          kind: "work-note",
+          taskId: task.id,
+          sourceVersion,
+          producer: "automatic",
+        });
         const confirmed = {
           ...claim,
           state: "saved",
           ...saved,
           indexing: "pending",
+          tracking,
         };
         await receipt(ledger, name, confirmed);
         const indexed = await indexSavedSnapshot(saved.file, saved.sha256);
@@ -200,12 +210,19 @@ export async function workJournalReceipts() {
     names = await fs.readdir(folder);
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT")
-      return { count: 0, unconfirmed: 0, full: false, pendingIndex: 0 };
+      return {
+        count: 0,
+        unconfirmed: 0,
+        full: false,
+        pendingIndex: 0,
+        pendingTracking: 0,
+      };
     throw error;
   }
   names = names.filter((name) => /^[a-f0-9-]{36}-\d+\.json$/i.test(name));
   let unknown = 0,
-    pendingIndex = 0;
+    pendingIndex = 0,
+    pendingTracking = 0;
   for (const name of names.slice(0, 500)) {
     try {
       const filename = path.join(folder, name);
@@ -214,6 +231,8 @@ export async function workJournalReceipts() {
         throw Error();
       const entry = JSON.parse(await fs.readFile(filename, "utf8"));
       if (!["saved", "skipped"].includes(entry.state)) unknown++;
+      if (entry.state === "saved" && entry.tracking === "pending")
+        pendingTracking++;
       if (entry.state === "saved" && entry.indexing === "pending")
         pendingIndex++;
     } catch {
@@ -231,6 +250,7 @@ export async function workJournalReceipts() {
   // Orphaned capacity reservations are conservative unknown outcomes too.
   return {
     pendingIndex,
+    pendingTracking,
     count: Math.max(names.length, reserved),
     unconfirmed: unknown + Math.max(0, reserved - names.length),
     full: Math.max(names.length, reserved) >= 500,

@@ -3436,3 +3436,7 @@ body {
   .memory-galaxy-workspace > .memory-spiral-stage { order:0; width:100%; }
   .memory-galaxy-inspector { order:1; width:100%; border-right:0; border-top:1px solid #514363; box-sizing:border-box; }
 }
+.saved-note-versions { margin-top:14px; }
+.saved-note-versions summary { cursor:pointer; color:#d5c4ef; }
+.saved-note-versions li { padding:14px 0; border-top:1px solid #27495f; overflow-wrap:anywhere; }
+.saved-note-versions code { white-space:normal; font-size:11px; }

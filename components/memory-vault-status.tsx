@@ -10,6 +10,7 @@ type Status = {
     unconfirmed: number;
     full: boolean;
     pendingIndex?: number;
+    pendingTracking?: number;
   };
 };
 export default function MemoryVaultStatus() {
@@ -124,6 +125,13 @@ export default function MemoryVaultStatus() {
           to enter the file index. They are already saved; do not create another
           copy. New saves can be indexed after the selected-file index is
           initialized and within its limits.
+        </p>
+      )}
+      {!!status?.journalReceipts?.pendingTracking && (
+        <p>
+          {status.journalReceipts.pendingTracking} saved journal notes have
+          pending version tracking. Their files are already saved; do not create
+          another copy to retry tracking.
         </p>
       )}
       <div className="foundation-actions">

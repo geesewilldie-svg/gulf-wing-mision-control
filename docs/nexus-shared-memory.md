@@ -96,3 +96,7 @@ Each entry distinguishes saved/read-back-at-the-recorded-time, skipped-before-wr
 See [the applied JARVIS capability plan](nexus-jarvis-capability-plan.md) for model switching over the same permitted memory service. Model identity, conversation context, voice/personality and tool permissions are independent state; changing one does not silently change the others.
 
 The local answer route now consumes a versioned internal shared-memory context envelope with stable source revisions/hashes and separate owner/work provenance. All in-budget owner instructions remain intact; external audiences receive no private owner/work content. See `nexus-shared-memory-context.md`. This is an adapter-ready retrieval slice, not a newly connected provider or synchronized vault writer.
+
+## Saved-note lifecycle tracking
+
+The first version/identity catalog is now delivered for new reviewed snapshots and new automatic journal notes. Stable logical note groups and source-version/file hashes support read-only inspection of unchanged, externally edited, missing, unavailable and historical copies. Foundation's **Saved note versions** panel checks ten tracked files at a time. Existing files are never overwritten or imported, and registration failure remains separate from a confirmed save. Older unregistered exports are not automatically adopted. See `nexus-note-versions.md`; managed current-note replacement/conflict resolution and metadata recovery remain later stages.

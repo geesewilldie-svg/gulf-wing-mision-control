@@ -1,3 +1,9 @@
+import {
+  noteSource,
+  trackSavedNote,
+  ownerNoteVersion,
+  taskNoteVersion,
+} from "./note-versions";
 import path from "node:path";
 import { indexSavedSnapshot } from "./local-files";
 import { createHash } from "node:crypto";
@@ -72,6 +78,7 @@ export async function memoryVault(body: any) {
     );
   const kind = body.kind || "owner-memory";
   let markdown: string;
+  let sourceVersion: string | null;
   if (kind === "work-note") {
     if (
       typeof body.taskId !== "string" ||
@@ -92,14 +99,26 @@ export async function memoryVault(body: any) {
         409,
         "Wait for a saved task output before reviewing a work note.",
       );
+    sourceVersion = taskNoteVersion(task);
     markdown = portableWorkNote(task, exportedAt);
   } else {
-    markdown = portableMemory(
-      listConversationMemory(workspace),
-      workspace,
-      exportedAt,
-    );
+    const records = listConversationMemory(workspace);
+    sourceVersion = ownerNoteVersion(records);
+    markdown = portableMemory(records, workspace, exportedAt);
   }
+  if (
+    !sourceVersion ||
+    sourceVersion !==
+      noteSource(
+        workspace,
+        kind,
+        kind === "work-note" ? body.taskId : undefined,
+      )
+  )
+    throw new SyncError(
+      409,
+      "Memory or task changed while preparing the snapshot. Review again.",
+    );
   const sha256 = createHash("sha256").update(markdown).digest("hex");
   if (body.op === "memory.vault.preview")
     return {
@@ -124,8 +143,15 @@ export async function memoryVault(body: any) {
       (kind === "work-note" ? "work-" : "") +
         workspace.toLowerCase().replace(/ /g, "-"),
     );
+    const tracking = await trackSavedNote(saved, {
+      workspace,
+      kind,
+      sourceVersion,
+      producer: "reviewed",
+      ...(kind === "work-note" ? { taskId: body.taskId } : {}),
+    });
     const indexed = await indexSavedSnapshot(saved.file, saved.sha256);
-    return { ...saved, indexing: indexed.state };
+    return { ...saved, indexing: indexed.state, tracking };
   } catch {
     throw new SyncError(
       503,

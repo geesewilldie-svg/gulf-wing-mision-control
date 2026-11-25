@@ -89,3 +89,5 @@ These are implementation requirements, not permission to enable providers, chang
 ## Delivered next-phase slices
 
 The Galaxy workspace now has current-view search/type/source filters, a selected-record rail, actual category counts, fit/reset and reference-inspired indigo/lilac lighting; see `nexus-galaxy-workspace.md`. Global catalog search and top-hub metrics remain pending. The first internal shared local-memory retrieval envelope is used by local answers with provenance/current-version boundaries; see `nexus-shared-memory-context.md`. This does not yet connect every agent or synchronize vault notes. `Update-Nexus.cmd` automates the native update sequence after its first local acquisition.
+
+Saved-note lifecycle refinement: new saves now have a private logical identity/source-version catalog and a read-only Foundation inspector for external edits, historical versions and missing sources/files. Existing snapshots remain create-only; this is not synchronized note replacement or general cross-agent write-back. See `nexus-note-versions.md` for the delivered boundary and remaining recovery/conflict-resolution work.

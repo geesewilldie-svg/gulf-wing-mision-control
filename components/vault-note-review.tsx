@@ -56,7 +56,7 @@ export default function VaultNoteReview({
       if (save) {
         setPreview(null);
         setResult(
-          `Vault snapshot saved and read back: ${data.filename}. ${data.indexing === "indexed" ? "Added to the file index. Open the galaxy or use Reload sources to see it." : "Indexing is pending; refresh the laptop file index if it does not appear."}`,
+          `Vault snapshot saved and read back: ${data.filename}. ${data.indexing === "indexed" ? "Added to the file index. Open the galaxy or use Reload sources to see it." : "Indexing is pending; refresh the laptop file index if it does not appear."} ${data.tracking === "pending" ? "The file is saved; version tracking is pending. Do not create another copy to retry tracking." : ""}`,
         );
       } else setPreview(data);
     } catch (error) {
