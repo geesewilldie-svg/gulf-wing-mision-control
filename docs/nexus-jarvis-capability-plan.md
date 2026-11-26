@@ -56,3 +56,5 @@ This plan changes documentation, not runtime configuration. Existing authorized 
 ## Concrete connection destinations supplied by the owner
 
 The owner supplied `github.com/morluto/rea`, `huggingface.co` and `venice.ai`. [Reference connection architecture](nexus-reference-connections.md) now pins the verified REA source/package, documents runtime and browser constraints, and defines separate Hub model-asset and Venice hosted-inference adapters. The three appear in setup inventory as planned targets, not connected runtime providers. The general REA repository uncertainty above is resolved by the source review; target-specific execution and model/provider availability remain separate verification.
+
+Implemented model-identity slice: existing supported adapter status now exposes configured request-model IDs without a generation probe; successful answers show per-call requested and provider-reported IDs. The latter are response metadata, not independent model verification. This advances the catalog/indicator requirement, while voice-driven model switching, new hosted adapters and model acquisition remain unconnected. See `nexus-model-identity.md`.

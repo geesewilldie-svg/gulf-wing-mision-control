@@ -6,6 +6,7 @@ export type ProviderStatus = {
   configured: boolean;
   external: boolean;
   detail: string;
+  requestedModel?: string | null;
 };
 export type AgentEvent = {
   id: string;
@@ -17,6 +18,8 @@ export type AgentEvent = {
 export type AgentResult = {
   provider: ProviderId;
   name: string;
+  requestedModel?: string | null;
+  reportedModel?: string | null;
   answer?: string;
   error?: string;
 };
@@ -51,4 +54,15 @@ export function planAgents(
     ...permitted.filter((p) => p.id !== "local" && p.id !== preferred),
   ];
   return ordered.slice(0, mode === "compare" ? 2 : 1).map((p) => p.id);
+}
+
+export type ModelIdentity = {
+  requestedModel: string | null;
+  reportedModel: string | null;
+};
+export function modelIdentifier(value: unknown): string | null {
+  return typeof value === "string" &&
+    /^[a-zA-Z0-9][a-zA-Z0-9._:/@+-]{0,199}$/.test(value)
+    ? value
+    : null;
 }

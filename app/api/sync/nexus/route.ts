@@ -476,6 +476,10 @@ export async function POST(request: Request) {
       request.signal.throwIfAborted();
       const name = providers.find((p) => p.id === id)!.name;
       try {
+        let identity: {
+          requestedModel: string | null;
+          reportedModel: string | null;
+        } = { requestedModel: null, reportedModel: null };
         const answer = await trackAgent(
           id,
           () =>
@@ -493,10 +497,15 @@ export async function POST(request: Request) {
                   : ""),
               id === "local" ? history : [],
               request.signal,
+              {
+                onIdentity: (value) => {
+                  identity = value;
+                },
+              },
             ),
           request.signal,
         );
-        answers.push({ provider: id, name, answer });
+        answers.push({ provider: id, name, answer, ...identity });
       } catch {
         if (request.signal.aborted)
           throw new SyncError(499, "Nexus request cancelled.");

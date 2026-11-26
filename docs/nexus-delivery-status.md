@@ -498,3 +498,9 @@ Validation: production webpack build, TypeScript and all 34 desktop/mobile catal
 Connected local planning to the same scoped/versioned owner/work retrieval contract used by local answers. Current owner corrections/deletions and task history are reflected in new plans; retained exports and other-workspace task artifacts remain excluded. Before/after generation checks reject changed context, including stale partial plans. No additional agent account, provider, permission or schema change is introduced.
 
 Validation: production webpack build, TypeScript and all 48 desktop/mobile planning, Foundation, shared-memory, answer-source and task-context checks passed. New planner fixtures verify reuse of current owner/work identities, owner correction/deletion, cross-workspace and retained-snapshot exclusion, source changes before dispatch/during generation, and stale incomplete-draft rejection. All model calls were mocked local requests; no owner data, provider account or external model was used.
+
+### Requested and reported model identity
+
+Added configured model IDs to existing provider status and per-response requested/reported model metadata beside successful answers. Configuration is not labelled live readiness, missing response metadata remains unknown and failed/cancelled calls do not gain successful identities. Model identifiers are bounded; no probe, provider activation, fallback or routing change is introduced.
+
+Validation: production webpack build, TypeScript and all 70 desktop/mobile model-identity, routing, planner, answer-memory, work-context and Gemini Public checks passed. New fixtures cover configuration without network probes, requested/reported differences, absent/invalid metadata, failed-call identity exclusion, per-answer API wiring, UI distinctions and response normalization for all four existing adapters. Providers were synthetic transports only; no real credentials, owner data or live model requests were used.

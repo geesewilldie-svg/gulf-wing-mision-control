@@ -5,6 +5,7 @@ import path from "node:path";
 import { configuredLocalModel } from "./nexus-store";
 import { SyncError } from "./sync-store";
 import { hasPublicGeminiPolicy } from "./gemini-public";
+import { modelIdentifier, type ModelIdentity } from "../agent-router";
 import type { ProviderId, ProviderStatus, AgentEvent } from "../agent-router";
 import type { ConversationTurn } from "../conversation";
 const names = {
@@ -27,6 +28,7 @@ export async function providerStatus(): Promise<ProviderStatus[]> {
       name: names.local,
       configured: !!local,
       external: false,
+      requestedModel: modelIdentifier(local),
       detail: local
         ? "Configured on this laptop; availability checked when used."
         : "Run local AI setup.",
@@ -44,6 +46,7 @@ export async function providerStatus(): Promise<ProviderStatus[]> {
         name: names[id],
         configured,
         external: true,
+        requestedModel: configured ? modelIdentifier(process.env[model]) : null,
         detail:
           id === "gemini" && publicOnly
             ? "Public-only Gemini: use the dedicated Gemini Public tab. Private-context routing, Auto and Compare exclude it."
@@ -159,13 +162,17 @@ export async function boundedJSON(r: Response, limit = 500000): Promise<any> {
   }
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
 }
+type ProviderCallOptions = {
+  purpose?: "planning";
+  onIdentity?: (identity: ModelIdentity) => void;
+};
 async function callProvider(
   id: ProviderId,
   query: string,
   system: string,
   history: ConversationTurn[],
   signal: AbortSignal,
-  options?: { purpose: "planning" },
+  options?: ProviderCallOptions,
 ): Promise<string> {
   const timeout = AbortSignal.any([
     signal,
@@ -176,12 +183,14 @@ async function callProvider(
     ...history,
     { role: "user", content: query },
   ];
+  let requestedModel: string | null = null;
   let url: string,
     headers: Record<string, string> = { "Content-Type": "application/json" },
     body: unknown;
   if (id === "local") {
     const model = await configuredLocalModel();
     if (!model) throw Error("Local model not configured.");
+    requestedModel = modelIdentifier(model);
     url = "http://127.0.0.1:11434/api/chat";
     body = {
       model,
@@ -199,6 +208,7 @@ async function callProvider(
       model = process.env[modelVar]?.trim();
     if (process.env.GW_NEXUS_ALLOW_EXTERNAL !== "1" || !key || !model)
       throw Error("Provider is not configured.");
+    requestedModel = modelIdentifier(model);
     timeout.throwIfAborted();
     await reserveExternal();
     timeout.throwIfAborted();
@@ -274,6 +284,13 @@ async function callProvider(
         ? "Planning response reached its generation limit; the saved draft needs review."
         : "Planning completion was not confirmed by the model; the saved draft needs review.",
     );
+  timeout.throwIfAborted();
+  options?.onIdentity?.({
+    requestedModel,
+    reportedModel: modelIdentifier(
+      id === "gemini" ? result.modelVersion : result.model,
+    ),
+  });
   return answer.slice(0, 12000);
 }
 
@@ -287,7 +304,7 @@ export async function askProvider(
   system: string,
   history: ConversationTurn[],
   signal: AbortSignal,
-  options?: { purpose: "planning" },
+  options?: ProviderCallOptions,
 ): Promise<string> {
   if (id === "gemini" && (await hasPublicGeminiPolicy()))
     throw new SyncError(

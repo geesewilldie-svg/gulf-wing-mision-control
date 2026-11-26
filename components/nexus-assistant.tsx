@@ -611,6 +611,25 @@ export default function NexusAssistant({
                 {answer.routing && (
                   <p className="nexus-router-note">{answer.routing.reason}</p>
                 )}
+                {!!answer.agents?.some((agent) => agent.answer) && (
+                  <details>
+                    <summary>Model response details</summary>
+                    <p>
+                      Requested model comes from this request's configuration.
+                      Reported model is response metadata from the provider, not
+                      independent identity verification.
+                    </p>
+                    {answer.agents
+                      .filter((agent) => agent.answer)
+                      .map((agent) => (
+                        <p key={agent.provider}>
+                          {agent.name} · Requested:{" "}
+                          {agent.requestedModel || "Not recorded"} · Provider
+                          reported: {agent.reportedModel || "Not supplied"}
+                        </p>
+                      ))}
+                  </details>
+                )}
                 {answer.warnings?.map((w) => (
                   <p className="nexus-router-note" key={w}>
                     {w}

@@ -179,6 +179,21 @@ export default function NexusAgentActivity({ enabled }: { enabled: boolean }) {
               "Short requests may finish between refreshes; their completed paths remain highlighted briefly. Signals are shown for 15 minutes; durable coding-worker history remains in Foundation."}
           </p>
           <details>
+            <summary>Configured inference models</summary>
+            <p>
+              Configuration only; readiness and quota are checked when used. No
+              generation probe is sent by this view.
+            </p>
+            {state?.providers.map((provider) => (
+              <p key={provider.id}>
+                {provider.name} ·{" "}
+                {provider.configured ? "Configured" : "Disabled"} · Requested
+                model: {provider.requestedModel || "Not recorded"}.{" "}
+                {provider.detail}
+              </p>
+            ))}
+          </details>
+          <details>
             <summary>Recent request outcomes</summary>
             <ul>
               {state?.events.slice(0, 10).map((e) => (
