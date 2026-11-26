@@ -5,27 +5,37 @@ export default function ReaReadiness() {
   const [data, setData] = useState<Status | null>(null),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  const [protocol, setProtocol] = useState<{
+    serverVersion: string;
+    tools: { name: string; schemaSha256: string }[];
+    checkedAt: string;
+    notice: string;
+  } | null>(null);
   const pending = useRef<AbortController | null>(null);
   useEffect(() => () => pending.current?.abort(), []);
-  async function inspect() {
+  async function inspect(testProtocol = false) {
     pending.current?.abort();
     const controller = new AbortController();
     pending.current = controller;
     setData(null);
+    setProtocol(null);
     setError("");
     setBusy(true);
     try {
       const response = await fetch("/api/sync/agents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "rea-preflight" }),
+        body: JSON.stringify({
+          action: testProtocol ? "rea-protocol-check" : "rea-preflight",
+        }),
         signal: controller.signal,
       });
       const result = await response.json();
       if (controller.signal.aborted) return;
       if (!response.ok)
         throw Error(result.error || "REA prerequisite check unavailable.");
-      setData(result);
+      if (testProtocol) setProtocol(result);
+      else setData(result);
     } catch (failure) {
       if (!controller.signal.aborted) setError((failure as Error).message);
     } finally {
@@ -42,7 +52,43 @@ export default function ReaReadiness() {
       <button disabled={busy} onClick={() => void inspect()}>
         Check REA prerequisites
       </button>
-      {busy && <p role="status">Reading prerequisite metadata…</p>}
+      <p>
+        The protocol test starts a short-lived local REA process and reads its
+        catalog. No browser is attached and no inspection tool is called.
+      </p>
+      <button disabled={busy} onClick={() => void inspect(true)}>
+        Test REA protocol without browser
+      </button>
+      {busy && (
+        <button
+          onClick={() => {
+            pending.current?.abort();
+            setBusy(false);
+            setError(
+              "REA check cancelled; process cleanup may still be finishing.",
+            );
+          }}
+        >
+          Cancel REA check
+        </button>
+      )}
+      {busy && <p role="status">Checking REA…</p>}
+      {protocol && (
+        <section aria-label="REA protocol results">
+          <p>{protocol.notice}</p>
+          <p>
+            Protocol server version: {protocol.serverVersion}. Checked{" "}
+            {protocol.checkedAt}.
+          </p>
+          <ul>
+            {protocol.tools.map((tool) => (
+              <li key={tool.name} style={{ overflowWrap: "anywhere" }}>
+                {tool.name} · Schema SHA-256: {tool.schemaSha256}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {error && <p role="status">{error}</p>}
       {data && (
         <section aria-label="REA prerequisite results">
