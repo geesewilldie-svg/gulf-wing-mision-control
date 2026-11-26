@@ -1,4 +1,5 @@
 "use client";
+import LocalModelCatalog from "./local-model-catalog";
 import ExpandableVisual from "./expandable-visual";
 import { useEffect, useState } from "react";
 import type { AgentEvent, ProviderStatus } from "@/lib/agent-router";
@@ -178,6 +179,7 @@ export default function NexusAgentActivity({ enabled }: { enabled: boolean }) {
             {message ||
               "Short requests may finish between refreshes; their completed paths remain highlighted briefly. Signals are shown for 15 minutes; durable coding-worker history remains in Foundation."}
           </p>
+          {state && <LocalModelCatalog />}
           <details>
             <summary>Configured inference models</summary>
             <p>

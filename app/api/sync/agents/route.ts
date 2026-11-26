@@ -1,4 +1,12 @@
-import { authorized, failure, response } from "@/lib/server/sync-store";
+import { inspectLocalModels } from "@/lib/server/local-model-catalog";
+import {
+  authorized,
+  failure,
+  response,
+  sameOrigin,
+  readBody,
+  SyncError,
+} from "@/lib/server/sync-store";
 import { providerStatus, events } from "@/lib/server/agent-router";
 import { workerActivity } from "@/lib/server/foundation/store";
 import { codexWorkerEnabled } from "@/lib/server/foundation/codex-worker";
@@ -24,5 +32,22 @@ export async function GET(request: Request) {
     });
   } catch (e) {
     return failure(e);
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    sameOrigin(request);
+    await authorized(request, true);
+    const body = (await readBody(request, 1000)) as any;
+    if (
+      !body ||
+      body.action !== "local-model-catalog" ||
+      Object.keys(body).some((key) => key !== "action")
+    )
+      throw new SyncError(400, "Choose the local model catalog operation.");
+    return response(await inspectLocalModels(request.signal));
+  } catch (error) {
+    return failure(error);
   }
 }
