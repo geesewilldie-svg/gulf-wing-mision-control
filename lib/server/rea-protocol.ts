@@ -210,11 +210,13 @@ export async function inspectReaProtocol(signal: AbortSignal) {
       ),
       target = path.join(root, "tools", "rea"),
       pkg = path.join(target, "node_modules", "rea-agents");
+    // The managed install is a runtime resource. Trace the committed pin data,
+    // not a broad filesystem glob over the installed package.
     const read = async (filename: string, limit: number) => {
-      const stat = await fs.lstat(filename);
+      const stat = await fs.lstat(/* turbopackIgnore: true */ filename);
       if (!stat.isFile() || stat.isSymbolicLink() || stat.size > limit)
         throw Error("Unsafe file");
-      const handle = await fs.open(filename, "r");
+      const handle = await fs.open(/* turbopackIgnore: true */ filename, "r");
       try {
         const opened = await handle.stat();
         if (
@@ -269,7 +271,15 @@ export async function inspectReaProtocol(signal: AbortSignal) {
       }
       if (
         createHash("sha256")
-          .update(await read(path.join(pkg, ...relative.split("/")), 10000000))
+          .update(
+            await read(
+              path.join(
+                /* turbopackIgnore: true */ pkg,
+                ...relative.split("/"),
+              ),
+              10000000,
+            ),
+          )
           .digest("hex") !== expected
       )
         throw Error("Pinned protocol files changed");
