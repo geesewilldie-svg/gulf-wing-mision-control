@@ -1,3 +1,4 @@
+import type { ModelIdentity } from "../../agent-router";
 import { sharedMemoryContext } from "../shared-memory-context";
 import { workContextStamp } from "../work-memory-context";
 import { ownerContextRevision } from "./store";
@@ -50,6 +51,7 @@ export async function generatePlan(
       "Task, owner memory or saved work changed before planning dispatch.",
     );
   let output: string;
+  let identity: ModelIdentity = { requestedModel: null, reportedModel: null };
   try {
     output = await askProvider(
       "local",
@@ -68,7 +70,12 @@ export async function generatePlan(
         JSON.stringify(sources),
       [],
       signal,
-      { purpose: "planning" },
+      {
+        purpose: "planning",
+        onIdentity: (value) => {
+          identity = value;
+        },
+      },
     );
   } catch (error) {
     signal.throwIfAborted();
@@ -83,10 +90,21 @@ export async function generatePlan(
     throw new Error(
       "Task, owner memory or saved work changed during planning. Stale output was not accepted.",
     );
-  return memory.owner.truncated
-    ? output +
-        "\n\nMemory coverage: owner context contains shortened excerpts; consult current owner records for full details."
-    : output;
+  const coverage = memory.owner.truncated
+    ? "\n\nMemory coverage: owner context contains shortened excerpts; consult current owner records for full details."
+    : "";
+  return (
+    output +
+    coverage +
+    "\n\nModel provenance (application-recorded; reported identity is not independently verified):\n" +
+    JSON.stringify({
+      version: 1,
+      provider: "local",
+      ...identity,
+      generatedAt: new Date().toISOString(),
+      generatedTextSha256: createHash("sha256").update(output).digest("hex"),
+    })
+  );
 }
 export async function coordinatorTick(
   worker: (t: NexusTask, signal: AbortSignal) => Promise<string> = generatePlan,

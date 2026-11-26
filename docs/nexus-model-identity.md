@@ -9,3 +9,11 @@ Identity is held per call and attached only to accepted text responses. Failed/c
 Only supported existing adapters are represented. Venice/Hugging Face/REA remain planned connections under their own contracts. This feature does not enable provider accounts, choose/download a new model, change routing, expose credentials or guarantee model availability. Provider billing/quota checks still apply when an authorized inference request is actually made.
 
 One-answer typed local model choices now retain their selected ID as the actual requested model in this response metadata; the saved default is not rewritten. See `nexus-local-model-choice.md` for the separately implemented local selector.
+
+## Durable provenance on new local plans
+
+New successfully completed local model generations now append an application-recorded provenance footer to the planning output: contract version, local provider, actual requested ID, provider-reported ID (or null), generation time and SHA-256 of the generated text before the footer/coverage notice. The coordinator's existing full-artifact hash separately covers the resulting saved output and provenance. This metadata survives reading the task again or changing the configured default because it is stored with that artifact, not reconstructed from current configuration.
+
+Reviewed work-note exports and automatic completed-task notes quote the saved output, retaining this provenance under their existing bounds/permissions. Recorded model identity does not verify the plan's claims, prove external execution or grant authority. The footer is plain artifact text, not a new trusted import format; arbitrary old/imported text bearing the same words is not adopted as application metadata.
+
+Old artifacts, injected/custom worker outputs and incomplete generations are not backfilled or assigned guessed model identities. Incomplete local responses still use the existing review-draft handling; stale/cancelled results remain rejected. No provider call, task schema migration, default-model change or source-file rewrite is added by provenance recording.

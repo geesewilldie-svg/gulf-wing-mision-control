@@ -169,3 +169,56 @@ test("a stale incomplete generation is rejected rather than retained as a draft"
       generatePlan(task, new AbortController().signal, async () => []),
     ).rejects.toThrow("Stale output was not accepted");
   }));
+
+test("completed plans retain application model provenance and exports preserve it without rewriting history", () =>
+  fixture(async () => {
+    const { coordinatorTick } = await import(
+      "../lib/server/foundation/coordinator"
+    );
+    const { snapshot } = await import("../lib/server/foundation/store");
+    const { portableWorkNote } = await import(
+      "../lib/server/portable-work-note"
+    );
+    const id = createTask({
+      scope: "Personal",
+      mode: "plan",
+      request: "QUARTZ checklist",
+    });
+    changeTask({ id, revision: 0, action: "queue" });
+    globalThis.fetch = (async () =>
+      Response.json({
+        model: "fixture:reported",
+        done: true,
+        done_reason: "stop",
+        message: {
+          content:
+            "1. Review the current checklist.\n2. Verify the saved result and record differences.",
+        },
+      })) as typeof fetch;
+    await coordinatorTick((task) =>
+      generatePlan(task, new AbortController().signal, async () => []),
+    );
+    const saved = snapshot().tasks.find((task) => task.id === id)!;
+    expect(saved.state).toBe("completed");
+    const marker =
+      "Model provenance (application-recorded; reported identity is not independently verified):\n";
+    const provenance = JSON.parse(
+      saved.output.split(marker)[1].split("\n\nArtifact SHA-256:")[0],
+    );
+    expect(provenance).toMatchObject({
+      version: 1,
+      provider: "local",
+      requestedModel: "fixture-local-model",
+      reportedModel: "fixture:reported",
+    });
+    expect(provenance.generatedTextSha256).toMatch(/^[a-f0-9]{64}$/);
+    process.env.GW_NEXUS_MODEL = "different-default";
+    const readAgain = snapshot().tasks.find((task) => task.id === id)!;
+    expect(readAgain.output).toBe(saved.output);
+    expect(portableWorkNote(readAgain, new Date().toISOString())).toContain(
+      "fixture:reported",
+    );
+    expect(portableWorkNote(readAgain, new Date().toISOString())).not.toContain(
+      "different-default",
+    );
+  }));
