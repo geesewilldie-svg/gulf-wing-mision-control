@@ -66,3 +66,7 @@ No silent hosted fallback when local inference fails. No automatic retries after
 5. Connect resulting evidence/model identities to the common memory, capability registry and assistant-status UI. Keep artifact save, index discovery, factual verification and provider sharing separate.
 
 Acceptance includes zero network/file effects from connection inventory, no model call during status/catalog lookup, wrong-runtime rejection, exact target/origin capture limits, bounded artifacts, cancelled/uncertain operation handling, hash/license/runtime checks, no private-context leakage to disabled providers and truthful rendered readiness on desktop/phone. Installed software, downloaded weights and verified adapter execution must remain separate states.
+
+## Implemented REA prerequisite inspection
+
+The actual Nexus server Node version and fixed isolated package metadata can now be inspected explicitly under Connection activity. Exact pinned runtime ranges are checked without installation, subprocesses or browser attachment. Matching metadata is not package integrity or adapter execution verification; REA remains unconnected. See `nexus-rea-preflight.md`. The earlier cloud runtime observation remains historical; the new result reports the current host process rather than inferring Windows compatibility from a successful Next build.

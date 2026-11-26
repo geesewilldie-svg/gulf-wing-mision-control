@@ -1,3 +1,4 @@
+import { inspectReaReadiness } from "@/lib/server/rea-readiness";
 import { inspectLocalModels } from "@/lib/server/local-model-catalog";
 import {
   authorized,
@@ -42,11 +43,15 @@ export async function POST(request: Request) {
     const body = (await readBody(request, 1000)) as any;
     if (
       !body ||
-      body.action !== "local-model-catalog" ||
+      !["local-model-catalog", "rea-preflight"].includes(body.action) ||
       Object.keys(body).some((key) => key !== "action")
     )
-      throw new SyncError(400, "Choose the local model catalog operation.");
-    return response(await inspectLocalModels(request.signal));
+      throw new SyncError(400, "Choose a supported metadata inspection.");
+    return response(
+      body.action === "rea-preflight"
+        ? await inspectReaReadiness()
+        : await inspectLocalModels(request.signal),
+    );
   } catch (error) {
     return failure(error);
   }
