@@ -227,3 +227,152 @@ test("desktop and phone show journal status and can disable only automatic notes
     "Reviewed saves remain available",
   );
 });
+
+test("confirmed journal metadata recovers after a transient catalog lock without another file write", async () =>
+  isolated(async (dir, target) => {
+    await enableWorkJournal(dir);
+    const id = completed();
+    await fs.writeFile(path.join(dir, "note-versions.lock"), "held");
+    await workJournalTick();
+    const receiptPath = path.join(dir, "work-journal", `${id}-0.json`);
+    const saved = JSON.parse(await fs.readFile(receiptPath, "utf8"));
+    expect(saved).toMatchObject({ state: "saved", tracking: "pending" });
+    expect(saved.trackingProof.rootIdentity).toMatch(/^[a-f0-9]{64}$/);
+    const file = path.join(dir, "vault", ...saved.file.name.split("/"));
+    const before = await fs.readFile(file);
+    const beforeStat = await fs.stat(file);
+    // The captured source version, not the later task contents, is recovered.
+    withStore((db) =>
+      db
+        .prepare(
+          "UPDATE tasks SET output='Later corrected artifact',revision=1,state='cancelled' WHERE id=?",
+        )
+        .run(id),
+    );
+    await fs.rm(path.join(dir, "note-versions.lock"));
+    await workJournalTick(async () => {
+      throw Error("Must not publish again");
+    });
+    expect(JSON.parse(await fs.readFile(receiptPath, "utf8")).tracking).toBe(
+      "tracked",
+    );
+    expect(await fs.readFile(file)).toEqual(before);
+    expect((await fs.stat(file)).mtimeMs).toBe(beforeStat.mtimeMs);
+    expect(await fs.readdir(target)).toHaveLength(1);
+    const catalog = JSON.parse(
+      await fs.readFile(path.join(dir, "note-versions.json"), "utf8"),
+    );
+    expect(catalog.entries).toHaveLength(1);
+    expect(catalog.entries[0].sourceVersion).toBe(
+      saved.trackingProof.sourceVersion,
+    );
+    expect(catalog.entries[0].savedAt).toBe(saved.trackingProof.savedAt);
+    await workJournalTick();
+    expect(
+      JSON.parse(
+        await fs.readFile(path.join(dir, "note-versions.json"), "utf8"),
+      ).entries,
+    ).toHaveLength(1);
+  }));
+
+test("tracking recovery preserves external edits and ignores uncertain and legacy receipts", async () =>
+  isolated(async (dir) => {
+    await enableWorkJournal(dir);
+    const id = completed();
+    await fs.writeFile(path.join(dir, "note-versions.lock"), "held");
+    await workJournalTick();
+    const ledger = path.join(dir, "work-journal");
+    const filename = path.join(ledger, `${id}-0.json`);
+    const saved = JSON.parse(await fs.readFile(filename, "utf8"));
+    const file = path.join(dir, "vault", ...saved.file.name.split("/"));
+    await fs.writeFile(file, "External edits remain mine");
+    await fs.rm(path.join(dir, "note-versions.lock"));
+    await workJournalTick();
+    expect(JSON.parse(await fs.readFile(filename, "utf8")).tracking).toBe(
+      "pending",
+    );
+    expect(await fs.readFile(file, "utf8")).toBe("External edits remain mine");
+    await fs.writeFile(
+      filename,
+      JSON.stringify({ ...saved, state: "unconfirmed" }),
+    );
+    await workJournalTick();
+    expect(JSON.parse(await fs.readFile(filename, "utf8")).state).toBe(
+      "unconfirmed",
+    );
+    const { trackingProof: _proof, ...legacy } = saved;
+    await fs.writeFile(filename, JSON.stringify(legacy));
+    await workJournalTick();
+    expect(JSON.parse(await fs.readFile(filename, "utf8")).tracking).toBe(
+      "pending",
+    );
+    await expect(
+      fs.stat(path.join(dir, "note-versions.json")),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  }));
+
+test("tracking recovery rejects a copied file under a replacement vault and pauses when journal is disabled", async () =>
+  isolated(async (dir) => {
+    await enableWorkJournal(dir);
+    const id = completed();
+    await fs.writeFile(path.join(dir, "note-versions.lock"), "held");
+    await workJournalTick();
+    const filename = path.join(dir, "work-journal", `${id}-0.json`);
+    const saved = JSON.parse(await fs.readFile(filename, "utf8"));
+    await fs.rm(path.join(dir, "note-versions.lock"));
+    await disableWorkJournal(dir);
+    await workJournalTick();
+    expect(JSON.parse(await fs.readFile(filename, "utf8")).tracking).toBe(
+      "pending",
+    );
+    const replacement = path.join(dir, "replacement");
+    const copy = path.join(replacement, ...saved.file.name.split("/"));
+    await fs.mkdir(path.dirname(copy), { recursive: true });
+    await fs.copyFile(
+      path.join(dir, "vault", ...saved.file.name.split("/")),
+      copy,
+    );
+    const rootsPath = path.join(dir, "local-folders.json");
+    const roots = JSON.parse(await fs.readFile(rootsPath, "utf8"));
+    roots.roots[0].path = replacement;
+    await fs.writeFile(rootsPath, JSON.stringify(roots));
+    // Retry the metadata through the same registration boundary: exact copied
+    // bytes must not override the originally captured vault identity.
+    const { trackSavedNote } = await import("../lib/server/note-versions");
+    expect(
+      await trackSavedNote(
+        saved,
+        {
+          workspace: "Personal",
+          kind: "work-note",
+          taskId: id,
+          producer: "automatic",
+          sourceVersion: saved.trackingProof.sourceVersion,
+        },
+        saved.trackingProof,
+      ),
+    ).toBe("pending");
+    await expect(
+      fs.stat(path.join(dir, "note-versions.json")),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  }));
+
+test("tracking recovery processes at most two eligible receipts per journal pass", async () =>
+  isolated(async (dir) => {
+    await enableWorkJournal(dir);
+    await fs.writeFile(path.join(dir, "note-versions.lock"), "held");
+    for (let i = 0; i < 4; i++) completed();
+    await workJournalTick();
+    await workJournalTick();
+    expect((await workJournalReceipts()).pendingTracking).toBe(4);
+    await fs.rm(path.join(dir, "note-versions.lock"));
+    await workJournalTick();
+    expect((await workJournalReceipts()).pendingTracking).toBe(2);
+    await workJournalTick();
+    expect((await workJournalReceipts()).pendingTracking).toBe(0);
+    expect(
+      JSON.parse(
+        await fs.readFile(path.join(dir, "note-versions.json"), "utf8"),
+      ).entries,
+    ).toHaveLength(4);
+  }));

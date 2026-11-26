@@ -171,11 +171,46 @@ async function catalog(): Promise<Entry[]> {
     await handle?.close();
   }
 }
+// Capture a recovery binding only after verifying the confirmed file's bytes.
+export async function savedNoteRoot(saved: {
+  file: SavedFile;
+  sha256: string;
+}): Promise<string | null> {
+  try {
+    if (!validName(saved.file?.name) || !/^[a-f0-9]{64}$/.test(saved.sha256))
+      return null;
+    const root = (await fileRoots()).find(
+      (r) => r.id === saved.file.rootId && r.kind === "obsidian",
+    );
+    if (!root) return null;
+    const base = await selectedDirectory(root);
+    const stat = await fs.lstat(
+      path.join(base.target, ...saved.file.name.split("/")),
+    );
+    if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 1500000)
+      return null;
+    const actual = await readSelectedResource(
+      root,
+      saved.file.name,
+      selectedFileVersion(stat),
+    );
+    const again = await selectedDirectory(root);
+    const binding = rootIdentity(base.stat, base.target);
+    return actual.hash === saved.sha256 &&
+      binding === rootIdentity(again.stat, again.target)
+      ? binding
+      : null;
+  } catch {
+    return null;
+  }
+}
+export type TrackingProof = { rootIdentity: string; savedAt: string };
 // Registration follows a confirmed create-only save. Its failure never causes
 // another source write or downgrades an already confirmed file-save receipt.
 export async function trackSavedNote(
   saved: { file: SavedFile; sha256: string },
   identity: Identity,
+  proof?: TrackingProof,
 ): Promise<"tracked" | "pending"> {
   let lock;
   const dir = privateDir(),
@@ -202,6 +237,13 @@ export async function trackSavedNote(
     )
       return "pending";
     scope(identity.workspace);
+    if (
+      proof &&
+      (!/^[a-f0-9]{64}$/.test(proof.rootIdentity) ||
+        !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(proof.savedAt) ||
+        !Number.isFinite(Date.parse(proof.savedAt)))
+    )
+      return "pending";
     await fs.mkdir(dir, { recursive: true, mode: 0o700 });
     lock = await fs.open(lockPath, "wx", 0o600);
     const entries = await catalog(),
@@ -212,7 +254,8 @@ export async function trackSavedNote(
         existing.kind === identity.kind &&
         existing.sourceVersion === identity.sourceVersion &&
         existing.producer === identity.producer &&
-        existing.taskId === identity.taskId
+        existing.taskId === identity.taskId &&
+        (!proof || existing.rootIdentity === proof.rootIdentity)
         ? "tracked"
         : "pending";
     if (entries.length >= 500) return "pending";
@@ -222,6 +265,8 @@ export async function trackSavedNote(
     if (!root) return "pending";
     const base = await selectedDirectory(root),
       target = path.join(base.target, ...saved.file.name.split("/"));
+    if (proof && rootIdentity(base.stat, base.target) !== proof.rootIdentity)
+      return "pending";
     const stat = await fs.lstat(target);
     if (stat.size > 1500000 || stat.isSymbolicLink() || !stat.isFile())
       return "pending";
@@ -249,7 +294,7 @@ export async function trackSavedNote(
       sha256: saved.sha256,
       file: saved.file,
       rootIdentity: rootIdentity(base.stat, base.target),
-      savedAt: new Date().toISOString(),
+      savedAt: proof?.savedAt || new Date().toISOString(),
     };
     const encoded = JSON.stringify({
       version: 1,

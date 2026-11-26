@@ -1,4 +1,8 @@
-import { taskNoteVersion, trackSavedNote } from "./note-versions";
+import {
+  taskNoteVersion,
+  trackSavedNote,
+  savedNoteRoot,
+} from "./note-versions";
 import fs from "node:fs/promises";
 import { indexSavedSnapshot } from "./local-files";
 import path from "node:path";
@@ -16,6 +20,7 @@ const privateDir = () =>
 const state = globalThis as typeof globalThis & {
   nexusJournalBusy?: boolean;
   nexusJournalIndexCursor?: number;
+  nexusJournalTrackingCursor?: number;
   nexusJournalTimer?: ReturnType<typeof setInterval>;
 };
 async function receipt(dir: string, name: string, value: unknown) {
@@ -62,6 +67,70 @@ async function retryNoteIndex(ledger: string) {
     }
   }
 }
+async function retryNoteTracking(ledger: string) {
+  const names = (await fs.readdir(ledger))
+    .filter((name) => /^[a-f0-9-]{36}-\d+\.json$/i.test(name))
+    .sort()
+    .slice(0, 500);
+  const offset =
+    (state.nexusJournalTrackingCursor || 0) % Math.max(1, names.length);
+  let attempted = 0;
+  for (let i = 0; i < names.length && attempted < 2; i++) {
+    const position = (offset + i) % names.length;
+    state.nexusJournalTrackingCursor = (position + 1) % names.length;
+    const name = names[position];
+    try {
+      const filename = path.join(ledger, name);
+      const stat = await fs.lstat(filename);
+      if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 5000) continue;
+      const handle = await fs.open(filename, "r");
+      let entry;
+      try {
+        const opened = await handle.stat();
+        if (
+          !opened.isFile() ||
+          opened.ino !== stat.ino ||
+          opened.dev !== stat.dev ||
+          opened.size > 5000
+        )
+          continue;
+        const bytes = Buffer.alloc(5001);
+        const read = await handle.read(bytes, 0, bytes.length, 0);
+        if (read.bytesRead > 5000) continue;
+        entry = JSON.parse(bytes.subarray(0, read.bytesRead).toString("utf8"));
+      } finally {
+        await handle.close();
+      }
+      if (
+        entry.version !== 1 ||
+        !Number.isSafeInteger(entry.revision) ||
+        entry.revision < 0 ||
+        entry.state !== "saved" ||
+        entry.tracking !== "pending" ||
+        !entry.trackingProof ||
+        !/^[a-f0-9]{64}$/.test(entry.trackingProof.sourceVersion) ||
+        name !== `${entry.taskId}-${entry.revision}.json`
+      )
+        continue;
+      attempted++;
+      const tracking = await trackSavedNote(
+        entry,
+        {
+          workspace: entry.workspace,
+          kind: "work-note",
+          taskId: entry.taskId,
+          sourceVersion: entry.trackingProof.sourceVersion,
+          producer: "automatic",
+        },
+        entry.trackingProof,
+      );
+      if (tracking === "tracked")
+        await receipt(ledger, name, { ...entry, tracking });
+    } catch {
+      /* Metadata recovery never republishes a note. */
+    }
+  }
+}
 export async function workJournalTick(
   writeSnapshot: typeof writeMemorySnapshot = writeMemorySnapshot,
 ) {
@@ -79,6 +148,7 @@ export async function workJournalTick(
     const ledger = path.join(root, "work-journal");
     await fs.mkdir(ledger, { recursive: true, mode: 0o700 });
     await retryNoteIndex(ledger);
+    await retryNoteTracking(ledger);
     let count = (await fs.readdir(ledger)).filter((name) =>
       name.endsWith(".json"),
     ).length;
@@ -170,19 +240,32 @@ export async function workJournalTick(
           "journal-" + task.scope.toLowerCase().replace(/ /g, "-"),
           since,
         );
-        const tracking = await trackSavedNote(saved, {
-          workspace: task.scope,
-          kind: "work-note",
-          taskId: task.id,
-          sourceVersion,
-          producer: "automatic",
-        });
+        const binding = await savedNoteRoot(saved);
+        const trackingProof = binding
+          ? {
+              rootIdentity: binding,
+              sourceVersion,
+              savedAt: new Date().toISOString(),
+            }
+          : null;
+        const tracking = await trackSavedNote(
+          saved,
+          {
+            workspace: task.scope,
+            kind: "work-note",
+            taskId: task.id,
+            sourceVersion,
+            producer: "automatic",
+          },
+          trackingProof || undefined,
+        );
         const confirmed = {
           ...claim,
           state: "saved",
           ...saved,
           indexing: "pending",
           tracking,
+          trackingProof,
         };
         await receipt(ledger, name, confirmed);
         const indexed = await indexSavedSnapshot(saved.file, saved.sha256);

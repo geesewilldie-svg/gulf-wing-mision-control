@@ -130,8 +130,10 @@ export default function MemoryVaultStatus() {
       {!!status?.journalReceipts?.pendingTracking && (
         <p>
           {status.journalReceipts.pendingTracking} saved journal notes have
-          pending version tracking. Their files are already saved; do not create
-          another copy to retry tracking.
+          pending version tracking. Their files are already saved. Eligible new
+          receipts retry metadata while the journal is enabled; changed files
+          and uncertain saves stay pending. Do not create another copy to retry
+          tracking.
         </p>
       )}
       <div className="foundation-actions">
