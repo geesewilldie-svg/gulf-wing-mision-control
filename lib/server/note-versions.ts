@@ -27,7 +27,7 @@ const privateDir = () =>
     process.env.GW_SYNC_DATA_DIR || path.join(process.cwd(), ".gulf-wing"),
   );
 type SavedFile = { rootId: string; name: string };
-type Identity = {
+export type Identity = {
   workspace: Scope;
   kind: "owner-memory" | "work-note";
   taskId?: string;

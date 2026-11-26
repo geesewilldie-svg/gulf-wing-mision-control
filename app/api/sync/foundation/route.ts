@@ -1,3 +1,4 @@
+import { recoverReviewedNote } from "@/lib/server/reviewed-note-recovery";
 import { inspectNoteVersions } from "@/lib/server/note-versions";
 import {
   previewUtilityActivation,
@@ -63,6 +64,8 @@ export async function POST(request: Request) {
       throw new SyncError(400, "Choose a supported foundation operation.");
     try {
       switch (body.op) {
+        case "memory.vault.recover":
+          return response(await recoverReviewedNote(body));
         case "memory.notes.inspect":
           return response(await inspectNoteVersions(body));
         case "memory.journal.disable":

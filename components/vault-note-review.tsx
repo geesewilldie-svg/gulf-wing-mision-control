@@ -16,11 +16,13 @@ export default function VaultNoteReview({
 }) {
   const [preview, setPreview] = useState<Preview | null>(null);
   const [result, setResult] = useState("");
+  const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const generation = useRef(0);
   useEffect(() => {
     generation.current++;
     setPreview(null);
+    setRecoveryToken(null);
     setResult("");
     setBusy(false);
     return () => {
@@ -32,6 +34,7 @@ export default function VaultNoteReview({
     const current = ++generation.current;
     setBusy(true);
     setResult("");
+    setRecoveryToken(null);
     try {
       const response = await fetch("/api/sync/foundation", {
         method: "POST",
@@ -54,6 +57,7 @@ export default function VaultNoteReview({
       if (!response.ok) throw Error(data.error || "Vault request failed.");
       if (current !== generation.current) return;
       if (save) {
+        setRecoveryToken(data.recoveryToken || null);
         setPreview(null);
         setResult(
           `Vault snapshot saved and read back: ${data.filename}. ${data.indexing === "indexed" ? "Added to the file index. Open the galaxy or use Reload sources to see it." : "Indexing is pending; refresh the laptop file index if it does not appear."} ${data.tracking === "pending" ? "The file is saved; version tracking is pending. Do not create another copy to retry tracking." : ""}`,
@@ -63,6 +67,41 @@ export default function VaultNoteReview({
       if (current === generation.current) {
         setPreview(null);
         setResult((error as Error).message);
+      }
+    } finally {
+      if (current === generation.current) setBusy(false);
+    }
+  }
+  async function recover() {
+    if (!recoveryToken) return;
+    const current = ++generation.current;
+    setBusy(true);
+    setResult("");
+    try {
+      const response = await fetch("/api/sync/foundation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          op: "memory.vault.recover",
+          token: recoveryToken,
+        }),
+      });
+      const data = await response.json();
+      if (current !== generation.current) return;
+      if (!response.ok)
+        throw Error(
+          data.error ||
+            "Metadata retry unavailable; the saved file is retained.",
+        );
+      setResult(
+        `${data.notice} Version tracking: ${data.tracking}. Indexing: ${data.indexing}.`,
+      );
+      if (data.tracking === "tracked" && data.indexing === "indexed")
+        setRecoveryToken(null);
+    } catch (error) {
+      if (current === generation.current) {
+        setResult((error as Error).message);
+        setRecoveryToken(null);
       }
     } finally {
       if (current === generation.current) setBusy(false);
@@ -79,6 +118,18 @@ export default function VaultNoteReview({
         <p role="status" style={{ marginBlock: "1rem" }}>
           {result}
         </p>
+      )}
+      {recoveryToken && (
+        <div>
+          <p>
+            The file is already saved. Retry metadata for this confirmed copy
+            only; this control expires after 30 minutes and is not retained
+            after leaving this view.
+          </p>
+          <button disabled={busy} onClick={() => void recover()}>
+            Retry saved-note metadata only
+          </button>
+        </div>
       )}
       {preview && (
         <section

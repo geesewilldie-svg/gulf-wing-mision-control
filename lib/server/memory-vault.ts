@@ -1,3 +1,4 @@
+import { reviewedRecoveryToken } from "./reviewed-note-recovery";
 import {
   noteSource,
   trackSavedNote,
@@ -143,15 +144,20 @@ export async function memoryVault(body: any) {
       (kind === "work-note" ? "work-" : "") +
         workspace.toLowerCase().replace(/ /g, "-"),
     );
-    const tracking = await trackSavedNote(saved, {
+    const identity = {
       workspace,
       kind,
       sourceVersion,
-      producer: "reviewed",
+      producer: "reviewed" as const,
       ...(kind === "work-note" ? { taskId: body.taskId } : {}),
-    });
+    };
+    const tracking = await trackSavedNote(saved, identity);
     const indexed = await indexSavedSnapshot(saved.file, saved.sha256);
-    return { ...saved, indexing: indexed.state, tracking };
+    const recoveryToken =
+      tracking === "pending" || indexed.state !== "indexed"
+        ? await reviewedRecoveryToken(saved, identity)
+        : null;
+    return { ...saved, indexing: indexed.state, tracking, recoveryToken };
   } catch {
     throw new SyncError(
       503,
