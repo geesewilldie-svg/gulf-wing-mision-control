@@ -149,26 +149,28 @@ export default function NexusFoundation({ disabled }: { disabled: boolean }) {
               · revision {data.policy.revision}. Shell, browser actions, sending
               messages and payments are not available to this coordinator.
             </p>
-            <button
-              disabled={busy}
-              onClick={() =>
-                mutate({
-                  op: "policy.set",
-                  revision: data.policy.revision,
-                  enabled: !data.policy.planningEnabled,
-                })
-              }
-            >
-              {data.policy.planningEnabled
-                ? "Pause all planning"
-                : "Enable local planning"}
-            </button>
-            <button
-              disabled={busy}
-              onClick={() => mutate({ op: "backup.create" })}
-            >
-              Back up foundation database
-            </button>
+            <div className="nexus-actions">
+              <button
+                disabled={busy}
+                onClick={() =>
+                  mutate({
+                    op: "policy.set",
+                    revision: data.policy.revision,
+                    enabled: !data.policy.planningEnabled,
+                  })
+                }
+              >
+                {data.policy.planningEnabled
+                  ? "Pause all planning"
+                  : "Enable local planning"}
+              </button>
+              <button
+                disabled={busy}
+                onClick={() => mutate({ op: "backup.create" })}
+              >
+                Back up foundation database
+              </button>
+            </div>
             <p>
               Backup covers this SQLite foundation only. Existing business
               files, models and credentials need their own backup.

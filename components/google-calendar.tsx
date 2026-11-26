@@ -106,30 +106,32 @@ export default function GoogleCalendar({ disabled }: { disabled: boolean }) {
             shared with trusted paired controllers, not isolated customer
             accounts.
           </p>
-          <button
-            disabled={busy || !status?.configured}
-            onClick={() => action()}
-          >
-            {status?.connected
-              ? "Add another Google Calendar"
-              : "Connect Google Calendar"}
-          </button>
-          <button
-            disabled={busy || !status?.accounts.length}
-            onClick={() => {
-              if (
-                window.confirm(
-                  "Disconnect all Google accounts locally and clear Drive snapshots?",
+          <div className="nexus-actions">
+            <button
+              disabled={busy || !status?.configured}
+              onClick={() => action()}
+            >
+              {status?.connected
+                ? "Add another Google Calendar"
+                : "Connect Google Calendar"}
+            </button>
+            <button
+              disabled={busy || !status?.accounts.length}
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "Disconnect all Google accounts locally and clear Drive snapshots?",
+                  )
                 )
-              )
-                void action(true);
-            }}
-          >
-            Disconnect all Google accounts
-          </button>
-          <button disabled={busy || !status?.connected} onClick={check}>
-            Check calendar access
-          </button>
+                  void action(true);
+              }}
+            >
+              Disconnect all Google accounts
+            </button>
+            <button disabled={busy || !status?.connected} onClick={check}>
+              Check calendar access
+            </button>
+          </div>
           <ul>
             {status?.accounts.map((account) => (
               <li key={account.id}>
@@ -172,18 +174,20 @@ export default function GoogleCalendar({ disabled }: { disabled: boolean }) {
             in the chosen account; Nexus indexes only files you select below. Up
             to four Google accounts. No Gmail inbox access is granted.
           </p>
-          <button
-            disabled={busy || !status?.configured}
-            onClick={() => action(false, undefined, "both")}
-          >
-            Connect Calendar and Drive account
-          </button>
-          <button
-            disabled={busy}
-            onClick={() => load().catch((e) => setMessage(e.message))}
-          >
-            Refresh Google status
-          </button>
+          <div className="nexus-actions">
+            <button
+              disabled={busy || !status?.configured}
+              onClick={() => action(false, undefined, "both")}
+            >
+              Connect Calendar and Drive account
+            </button>
+            <button
+              disabled={busy}
+              onClick={() => load().catch((e) => setMessage(e.message))}
+            >
+              Refresh Google status
+            </button>
+          </div>
         </>
       )}
       <p role="status">{message}</p>

@@ -502,3 +502,5 @@ REA bounded protocol execution — November 26, 2026: explicit controller checks
 
 
 REA owned browser diagnostic — November 26, 2026: the next execution slice adds one fixed owned loopback fixture in a fresh temporary headless profile, bounded real inspection, target/title/origin evidence matching, cleanup acceptance and private metadata-only receipts. No caller URL/CDP/executable is accepted and general site inspection stays unconnected. See `../nexus-rea-owned-browser-self-test.md`.
+
+Cross-phase interface requirement — November 26, 2026: all architecture deliveries must follow the shared [layout/spacing contract](../nexus-layout-spacing.md). Consistent tab gaps, card padding, readable field labels, grouped actions and phone stacking are acceptance criteria for future UI work, not a final polish phase. Shared scoped tokens now cover the Nexus shell, cards and assistant; Foundation/Google controls adopt explicit action groups.

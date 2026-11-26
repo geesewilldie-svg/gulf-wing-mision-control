@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import "./nexus-spacing.css";
 import { WorkspaceProvider } from "@/components/workspace-provider";
 import NexusAssistant from "@/components/nexus-assistant";
 export const viewport: Viewport = { themeColor: "#07111c" };
