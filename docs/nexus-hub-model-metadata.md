@@ -11,3 +11,5 @@ The result and visible JSON download are metadata snapshots, not a durable insta
 Validation uses controlled transport fixtures, API authorization checks and rendered desktop/Samsung-phone workflows. The official Hub API/docs live probes from this cloud environment were blocked by an HTTP proxy CONNECT 403 policy response; live service/schema acceptance remains unverified. The connector fails with a bounded public-metadata-unavailable response rather than claiming access or falling back. No policy change or credential installation was made. Native host network access remains observable only through an explicit owner lookup.
 
 The next review step now supports an [exact-artifact acquisition preview](nexus-hub-acquisition-preview.md), including a fresh commit-bound size/hash comparison and a read-only archive-volume capacity check. It exports a preview only and does not start a model download.
+
+A separate [reviewed archive transfer](nexus-hub-model-archive.md) now implements the first bounded byte-acquisition slice. Lookup/export alone still downloads no weights; runtime import and inference readiness remain separate.

@@ -97,7 +97,7 @@ test("acquisition checks separate capacity, digest, bounded single-file format, 
   expect(
     good.checks.filter((c) => c.state === "review").map((c) => c.id),
   ).toEqual(["license-review", "runtime"]);
-  expect(good.downloadImplemented).toBe(false);
+  expect(good.downloadImplemented).toBe(true);
   expect(good.downloaded).toBe(false);
   expect(good.inferenceReady).toBe(false);
   for (const available of [null, required - 1])
@@ -312,7 +312,7 @@ test("desktop and phone review the exact selected file, export a preview and cle
   });
   await expect(region).toContainText("Metadata and capacity checks passed");
   await expect(region).toContainText("Review needed");
-  await expect(region).toContainText("Model download is not implemented");
+  await expect(region).toContainText("Review alone does not download");
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth + 1,

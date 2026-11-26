@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import HubArchiveTransfer from "./hub-archive-transfer";
 import type { HubModelMetadata } from "@/lib/hub-model";
 import type { HubAcquisitionPreview as Preview } from "@/lib/hub-acquisition";
 const bytes = (value: number | null) =>
@@ -122,7 +123,7 @@ export default function HubAcquisitionPreview({
             {result.metadataAndCapacityReady
               ? "Metadata and capacity checks passed; license and runtime review remain."
               : "Some acquisition prerequisites are blocked or unknown."}{" "}
-            Model download is not implemented in this preview.
+            Review alone does not download this file.
           </p>
           <dl>
             <div>
@@ -168,6 +169,7 @@ export default function HubAcquisitionPreview({
           <div className="nexus-actions">
             <button onClick={download}>Download acquisition preview</button>
           </div>
+          <HubArchiveTransfer key={result.previewId} preview={result} />
           <p>
             Checked at {result.checkedAt}. This preview is not a reservation,
             transfer authorization or proof of inference readiness.

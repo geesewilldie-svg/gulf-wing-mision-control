@@ -22,7 +22,7 @@ export type HubAcquisitionPreview = {
     detail: string;
   }[];
   metadataAndCapacityReady: boolean;
-  downloadImplemented: false;
+  downloadImplemented: true;
   downloaded: false;
   inferenceReady: false;
   notice: string;

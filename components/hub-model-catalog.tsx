@@ -71,8 +71,9 @@ export default function HubModelCatalog({ disabled }: { disabled: boolean }) {
         conversation are not included.
       </p>
       <p>
-        This reads catalog metadata only. Downloads, model installation, hosted
-        inference and hardware compatibility are not connected.
+        Lookup reads metadata only. A separate reviewed archive action can
+        transfer an eligible file; runtime installation, hosted inference and
+        hardware compatibility remain separate.
       </p>
       <form onSubmit={lookup}>
         <label>
@@ -157,8 +158,9 @@ export default function HubModelCatalog({ disabled }: { disabled: boolean }) {
           </p>
           <p>
             {data.sha256ReportedArtifacts} artifacts have a reported SHA-256.
-            These digests have not been verified against downloaded bytes. Model
-            files are not downloaded; inference readiness is not established.
+            These digests have not been verified against downloaded bytes.
+            Lookup does not download model files; inference readiness is not
+            established.
           </p>
           <div className="nexus-actions">
             <a href={data.sourceUrl} target="_blank" rel="noopener noreferrer">

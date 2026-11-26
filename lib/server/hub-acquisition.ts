@@ -222,7 +222,7 @@ export function acquisitionChecks(
     metadataAndCapacityReady: checks
       .filter((c) => c.state !== "review")
       .every((c) => c.state === "passed"),
-    downloadImplemented: false,
+    downloadImplemented: true,
     downloaded: false,
     inferenceReady: false,
     notice:

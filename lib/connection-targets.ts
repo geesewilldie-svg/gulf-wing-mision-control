@@ -15,9 +15,9 @@ export const plannedConnectionTargets = [
     name: "Hugging Face Model Hub",
     status: "Metadata lookup available",
     detail:
-      "Explicit anonymous repository metadata lookup is implemented; live Hub access is unverified. Downloads, installation and inference remain unconnected. Reported license, revision, sizes and hashes require review before acquisition.",
+      "Explicit anonymous metadata lookup and reviewed archive-only transfer are implemented; live Hub access is unverified. Runtime import and inference remain unconnected. Source identity, license review, capacity and full-byte integrity checks gate each transfer.",
     authorization:
-      "No account access, token use, model download or hosted inference is enabled. Local runtime setup and any hosted Hugging Face service are separate capabilities.",
+      "No automatic acquisition, account token use or hosted inference is enabled. A separate explicit reviewed-file action is required for archive transfer; runtime setup remains separate.",
   },
   {
     id: "venice",
