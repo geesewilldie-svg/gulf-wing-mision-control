@@ -5,16 +5,21 @@ import type { FileSearchStatus, IndexedFile } from "./local-files";
 export function sourceMap(
   status: FileSearchStatus,
   files: IndexedFile[],
-  options: { query?: string; offset?: number } = {},
+  options: { query?: string; offset?: number; focusId?: string } = {},
 ) {
   const query = (options.query || "").trim();
-  const offset = options.offset || 0;
+  const requestedOffset = options.offset || 0;
   const labels = new Map(status.roots.map((root) => [root.id, root.label]));
   const matching = files.filter((file) =>
     `${labels.get(file.rootId) || ""} ${file.name}`
       .toLowerCase()
       .includes(query.toLowerCase()),
   );
+  const focusIndex = options.focusId
+    ? matching.findIndex((file) => file.id === options.focusId)
+    : -1;
+  const offset =
+    focusIndex >= 0 ? Math.floor(focusIndex / 80) * 80 : requestedOffset;
   const selected = matching.slice(offset, offset + 80);
   const links = new Map(
     files
@@ -26,6 +31,24 @@ export function sourceMap(
       .map((file) => [file.id, noteLinks(file, files)]),
   );
   const values = [...links.values()];
+  const incoming = new Map<string, number>();
+  for (const result of values)
+    for (const target of result.links)
+      incoming.set(target.id, (incoming.get(target.id) || 0) + 1);
+  const topHubs = files
+    .filter((file) => incoming.has(file.id))
+    .map((file) => ({
+      id: file.id,
+      name: file.name,
+      folder: labels.get(file.rootId) || "Selected source",
+      incomingLinks: incoming.get(file.id)!,
+    }))
+    .sort(
+      (a, b) =>
+        b.incomingLinks - a.incomingLinks ||
+        (a.name < b.name ? -1 : a.name > b.name ? 1 : a.id.localeCompare(b.id)),
+    )
+    .slice(0, 5);
   return {
     scannedAt: status.scannedAt,
     total: files.length,
@@ -34,6 +57,8 @@ export function sourceMap(
     catalog: {
       query,
       offset,
+      focusId: focusIndex >= 0 ? options.focusId! : null,
+      topHubs,
       matched: matching.length,
       limit: 80,
       nextOffset: offset + 80 < matching.length ? offset + 80 : null,

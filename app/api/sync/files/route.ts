@@ -36,6 +36,7 @@ export async function POST(request: Request) {
       hash?: string;
       part?: number;
       offset?: number;
+      focusId?: string;
     };
     if (!body || typeof body !== "object")
       throw new SyncError(400, "Choose a supported folder operation.");
@@ -53,10 +54,25 @@ export async function POST(request: Request) {
         (body.offset ?? 0) > 160
       )
         throw new SyncError(400, "Choose a valid indexed-name query and page.");
+      if (
+        body.focusId !== undefined &&
+        (typeof body.focusId !== "string" ||
+          !/^[a-f0-9]{24}$/.test(body.focusId))
+      )
+        throw new SyncError(400, "Select a current indexed note.");
+      if (
+        body.focusId &&
+        !snapshot.files.some((file) => file.id === body.focusId)
+      )
+        throw new SyncError(
+          409,
+          "Selected note changed or is unavailable. Reload the catalog.",
+        );
       return response({
         map: sourceMap(snapshot.status, snapshot.files, {
           query: body.query,
           offset: body.offset,
+          focusId: body.focusId,
         }),
         warnings: [
           snapshot.status.warning,

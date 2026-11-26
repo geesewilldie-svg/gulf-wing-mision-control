@@ -85,6 +85,7 @@ test("catalog map query rejects invalid pages and requires controller and same o
     { offset: 0.5 },
     { query: "a".repeat(201) },
     { query: 5 },
+    { focusId: "bad-id" },
   ])
     expect(
       (
@@ -96,6 +97,13 @@ test("catalog map query rejects invalid pages and requires controller and same o
   expect(
     (await context.request.post("/api/sync/files", { data })).status(),
   ).toBe(200);
+  expect(
+    (
+      await context.request.post("/api/sync/files", {
+        data: { ...data, focusId: "f".repeat(24) },
+      })
+    ).status(),
+  ).toBe(409);
 });
 
 test("catalog paging and search reveal real stars without automatically reading their files", async ({
@@ -104,6 +112,19 @@ test("catalog paging and search reveal real stars without automatically reading 
 }) => {
   await fixtureRole(context);
   const reads: unknown[] = [];
+  const hubFiles = files.map((file, index) =>
+    index < 2
+      ? {
+          ...file,
+          documents: [
+            {
+              ...file.documents[0],
+              text: "[[Distant Checklist]] [[Distant Checklist]]",
+            },
+          ],
+        }
+      : file,
+  );
   await page.route("**/api/sync/files", (route) => {
     const body = route.request().postDataJSON();
     if (body.action !== "map") {
@@ -112,9 +133,10 @@ test("catalog paging and search reveal real stars without automatically reading 
     }
     return route.fulfill({
       json: {
-        map: sourceMap(status, files, {
+        map: sourceMap(status, hubFiles, {
           query: body.query,
           offset: body.offset,
+          focusId: body.focusId,
         }),
         warnings: [],
       },
@@ -147,9 +169,53 @@ test("catalog paging and search reveal real stars without automatically reading 
     .getByRole("button", { name: "Show indexed catalog", exact: true })
     .click();
   await expect(galaxy).toContainText("165 matching files");
+  await galaxy.getByText("Most linked indexed notes", { exact: true }).click();
+  await galaxy
+    .getByRole("button", {
+      name: /Focus linked note: Knowledge \/ Distant Checklist/,
+    })
+    .click();
+  const inspector = galaxy.getByRole("region", {
+    name: "Selected file star",
+    exact: true,
+  });
+  await expect(inspector).toContainText("Distant Checklist.md");
+  await expect(galaxy).toContainText("5 indexed file stars available");
+  expect(reads).toEqual([]);
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+});
+
+test("hub ranks derive from current incoming links and focus loads the target page", () => {
+  const linked = files.map((file, i) =>
+    i < 2
+      ? {
+          ...file,
+          documents: [
+            {
+              ...file.documents[0],
+              text: "[[Distant Checklist]] [[Distant Checklist]]",
+            },
+          ],
+        }
+      : file,
+  );
+  const map = sourceMap(status, linked, { focusId: files[164].id });
+  expect(map.catalog).toMatchObject({
+    offset: 160,
+    focusId: files[164].id,
+    topHubs: [{ id: files[164].id, incomingLinks: 2 }],
+  });
+  expect(map.folders[0].files).toHaveLength(5);
+  const removed = sourceMap(
+    status,
+    linked.filter((file) => file.id !== files[164].id),
+    { focusId: files[164].id },
+  );
+  expect(removed.catalog.focusId).toBeNull();
+  expect(removed.catalog.topHubs).toEqual([]);
+  expect(removed.catalog.unresolvedTargets).toBe(2);
 });

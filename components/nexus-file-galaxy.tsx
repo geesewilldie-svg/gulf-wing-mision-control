@@ -11,7 +11,11 @@ export default function NexusFileGalaxy({ enabled }: { enabled: boolean }) {
     [error, setError] = useState(""),
     [filter, setFilter] = useState(""),
     [catalogQuery, setCatalogQuery] = useState(""),
-    [catalogSearch, setCatalogSearch] = useState({ query: "", offset: 0 }),
+    [catalogSearch, setCatalogSearch] = useState<{
+      query: string;
+      offset: number;
+      focusId?: string;
+    }>({ query: "", offset: 0 }),
     [zoom, setZoom] = useState(1),
     [storageMode, setStorageMode] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]),
@@ -286,6 +290,36 @@ export default function NexusFileGalaxy({ enabled }: { enabled: boolean }) {
                   not all laptop files or owner memory. Links use extracted
                   text; no connection lines are drawn.
                 </p>
+                {!!map.catalog.topHubs?.length && (
+                  <details>
+                    <summary>Most linked indexed notes</summary>
+                    <p>
+                      Up to five notes ranked by incoming explicit links within
+                      the current index. Counts may be partial; this is not
+                      usage or importance ranking. Focusing does not open a
+                      file.
+                    </p>
+                    <div className="nexus-draft-actions">
+                      {map.catalog.topHubs.map((hub) => (
+                        <button
+                          key={hub.id}
+                          onClick={() => {
+                            setCatalogQuery("");
+                            setFilter("");
+                            setCatalogSearch({
+                              query: "",
+                              offset: 0,
+                              focusId: hub.id,
+                            });
+                          }}
+                        >
+                          Focus linked note: {hub.folder} / {hub.name} ·{" "}
+                          {hub.incomingLinks} incoming links
+                        </button>
+                      ))}
+                    </div>
+                  </details>
+                )}
                 <div className="nexus-draft-actions">
                   {map.catalog.offset > 0 && (
                     <button
@@ -325,6 +359,7 @@ export default function NexusFileGalaxy({ enabled }: { enabled: boolean }) {
             <AnimatedFileGalaxy
               files={shown}
               selectedId={selected?.id}
+              focusTargetId={map.catalog?.focusId || undefined}
               zoom={zoom}
               onFit={() => setZoom(1)}
               onRead={(file) => void read(file)}

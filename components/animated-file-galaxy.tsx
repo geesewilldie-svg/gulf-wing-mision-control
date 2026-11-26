@@ -31,6 +31,7 @@ const stars = Array.from({ length: 1050 }, (_, i) => {
 export default function AnimatedFileGalaxy({
   files: catalogFiles,
   selectedId,
+  focusTargetId,
   zoom,
   onRead,
   resourceMode = false,
@@ -40,6 +41,7 @@ export default function AnimatedFileGalaxy({
   resourceMode?: boolean;
   files: GalaxyFile[];
   selectedId?: string;
+  focusTargetId?: string;
   zoom: number;
   onRead: (file: GalaxyFile) => void;
 }) {
@@ -82,6 +84,19 @@ export default function AnimatedFileGalaxy({
   }, [files, focusId]);
   const [paused, setPaused] = useState(false),
     [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    if (
+      focusTargetId &&
+      catalogFiles.some((file) => file.id === focusTargetId)
+    ) {
+      setQuery("");
+      setTypeFilter("all");
+      setSourceFilter("all");
+      setTrail([focusTargetId]);
+      setRailOpen(true);
+      setPaused(true);
+    }
+  }, [focusTargetId]);
   useEffect(() => {
     const media = matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => setReduced(media.matches);
