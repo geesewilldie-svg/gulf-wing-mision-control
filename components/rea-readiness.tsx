@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import ReaSelfTestHistory from "./rea-self-test-history";
 import type { ReaReadiness as Status } from "@/lib/rea-readiness";
 export default function ReaReadiness() {
   const [data, setData] = useState<Status | null>(null),
@@ -121,6 +122,7 @@ export default function ReaReadiness() {
         </section>
       )}
       {error && <p role="status">{error}</p>}
+      <ReaSelfTestHistory />
       {data && (
         <section aria-label="REA prerequisite results">
           <p>

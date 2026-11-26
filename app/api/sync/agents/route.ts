@@ -1,3 +1,4 @@
+import { readReaSelfTestHistory } from "@/lib/server/rea-self-test-history";
 import { reaBrowserSelfTest } from "@/lib/server/rea-browser-self-test";
 import { inspectReaProtocol } from "@/lib/server/rea-protocol";
 import { inspectReaReadiness } from "@/lib/server/rea-readiness";
@@ -50,10 +51,13 @@ export async function POST(request: Request) {
         "rea-preflight",
         "rea-protocol-check",
         "rea-browser-self-test",
+        "rea-test-history",
       ].includes(body.action) ||
       Object.keys(body).some((key) => key !== "action")
     )
       throw new SyncError(400, "Choose a supported metadata inspection.");
+    if (body.action === "rea-test-history")
+      return response(await readReaSelfTestHistory(request.signal));
     if (body.action === "rea-browser-self-test")
       return response(await reaBrowserSelfTest(request.signal));
     if (body.action === "rea-protocol-check")

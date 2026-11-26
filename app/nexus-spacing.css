@@ -190,3 +190,34 @@
   label:not(.business-check):not(.nexus-sharing) {
   margin-block: 0;
 }
+
+.nexus-app-frame .nexus-receipt-history {
+  margin-top: var(--nexus-space-6);
+  padding-top: var(--nexus-space-6);
+  border-top: 1px solid var(--line);
+}
+.nexus-app-frame .nexus-receipt-list {
+  display: grid;
+  gap: var(--nexus-space-4);
+  margin-top: var(--nexus-space-4);
+}
+.nexus-app-frame .nexus-receipt-list article {
+  min-width: 0;
+  padding: var(--nexus-space-4);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow-wrap: anywhere;
+}
+.nexus-app-frame .nexus-receipt-list dl {
+  display: grid;
+  gap: var(--nexus-space-3);
+  margin: 0;
+}
+.nexus-app-frame .nexus-receipt-list dt {
+  color: var(--muted);
+  margin-bottom: var(--nexus-space-1);
+}
+.nexus-app-frame .nexus-receipt-list dd {
+  margin: 0;
+  line-height: 1.5;
+}

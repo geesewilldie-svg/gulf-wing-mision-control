@@ -62,3 +62,5 @@ Implemented model-identity slice: existing supported adapter status now exposes 
 Installed local model discovery is now implemented as an explicit bounded Ollama catalog inspection, separate from inference and model selection. Reported installation/configured presence does not imply loaded or runnable readiness. It does not add Hub downloads or hosted providers; see `nexus-local-model-catalog.md`.
 
 The first explicit model-switch slice now supports a one-question installed local model choice for typed Local Ollama answers. It retains permitted memory and reports request/response identity without changing the saved default or adding providers. General voice-driven switching and persistent selection remain pending; see `nexus-local-model-choice.md`.
+
+REA execution evidence now includes an owned loopback browser self-test and an explicit bounded saved-run history/export. Historical outcomes remain separate from current readiness and do not enable external-site inspection. This advances durable tool-result review without adding a provider or personal browser attachment; see `nexus-rea-owned-browser-self-test.md`.
