@@ -98,3 +98,118 @@ test("an exited process is reported differently from a still-loading worker", as
   });
   assert.ok(logs.some((s) => s.includes("process exited before readiness")));
 });
+
+test("a reused saved PID for build or another process cannot suppress a missing server restart", async () => {
+  const { managedServiceProbe, serviceProcessPattern } = await import(
+    "./nexus-launcher-lib.mjs"
+  );
+  const server = {
+    ...services[1],
+    command: "C:\\Program Files\\nodejs\\node.exe",
+    args: [
+      "C:\\Users\\Owner [test]\\Nexus\\node_modules\\next\\dist\\bin\\next",
+      "start",
+      "--hostname",
+      "0.0.0.0",
+    ],
+  };
+  const matches = new RegExp(serviceProcessPattern(server), "i");
+  const prefix =
+    '"C:\\Program Files\\nodejs\\node.exe" "C:\\Users\\Owner [test]\\Nexus\\node_modules\\next\\dist\\bin\\next"';
+  assert.equal(matches.test(prefix + " start --hostname 0.0.0.0"), true);
+  for (const args of [
+    " build",
+    " start --hostname 127.0.0.1",
+    " start --hostname 0.0.0.0 --port 4000",
+    " start --hostname 0.0.0.0 --extra",
+  ])
+    assert.equal(matches.test(prefix + args), false);
+  let starts = 0;
+  const state = await managedServiceProbe(
+    server,
+    { pid: 31916, command: server.command },
+    {
+      health: async () => "down",
+      identity: async (_service, pid) => {
+        assert.equal(pid, 31916);
+        return matches.test(prefix + " build");
+      },
+    },
+  );
+  assert.equal(state, "down");
+  const result = await startServices([server], {
+    log: () => {},
+    probe: async () => state,
+    prepare: async () => true,
+    start: async () => {
+      starts++;
+      return 123;
+    },
+    wait: async () => "ready",
+  });
+  assert.equal(starts, 1);
+  assert.equal(result[0].state, "ready");
+});
+
+test("healthy services bypass process metadata, absent processes restart, and unverifiable identity never launches duplicates", async () => {
+  const { managedServiceProbe } = await import("./nexus-launcher-lib.mjs");
+  assert.equal(
+    await managedServiceProbe(
+      services[1],
+      { pid: 42 },
+      {
+        health: async () => "ready",
+        identity: async () => {
+          throw Error("must not query");
+        },
+      },
+    ),
+    "ready",
+  );
+  for (const [identity, expected] of [
+    [false, "down"],
+    [true, "pending"],
+    [null, "unverified"],
+  ])
+    assert.equal(
+      await managedServiceProbe(
+        services[1],
+        { pid: 42 },
+        { health: async () => "down", identity: async () => identity },
+      ),
+      expected,
+    );
+  const result = await startServices([services[1]], {
+    log: () => {},
+    probe: async () => "unverified",
+    prepare: async () => {
+      throw Error("must not prepare");
+    },
+    start: async () => {
+      throw Error("must not launch");
+    },
+  });
+  assert.equal(result[0].state, "blocked");
+});
+
+test("a matching existing launch is awaited and reused, including failure/warming outcomes", async () => {
+  for (const state of ["ready", "degraded", "failed", "warming"]) {
+    let waited = 0;
+    const result = await startServices([services[1]], {
+      log: () => {},
+      probe: async () => "pending",
+      waitExisting: async () => {
+        waited++;
+        return state;
+      },
+      prepare: async () => {
+        throw Error("must not prepare");
+      },
+      start: async () => {
+        throw Error("must not start duplicate");
+      },
+    });
+    assert.equal(waited, 1);
+    assert.equal(result[0].state, state);
+  }
+});

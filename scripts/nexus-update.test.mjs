@@ -148,3 +148,65 @@ test("asset readiness checks current CSS/JS and rejects the unstyled-page failur
     ),
   );
 });
+
+test("update restart ignores a recycled launcher PID from Next build and verifies the replacement assets", async () => {
+  const { managedServiceProbe, serviceProcessPattern, startServices } =
+    await import("./nexus-launcher-lib.mjs");
+  const { io, events } = fixture();
+  const service = {
+    id: "server",
+    name: "Mission Control",
+    port: 3000,
+    command: "C:\\node.exe",
+    args: [
+      "C:\\Nexus\\node_modules\\next\\dist\\bin\\next",
+      "start",
+      "--hostname",
+      "0.0.0.0",
+    ],
+  };
+  let currentCommandLine =
+    '"C:\\node.exe" C:\\Nexus\\node_modules\\next\\dist\\bin\\next start --hostname 0.0.0.0';
+  io.build = async () => {
+    events.push("build");
+    currentCommandLine =
+      '"C:\\node.exe" C:\\Nexus\\node_modules\\next\\dist\\bin\\next build';
+  };
+  let launched = 0;
+  io.start = async () => {
+    const result = await startServices([service], {
+      log: () => {},
+      probe: () =>
+        managedServiceProbe(
+          service,
+          { pid: 31916, command: service.command },
+          {
+            health: async () => "down",
+            identity: async () =>
+              new RegExp(serviceProcessPattern(service), "i").test(
+                currentCommandLine,
+              ),
+          },
+        ),
+      prepare: async () => true,
+      start: async () => {
+        launched++;
+        events.push("restart");
+        return 100;
+      },
+      wait: async () => "ready",
+    });
+    assert.equal(result[0].state, "ready");
+  };
+  await updateNexus(io);
+  assert.equal(launched, 1);
+  assert.deepEqual(events, [
+    "pull",
+    "stop",
+    "dependencies",
+    "build",
+    "restart",
+    "assets",
+    "save",
+  ]);
+});

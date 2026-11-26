@@ -1,9 +1,17 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import net from "node:net";
-import { spawn } from "node:child_process";
+import { spawn, execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
-import { startServices, backgroundVoicePython } from "./nexus-launcher-lib.mjs";
+import {
+  startServices,
+  backgroundVoicePython,
+  managedServiceProbe,
+  serviceProcessPattern,
+  managedProcessIdentityScript,
+} from "./nexus-launcher-lib.mjs";
+const execute = promisify(execFile);
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const privateDir = path.join(root, ".gulf-wing");
@@ -26,16 +34,55 @@ function alive(pid) {
     return e.code !== "ESRCH";
   }
 }
+async function recordedIdentity(service, pid) {
+  const pattern = serviceProcessPattern(service);
+  if (!pattern) return null;
+  try {
+    const result = await execute(
+      "powershell.exe",
+      [
+        "-NoLogo",
+        "-NoProfile",
+        "-NonInteractive",
+        "-EncodedCommand",
+        Buffer.from(managedProcessIdentityScript, "utf16le").toString("base64"),
+      ],
+      {
+        windowsHide: true,
+        timeout: 10000,
+        maxBuffer: 2000,
+        env: {
+          ...process.env,
+          NEXUS_LAUNCH_PID: String(pid),
+          NEXUS_LAUNCH_PATTERN: pattern,
+        },
+      },
+    );
+    const state = result.stdout.trim();
+    return state === "match"
+      ? true
+      : ["missing", "different"].includes(state)
+        ? false
+        : null;
+  } catch {
+    return null;
+  }
+}
 async function managedProbe(service) {
-  const state = await health(service);
-  if (state !== "down") return state;
-  const entry = managed[service.id];
-  return entry &&
-    Number.isSafeInteger(entry.pid) &&
-    entry.pid > 0 &&
-    alive(entry.pid)
-    ? "pending"
-    : "down";
+  return managedServiceProbe(service, managed[service.id], {
+    health,
+    identity: recordedIdentity,
+  });
+}
+async function waitForService(s, pid) {
+  const until = Date.now() + s.timeout;
+  do {
+    const state = await health(s);
+    if (state === "ready" || state === "degraded") return state;
+    if (pid && !alive(pid)) return "failed";
+    await sleep(1000);
+  } while (Date.now() < until);
+  return "warming";
 }
 async function busyPort(port) {
   return new Promise((resolve) => {
@@ -293,16 +340,9 @@ async function main() {
             (await exists(s.args[0]))
           : !!s.command && (await exists(s.command)),
       start: launchLogged,
-      wait: async (s, pid) => {
-        const until = Date.now() + s.timeout;
-        do {
-          const state = await health(s);
-          if (state === "ready" || state === "degraded") return state;
-          if (pid && !alive(pid)) return "failed";
-          await sleep(1000);
-        } while (Date.now() < until);
-        return "warming";
-      },
+      wait: waitForService,
+      waitExisting: (service) =>
+        waitForService(service, managed[service.id]?.pid),
     });
     const server = results.find((r) => r.id === "server");
     if (server?.state === "ready" && !process.argv.includes("--no-browser")) {
