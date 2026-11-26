@@ -60,7 +60,7 @@ export async function modelBody(url: URL, signal: AbortSignal) {
   }
   throw new SyncError(503, "The model delivery redirect limit was reached.");
 }
-async function directories(target: string, create = false) {
+export async function archiveDirectoryGuard(target: string, create = false) {
   const absolute = path.resolve(target),
     parsed = path.parse(absolute),
     segments = absolute
@@ -235,7 +235,7 @@ export async function acquireHubArtifact(
       process.env.GW_SYNC_DATA_DIR || path.join(process.cwd(), ".gulf-wing"),
       "model-assets",
     );
-    const checkArchive = await directories(archive, true);
+    const checkArchive = await archiveDirectoryGuard(archive, true);
     let slot = "";
     for (let i = 0; i < 100; i++) {
       await checkArchive();
@@ -257,11 +257,15 @@ export async function acquireHubArtifact(
         409,
         "The model archive has reached its 100-record limit. Existing records and files were retained.",
       );
-    checkDirs = await directories(directory);
+    checkDirs = await archiveDirectoryGuard(directory);
     partial = path.join(directory, "model.partial");
     final = path.join(directory, "model.gguf");
     recordPath = path.join(directory, "receipt.json");
-    receipt = await fs.open(recordPath, "wx+", 0o600);
+    receipt = await fs.open(
+      /* turbopackIgnore: true */ recordPath,
+      "wx+",
+      0o600,
+    );
     receiptIdentity = await receipt.stat();
     Object.assign(base, {
       repository: preview.repository,
@@ -276,7 +280,7 @@ export async function acquireHubArtifact(
     });
     await save(base);
     await checkDirs();
-    file = await fs.open(partial, "wx+", 0o600);
+    file = await fs.open(/* turbopackIgnore: true */ partial, "wx+", 0o600);
     stat = await file.stat();
     const url = new URL(
       `https://huggingface.co/${preview.repository.split("/").map(encodeURIComponent).join("/")}/resolve/${preview.revision}/${filename.split("/").map(encodeURIComponent).join("/")}?download=true`,

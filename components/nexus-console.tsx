@@ -1,6 +1,7 @@
 "use client";
 import NexusFileGalaxy from "./nexus-file-galaxy";
 import HubModelCatalog from "./hub-model-catalog";
+import HubArchiveHistory from "./hub-archive-history";
 import ExpandableVisual from "./expandable-visual";
 import { useEffect, useState } from "react";
 import { connections } from "@/lib/nexus";
@@ -234,6 +235,7 @@ export default function NexusConsole() {
               access. No paid service or credential has been enabled for you.
             </p>
             <HubModelCatalog disabled={disabled} />
+            <HubArchiveHistory disabled={disabled} />
             <details className="nexus-tool-inventory">
               <summary>Downloaded tools — setup and connection status</summary>
               <p>
