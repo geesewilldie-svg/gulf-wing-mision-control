@@ -70,3 +70,5 @@ Acceptance includes zero network/file effects from connection inventory, no mode
 ## Implemented REA prerequisite inspection
 
 The actual Nexus server Node version and fixed isolated package metadata can now be inspected explicitly under Connection activity. Exact pinned runtime ranges are checked without installation, subprocesses or browser attachment. Matching metadata is not package integrity or adapter execution verification; REA remains unconnected. See `nexus-rea-preflight.md`. The earlier cloud runtime observation remains historical; the new result reports the current host process rather than inferring Windows compatibility from a successful Next build.
+
+Isolated package acquisition is now implemented by `Setup-Nexus-REA.cmd` using a separate reviewed-version dependency lock, archive-integrity pin and disabled lifecycle scripts. It refuses incompatible runtimes and preserves partial/foreign stages. This stages package files only; no REA setup, personal agent registration, MCP execution or browser attachment is supplied. See `nexus-rea-package-staging.md` for archive/layout verification evidence and remaining native/runtime acceptance limits.
