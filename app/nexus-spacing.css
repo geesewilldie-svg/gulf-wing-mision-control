@@ -221,3 +221,40 @@
   margin: 0;
   line-height: 1.5;
 }
+
+.nexus-app-frame .nexus-hub-result,
+.nexus-app-frame .nexus-hub-result dl,
+.nexus-app-frame .nexus-hub-artifacts,
+.nexus-app-frame .nexus-hub-artifacts li {
+  display: grid;
+  gap: var(--nexus-space-3);
+  min-width: 0;
+}
+.nexus-app-frame .nexus-hub-result {
+  margin-top: var(--nexus-space-6);
+}
+.nexus-app-frame .nexus-hub-result dl {
+  margin: 0;
+}
+.nexus-app-frame .nexus-hub-result dd {
+  margin: var(--nexus-space-1) 0 0;
+  overflow-wrap: anywhere;
+}
+.nexus-app-frame .nexus-hub-result dt {
+  color: var(--muted);
+}
+.nexus-app-frame .nexus-hub-result .nexus-actions a {
+  padding: var(--nexus-space-3) var(--nexus-space-4);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.nexus-app-frame .nexus-hub-artifacts {
+  padding: 0;
+  list-style: none;
+}
+.nexus-app-frame .nexus-hub-artifacts li {
+  padding: var(--nexus-space-4);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow-wrap: anywhere;
+}

@@ -13,9 +13,9 @@ export const plannedConnectionTargets = [
   {
     id: "hugging-face",
     name: "Hugging Face Model Hub",
-    status: "Planned — not connected",
+    status: "Metadata lookup available",
     detail:
-      "Model catalog and download adapter target. License, repository revision, artifact hash, disk space and runtime compatibility must be checked. A downloaded model is not a running local model.",
+      "Explicit anonymous repository metadata lookup is implemented; live Hub access is unverified. Downloads, installation and inference remain unconnected. Reported license, revision, sizes and hashes require review before acquisition.",
     authorization:
       "No account access, token use, model download or hosted inference is enabled. Local runtime setup and any hosted Hugging Face service are separate capabilities.",
   },

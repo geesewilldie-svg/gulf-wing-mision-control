@@ -1,5 +1,6 @@
 "use client";
 import NexusFileGalaxy from "./nexus-file-galaxy";
+import HubModelCatalog from "./hub-model-catalog";
 import ExpandableVisual from "./expandable-visual";
 import { useEffect, useState } from "react";
 import { connections } from "@/lib/nexus";
@@ -232,6 +233,7 @@ export default function NexusConsole() {
               sharing permission. Existing chat subscriptions do not grant API
               access. No paid service or credential has been enabled for you.
             </p>
+            <HubModelCatalog disabled={disabled} />
             <details className="nexus-tool-inventory">
               <summary>Downloaded tools — setup and connection status</summary>
               <p>

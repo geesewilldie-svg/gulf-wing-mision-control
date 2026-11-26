@@ -64,3 +64,5 @@ Installed local model discovery is now implemented as an explicit bounded Ollama
 The first explicit model-switch slice now supports a one-question installed local model choice for typed Local Ollama answers. It retains permitted memory and reports request/response identity without changing the saved default or adding providers. General voice-driven switching and persistent selection remain pending; see `nexus-local-model-choice.md`.
 
 REA execution evidence now includes an owned loopback browser self-test and an explicit bounded saved-run history/export. Historical outcomes remain separate from current readiness and do not enable external-site inspection. This advances durable tool-result review without adding a provider or personal browser attachment; see `nexus-rea-owned-browser-self-test.md`.
+
+The model-asset prerequisite now supports explicit public Hub metadata lookup at an immutable commit and export of the visible reported artifact/license metadata. This does not download weights or establish hardware/runtime suitability; live Hub service access remains unverified in the policy-restricted cloud. See `nexus-hub-model-metadata.md`.
