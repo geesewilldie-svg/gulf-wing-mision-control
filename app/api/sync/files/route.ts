@@ -35,6 +35,7 @@ export async function POST(request: Request) {
       id?: string;
       hash?: string;
       part?: number;
+      offset?: number;
     };
     if (!body || typeof body !== "object")
       throw new SyncError(400, "Choose a supported folder operation.");
@@ -43,9 +44,20 @@ export async function POST(request: Request) {
     if (body.action === "remove" && typeof body.id === "string")
       return response((await removeFileRoot(body.id)).status);
     const snapshot = await fileSnapshot();
-    if (body.action === "map")
+    if (body.action === "map") {
+      if (
+        (body.query !== undefined &&
+          (typeof body.query !== "string" || body.query.length > 200)) ||
+        !Number.isSafeInteger(body.offset ?? 0) ||
+        (body.offset ?? 0) < 0 ||
+        (body.offset ?? 0) > 160
+      )
+        throw new SyncError(400, "Choose a valid indexed-name query and page.");
       return response({
-        map: sourceMap(snapshot.status, snapshot.files),
+        map: sourceMap(snapshot.status, snapshot.files, {
+          query: body.query,
+          offset: body.offset,
+        }),
         warnings: [
           snapshot.status.warning,
           ...snapshot.status.scans
@@ -56,6 +68,7 @@ export async function POST(request: Request) {
             ),
         ].filter(Boolean),
       });
+    }
     if (body.action === "read-indexed") {
       if (
         typeof body.id !== "string" ||

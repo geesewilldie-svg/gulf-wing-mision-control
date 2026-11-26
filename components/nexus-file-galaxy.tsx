@@ -10,6 +10,8 @@ export default function NexusFileGalaxy({ enabled }: { enabled: boolean }) {
   const [map, setMap] = useState<SourceMap | null>(null),
     [error, setError] = useState(""),
     [filter, setFilter] = useState(""),
+    [catalogQuery, setCatalogQuery] = useState(""),
+    [catalogSearch, setCatalogSearch] = useState({ query: "", offset: 0 }),
     [zoom, setZoom] = useState(1),
     [storageMode, setStorageMode] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]),
@@ -42,7 +44,7 @@ export default function NexusFileGalaxy({ enabled }: { enabled: boolean }) {
       void fetch("/api/sync/files", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "map" }),
+        body: JSON.stringify({ action: "map", ...catalogSearch }),
         signal: controller.signal,
       })
         .then(async (response) => {
@@ -69,7 +71,7 @@ export default function NexusFileGalaxy({ enabled }: { enabled: boolean }) {
       controller.abort();
       request.current?.abort();
     };
-  }, [enabled, reload]);
+  }, [enabled, reload, catalogSearch]);
   const nodes: FileNode[] =
     map?.folders.flatMap((folder) =>
       folder.files.map((file) => ({
@@ -181,6 +183,39 @@ export default function NexusFileGalaxy({ enabled }: { enabled: boolean }) {
       <div hidden={storageMode}>
         <details className="memory-galaxy-tools">
           <summary>Find files and view controls</summary>
+          <form
+            className="nexus-draft-actions"
+            onSubmit={(event) => {
+              event.preventDefault();
+              setFilter("");
+              setCatalogSearch({ query: catalogQuery.trim(), offset: 0 });
+            }}
+          >
+            <label>
+              Search all indexed file names
+              <input
+                type="search"
+                maxLength={200}
+                value={catalogQuery}
+                onChange={(event) => setCatalogQuery(event.target.value)}
+              />
+            </label>
+            <button type="submit">Search indexed catalog</button>
+            <button
+              type="button"
+              onClick={() => {
+                setCatalogQuery("");
+                setFilter("");
+                setCatalogSearch({ query: "", offset: 0 });
+              }}
+            >
+              Show indexed catalog
+            </button>
+          </form>
+          <p>
+            Search covers current selected-folder index names and source labels.
+            It does not scan drives or search file contents.
+          </p>
           <div className="nexus-draft-actions">
             <label>
               Find files
@@ -235,6 +270,52 @@ export default function NexusFileGalaxy({ enabled }: { enabled: boolean }) {
                 ? ` · ${map.omitted} more indexed files outside this view`
                 : ""}
             </p>
+            {map.catalog && (
+              <section aria-label="Indexed catalog coverage">
+                <p>
+                  {map.catalog.matched} matching files in {map.total} current
+                  indexed files
+                  {map.catalog.query ? ` for “${map.catalog.query}”` : ""}. This
+                  page shows up to {map.catalog.limit} stars.
+                </p>
+                <p>
+                  {map.catalog.resolvedDirectedLinks} resolved directed note
+                  links · {map.catalog.unresolvedTargets} unresolved targets ·{" "}
+                  {map.catalog.partialLinkFiles} notes with bounded link
+                  extraction. Counts cover the current selected-folder index,
+                  not all laptop files or owner memory. Links use extracted
+                  text; no connection lines are drawn.
+                </p>
+                <div className="nexus-draft-actions">
+                  {map.catalog.offset > 0 && (
+                    <button
+                      onClick={() => {
+                        setFilter("");
+                        setCatalogSearch({
+                          query: map.catalog.query,
+                          offset: Math.max(0, map.catalog.offset - 80),
+                        });
+                      }}
+                    >
+                      Previous indexed stars
+                    </button>
+                  )}
+                  {map.catalog.nextOffset !== null && (
+                    <button
+                      onClick={() => {
+                        setFilter("");
+                        setCatalogSearch({
+                          query: map.catalog.query,
+                          offset: map.catalog.nextOffset!,
+                        });
+                      }}
+                    >
+                      Next indexed stars
+                    </button>
+                  )}
+                </div>
+              </section>
+            )}
             {!shown.length && (
               <p>
                 No current files match this view. Choose folders locally or
