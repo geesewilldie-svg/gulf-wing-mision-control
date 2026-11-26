@@ -9,3 +9,5 @@ At most 1,000 reported entries are accepted and 100 valid unique model names dis
 The controller-only same-origin POST accepts only `action: local-model-catalog`; arbitrary targets/extra fields are rejected. Results clear on a new attempt or access error, and the component unmounts when the parent activity view loses its authenticated status. Existing configuration polling does not run inference or catalog scans. Data stays on this controller/laptop path; provider enablement and per-question sharing rules remain unchanged.
 
 This supplies discovery for the existing installed local runtime. It is not a Hub download connector, model installer, model-selection control, memory permission or performance benchmark. Venice, REA and asset acquisition retain their separate pending contracts.
+
+The same bounded catalog now supports the separate one-answer selector in typed Local Ollama Answer settings. Catalog inspection itself remains read-only; see `nexus-local-model-choice.md` for request-local selection and its generation-time membership recheck.

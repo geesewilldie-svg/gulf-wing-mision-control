@@ -1,4 +1,5 @@
 "use client";
+import LocalAnswerModel from "./local-answer-model";
 import OriginalFileLinks from "./original-file-links";
 import JournalReceipt from "./journal-receipt";
 import type { JournalReceiptView } from "@/lib/work-journal";
@@ -99,6 +100,7 @@ export default function NexusAssistant({
   const [workspaceScope, setWorkspaceScope] = useState<Scope>("Personal");
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState("auto");
+  const [localModel, setLocalModel] = useState("");
   const [allowExternal, setAllowExternal] = useState(false);
   const [publicQuery, setPublicQuery] = useState("");
   const [answer, setAnswer] = useState<Answer | null>(null);
@@ -179,6 +181,7 @@ export default function NexusAssistant({
     setMessage("");
     setAllowExternal(false);
     setPublicQuery("");
+    setLocalModel("");
     try {
       const r = await fetch("/api/sync/nexus", {
         method: "POST",
@@ -194,6 +197,8 @@ export default function NexusAssistant({
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           workspaceScope,
           mode,
+          localModel:
+            !signal && mode === "local" && localModel ? localModel : undefined,
           history,
           allowExternal,
           publicQuery,
@@ -317,7 +322,10 @@ export default function NexusAssistant({
                   aria-label="Routing"
                   disabled={conversationActive}
                   value={mode}
-                  onChange={(e) => setMode(e.target.value)}
+                  onChange={(e) => {
+                    setMode(e.target.value);
+                    setLocalModel("");
+                  }}
                 >
                   <option value="auto">
                     Auto — local first, permitted agents only
@@ -337,6 +345,13 @@ export default function NexusAssistant({
                     ))}
                 </select>
               </label>
+              {mode === "local" && !disabled && (
+                <LocalAnswerModel
+                  value={localModel}
+                  onChange={setLocalModel}
+                  disabled={busy || conversationActive}
+                />
+              )}
               <label className="nexus-sharing">
                 <input
                   type="checkbox"

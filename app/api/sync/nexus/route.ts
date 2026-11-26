@@ -106,6 +106,7 @@ export async function POST(request: Request) {
       workspaceScope?: unknown;
       query?: unknown;
       mode?: unknown;
+      localModel?: unknown;
       allowExternal?: unknown;
       publicQuery?: unknown;
     };
@@ -131,6 +132,17 @@ export async function POST(request: Request) {
       throw new SyncError(
         400,
         "Enter a question of up to 2,000 characters and choose a supported mode.",
+      );
+    if (
+      body.localModel !== undefined &&
+      (typeof body.localModel !== "string" ||
+        !/^[a-zA-Z0-9][a-zA-Z0-9._:/@+-]{0,199}$/.test(body.localModel) ||
+        body.mode !== "local" ||
+        body.voiceConversation === true)
+    )
+      throw new SyncError(
+        400,
+        "A local model choice applies only to one typed Local Ollama answer.",
       );
     let history: ReturnType<typeof parseHistory>;
     try {
@@ -498,6 +510,7 @@ export async function POST(request: Request) {
               id === "local" ? history : [],
               request.signal,
               {
+                localModel: body.localModel as string | undefined,
                 onIdentity: (value) => {
                   identity = value;
                 },

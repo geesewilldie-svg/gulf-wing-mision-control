@@ -1,0 +1,11 @@
+# One-answer local model choice
+
+In the assistant's **Answer settings and sharing**, choose **Local Ollama**, then **Load local answer models**. Select a model from the bounded installed catalog for the next typed question. Loading the list reads only local metadata; asking the question performs the requested local generation. The selector resets to **Saved default** after each submitted question, including a failed one. Switching routing unmounts the choices; losing controller access removes the private selector.
+
+The choice is request-local. It does not update the saved default, environment, task planner, voice-session model or any provider permission. The same workspace/current owner and permitted work retrieval, bounded conversation and existing freshness fences apply regardless of the chosen local model. Response details record the actually requested ID and provider-reported ID. A model choice does not reset durable memory.
+
+Before dispatch, the local adapter rechecks the fixed local Ollama tags catalog and accepts an exact name from its first 100 valid unique displayed entries. Unavailable/removed choices fail without generation, pull/install, external fallback or substitution. This extra metadata read occurs only for an explicit nondefault choice. Existing default answers do not acquire a tags request. A currently configured local adapter is still required by routing; this feature does not bypass local setup.
+
+The API accepts `localModel` only for typed `mode: local` requests, as a bounded model identifier. Voice/Auto/Compare/external overrides are rejected, and internal external adapter calls also reject a local override. New typed defaults omit the field. Non-model local commands may return their existing deterministic response without inference; they do not change the saved model either.
+
+Installed is not proof of hardware fit, loaded state or generation readiness on the 8 GB laptop. Large or unsupported models may fail. No automatic performance probe or download is performed. Catalog timeouts, size/count limits, controller/origin checks, local inference serialization and cancellation remain active. Models outside the bounded displayed catalog, voice-driven brain switching, persistent default selection and new hosted adapters remain separate work.

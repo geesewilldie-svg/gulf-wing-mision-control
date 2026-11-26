@@ -252,3 +252,171 @@ test("external adapters normalize their response model metadata without probing 
       }
     }
   }));
+
+test("one-answer local model choice is catalog-bound, preserves default and fails without hidden generation", () =>
+  fixture(async () => {
+    const calls: { url: string; body: any }[] = [];
+    let installed = true;
+    globalThis.fetch = (async (url, init) => {
+      calls.push({
+        url: String(url),
+        body: init?.body ? JSON.parse(init.body as string) : null,
+      });
+      if (String(url).endsWith("/api/tags"))
+        return Response.json({
+          models: installed ? [{ name: "alternate:small" }] : [],
+        });
+      expect(String(url)).toBe("http://127.0.0.1:11434/api/chat");
+      return Response.json({
+        model: "alternate:small",
+        message: { content: "Fixture alternate" },
+      });
+    }) as typeof fetch;
+    let identity: ModelIdentity | undefined;
+    await askProvider(
+      "local",
+      "QUARTZ",
+      "Current scoped context",
+      [],
+      new AbortController().signal,
+      {
+        localModel: "alternate:small",
+        onIdentity: (value) => (identity = value),
+      },
+    );
+    expect(identity).toEqual({
+      requestedModel: "alternate:small",
+      reportedModel: "alternate:small",
+    });
+    expect(calls.map((call) => call.url)).toEqual([
+      "http://127.0.0.1:11434/api/tags",
+      "http://127.0.0.1:11434/api/chat",
+    ]);
+    expect(process.env.GW_NEXUS_MODEL).toBe("fixture:requested");
+    installed = false;
+    await expect(
+      askProvider(
+        "local",
+        "QUARTZ",
+        "Current scoped context",
+        [],
+        new AbortController().signal,
+        { localModel: "alternate:small" },
+      ),
+    ).rejects.toMatchObject({ status: 409 });
+    expect(calls.filter((call) => call.url.endsWith("/api/chat"))).toHaveLength(
+      1,
+    );
+  }));
+
+test("answer override keeps current local memory and rejects nonlocal and voice overrides", () =>
+  fixture(async (config) => {
+    const { saveMemory } = await import("../lib/server/foundation/store");
+    saveMemory({
+      scope: "Personal",
+      kind: "fact",
+      content: "QUARTZ current local memory",
+    });
+    const calls: any[] = [];
+    globalThis.fetch = (async (url, init) => {
+      calls.push({
+        url: String(url),
+        body: init?.body ? JSON.parse(init.body as string) : null,
+      });
+      return String(url).endsWith("/api/tags")
+        ? Response.json({ models: [{ name: "alternate:small" }] })
+        : Response.json({
+            model: "alternate:small",
+            message: { content: "Fixture answer" },
+          });
+    }) as typeof fetch;
+    const send = (extra: any) =>
+      POST(
+        new Request("http://localhost:3000/api/sync/nexus", {
+          method: "POST",
+          headers: {
+            host: "localhost:3000",
+            origin: "http://localhost:3000",
+            "content-type": "application/json",
+            cookie: "gw_sync_session=" + token(config, "controller"),
+          },
+          body: JSON.stringify({
+            query: "Explain QUARTZ",
+            workspaceScope: "Personal",
+            mode: "local",
+            localModel: "alternate:small",
+            ...extra,
+          }),
+        }),
+      );
+    expect((await send({ mode: "auto" })).status).toBe(400);
+    expect((await send({ voiceConversation: true })).status).toBe(400);
+    expect(calls).toHaveLength(0);
+    const result = await send({});
+    expect(result.status).toBe(200);
+    expect((await result.json()).agents[0].requestedModel).toBe(
+      "alternate:small",
+    );
+    expect(
+      JSON.stringify(calls.find((call) => call.body?.messages)?.body.messages),
+    ).toContain("current local memory");
+    expect(process.env.GW_NEXUS_MODEL).toBe("fixture:requested");
+  }));
+
+test("desktop and phone select a local model for one typed answer and reset to saved default", async ({
+  page,
+  context,
+}) => {
+  await fixtureRole(context);
+  let catalogCalls = 0;
+  const questions: any[] = [];
+  await page.route("**/api/sync/agents", (route) => {
+    if (route.request().method() === "GET")
+      return route.fulfill({ json: { providers: [], events: [] } });
+    catalogCalls++;
+    return route.fulfill({
+      json: {
+        models: [{ name: "alternate:small" }],
+        uniqueModels: 1,
+        omitted: 0,
+      },
+    });
+  });
+  await page.route("**/api/sync/nexus", (route) => {
+    if (route.request().method() !== "POST") return route.continue();
+    questions.push(route.request().postDataJSON());
+    return route.fulfill({
+      json: { engine: "Fixture", answer: "Fixture answer", sources: [] },
+    });
+  });
+  await page.goto("/nexus");
+  const { openAssistant } = await import("./helpers/assistant");
+  await openAssistant(page);
+  await page.getByText("Answer settings and sharing", { exact: true }).click();
+  await page.getByLabel("Routing", { exact: true }).selectOption("local");
+  expect(catalogCalls).toBe(0);
+  await page
+    .getByRole("button", { name: "Load local answer models", exact: true })
+    .click();
+  const select = page.getByRole("combobox", {
+    name: "Local model for next typed answer",
+    exact: true,
+  });
+  await select.selectOption("alternate:small");
+  const input = page.locator("form").getByLabel("Ask Nexus", { exact: true });
+  await input.fill("Explain QUARTZ");
+  await page
+    .locator("form")
+    .getByRole("button", { name: "Ask Nexus", exact: true })
+    .click();
+  await expect(select).toHaveValue("");
+  expect(questions[0].localModel).toBe("alternate:small");
+  await input.fill("Explain again");
+  await page
+    .locator("form")
+    .getByRole("button", { name: "Ask Nexus", exact: true })
+    .click();
+  await expect.poll(() => questions.length).toBe(2);
+  expect(questions[1].localModel).toBeUndefined();
+  expect(catalogCalls).toBe(1);
+});

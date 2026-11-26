@@ -164,6 +164,7 @@ export async function boundedJSON(r: Response, limit = 500000): Promise<any> {
 }
 type ProviderCallOptions = {
   purpose?: "planning";
+  localModel?: string;
   onIdentity?: (identity: ModelIdentity) => void;
 };
 async function callProvider(
@@ -188,8 +189,19 @@ async function callProvider(
     headers: Record<string, string> = { "Content-Type": "application/json" },
     body: unknown;
   if (id === "local") {
-    const model = await configuredLocalModel();
+    const model = options?.localModel || (await configuredLocalModel());
     if (!model) throw Error("Local model not configured.");
+    if (options?.localModel) {
+      if (!modelIdentifier(options.localModel))
+        throw new SyncError(400, "Choose an installed local model.");
+      const { inspectLocalModels } = await import("./local-model-catalog");
+      const catalog = await inspectLocalModels(timeout);
+      if (!catalog.models.some((item) => item.name === options.localModel))
+        throw new SyncError(
+          409,
+          "Selected local model is no longer in the bounded installed catalog. No generation or download was requested.",
+        );
+    }
     requestedModel = modelIdentifier(model);
     url = "http://127.0.0.1:11434/api/chat";
     body = {
@@ -306,6 +318,11 @@ export async function askProvider(
   signal: AbortSignal,
   options?: ProviderCallOptions,
 ): Promise<string> {
+  if (options?.localModel && id !== "local")
+    throw new SyncError(
+      400,
+      "A local model choice cannot be used for an external provider.",
+    );
   if (id === "gemini" && (await hasPublicGeminiPolicy()))
     throw new SyncError(
       403,
