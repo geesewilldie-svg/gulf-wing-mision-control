@@ -1,0 +1,11 @@
+# REA owned browser self-test
+
+In Connection activity → REA inspection prerequisites, choose **Test REA owned browser inspection**. This is an explicit diagnostic, not a general website inspector.
+
+Nexus checks the actual server Node runtime, creates a temporary browser profile and a random loopback-only HTML fixture, starts installed Chrome/Edge headless with an ephemeral loopback debugging endpoint, and creates a target for that fixture. The existing staged-package integrity gate and bounded MCP exchange then call `inspect_web_page` once. Acceptance matches the expected title, target ID, URL and origin, records the evidence identity/hash and capture completeness, and requires REA exit and browser cleanup. Personal browser profiles, existing tabs, external websites and models are not used. No browser is downloaded. The production browser keeps its normal sandbox settings.
+
+The controller-only same-origin action accepts no URL, executable, profile, CDP endpoint or tool arguments. Capture enables accessibility text but disables console text, JSON body shapes, WebSocket shapes, storage keys/fingerprints and script sources. The whole fixture has a 30-second operation deadline; owned-process cleanup has additional bounded waits. Cleanup failure does not yield success and retains temporary files; an unclosed owned browser blocks another self-test until its close is observed. This is process ownership bookkeeping, not an operating-system process-tree sandbox guarantee.
+
+Small metadata-only JSON receipts are created exclusively under the private Nexus data directory in `rea-self-test-receipts`, up to 100 files, with write/readback verification. Raw page content is not stored or added to owner memory. Receipt failure/full capacity is reported as pending independently of successful inspection; files are not automatically overwritten or pruned.
+
+`policy_filtered` or `attach_limited` evidence is partial capture, not a complete page extraction or a security audit. General-site inspection, authenticated browsing, screenshots and arbitrary actions remain unconnected. Native Windows execution still needs host acceptance; cloud validation uses a disposable Chromium fixture with an internal test-only sandbox override, never a browser setting exposed by the HTTP API.

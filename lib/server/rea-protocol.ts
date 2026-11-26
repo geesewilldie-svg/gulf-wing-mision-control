@@ -16,13 +16,74 @@ const permitted = [
   "observe_web_session",
   "compare_web_captures",
 ];
+export type OwnedReaInspection = {
+  endpoint: string;
+  targetId: string;
+  url: string;
+  origin: string;
+  title: string;
+};
+export function ownedInspectionArguments(inspection: OwnedReaInspection) {
+  return {
+    cdp_endpoint: inspection.endpoint,
+    target_id: inspection.targetId,
+    allowed_origins: [inspection.origin],
+    discovery_timeout_ms: 2000,
+    command_timeout_ms: 3000,
+    observation_ms: 100,
+    include_accessibility_text: true,
+    include_console_text: false,
+    include_json_body_shapes: false,
+    include_websocket_shapes: false,
+    include_storage_keys: false,
+    include_storage_fingerprints: false,
+    include_script_sources: false,
+  };
+}
+export function ownedInspectionEvidence(
+  result: any,
+  expected: OwnedReaInspection,
+) {
+  const data = result?.structuredContent;
+  const target = data?.normalized_result?.target;
+  const parameters = data?.parameters;
+  const expectedParameters = ownedInspectionArguments(expected);
+  if (
+    result?.isError ||
+    Object.entries(expectedParameters).some(
+      ([key, value]) =>
+        JSON.stringify(parameters?.[key]) !== JSON.stringify(value),
+    ) ||
+    data?.predicate_type !== "rea.web-page-inspection" ||
+    data?.operation !== "inspect_web_page" ||
+    data?.provider?.id !== "rea-cdp-browser" ||
+    target?.target_id !== expected.targetId ||
+    target?.url !== expected.url ||
+    target?.origin !== expected.origin ||
+    target?.title !== expected.title ||
+    data?.subject?.identity?.url !== expected.url ||
+    !/^ev_[a-f0-9]{64}$/.test(data?.evidence_id || "")
+  )
+    throw Error("Owned fixture evidence does not match");
+  return {
+    evidenceId: data.evidence_id as string,
+    evidenceSha256: createHash("sha256")
+      .update(JSON.stringify(data))
+      .digest("hex"),
+    completeness: String(
+      data.normalized_result?.completeness?.status || "unknown",
+    ).slice(0, 80),
+  };
+}
 export function reaCatalogExchange(
   child: ChildProcessWithoutNullStreams,
   signal: AbortSignal,
+  inspection?: OwnedReaInspection,
 ) {
   return new Promise<{
     serverVersion: string;
     tools: { name: string; schemaSha256: string }[];
+    inspection?: ReturnType<typeof ownedInspectionEvidence>;
   }>((resolve, reject) => {
     const decoder = new StringDecoder("utf8");
     let failure: string | null = null;
@@ -35,6 +96,7 @@ export function reaCatalogExchange(
       result: {
         serverVersion: string;
         tools: { name: string; schemaSha256: string }[];
+        inspection?: ReturnType<typeof ownedInspectionEvidence>;
       } | null = null,
       ended = false;
     const fail = (message: string) => {
@@ -134,6 +196,26 @@ export function reaCatalogExchange(
             });
             result = { serverVersion: reaTarget.version, tools: found };
             stage = 2;
+            if (inspection) {
+              send({
+                jsonrpc: "2.0",
+                id: 3,
+                method: "tools/call",
+                params: {
+                  name: "inspect_web_page",
+                  arguments: ownedInspectionArguments(inspection),
+                },
+              });
+            } else {
+              stage = 3;
+              child.stdin.end();
+            }
+          } else if (stage === 2 && inspection && message.id === 3 && result) {
+            result.inspection = ownedInspectionEvidence(
+              message.result,
+              inspection,
+            );
+            stage = 3;
             child.stdin.end();
           } else throw Error();
         } catch {
@@ -157,7 +239,7 @@ export function reaCatalogExchange(
       if (
         code === 0 &&
         !exitSignal &&
-        stage === 2 &&
+        stage === 3 &&
         result &&
         !buffer.trim() &&
         !decoder.end().trim()
@@ -188,7 +270,10 @@ export function reaCatalogExchange(
   });
 }
 let running = false;
-export async function inspectReaProtocol(signal: AbortSignal) {
+export async function inspectReaProtocol(
+  signal: AbortSignal,
+  inspection?: OwnedReaInspection,
+) {
   if (running)
     throw new SyncError(429, "A REA protocol check is already running.");
   running = true;
@@ -313,15 +398,16 @@ export async function inspectReaProtocol(signal: AbortSignal) {
     child.once("close", () => {
       running = false;
     });
-    const result = await reaCatalogExchange(child, signal);
+    const result = await reaCatalogExchange(child, signal, inspection);
     return {
       ...result,
       checkedAt: new Date().toISOString(),
       protocolVerified: true,
-      toolsCalled: 0,
+      toolsCalled: inspection ? 1 : 0,
       browserReady: false,
-      notice:
-        "REA initialize/catalog exchange and clean shutdown verified. No tool was called, no browser attached, and no model contacted. Site inspection remains unconnected.",
+      notice: inspection
+        ? "Owned local fixture inspected and REA closed cleanly. No personal profile, account or external site was inspected."
+        : "REA initialize/catalog exchange and clean shutdown verified. No tool was called, no browser attached, and no model contacted. Site inspection remains unconnected.",
     };
   } catch (error) {
     if (error instanceof SyncError) throw error;

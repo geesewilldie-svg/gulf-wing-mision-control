@@ -1,3 +1,4 @@
+import { reaBrowserSelfTest } from "@/lib/server/rea-browser-self-test";
 import { inspectReaProtocol } from "@/lib/server/rea-protocol";
 import { inspectReaReadiness } from "@/lib/server/rea-readiness";
 import { inspectLocalModels } from "@/lib/server/local-model-catalog";
@@ -44,12 +45,17 @@ export async function POST(request: Request) {
     const body = (await readBody(request, 1000)) as any;
     if (
       !body ||
-      !["local-model-catalog", "rea-preflight", "rea-protocol-check"].includes(
-        body.action,
-      ) ||
+      ![
+        "local-model-catalog",
+        "rea-preflight",
+        "rea-protocol-check",
+        "rea-browser-self-test",
+      ].includes(body.action) ||
       Object.keys(body).some((key) => key !== "action")
     )
       throw new SyncError(400, "Choose a supported metadata inspection.");
+    if (body.action === "rea-browser-self-test")
+      return response(await reaBrowserSelfTest(request.signal));
     if (body.action === "rea-protocol-check")
       return response(await inspectReaProtocol(request.signal));
     return response(

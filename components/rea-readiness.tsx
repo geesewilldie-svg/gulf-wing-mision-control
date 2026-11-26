@@ -11,14 +11,22 @@ export default function ReaReadiness() {
     checkedAt: string;
     notice: string;
   } | null>(null);
+  const [browserTest, setBrowserTest] = useState<{
+    runId: string;
+    receiptState: string;
+    evidenceId: string;
+    completeness: string;
+    notice: string;
+  } | null>(null);
   const pending = useRef<AbortController | null>(null);
   useEffect(() => () => pending.current?.abort(), []);
-  async function inspect(testProtocol = false) {
+  async function inspect(testProtocol = false, testBrowser = false) {
     pending.current?.abort();
     const controller = new AbortController();
     pending.current = controller;
     setData(null);
     setProtocol(null);
+    setBrowserTest(null);
     setError("");
     setBusy(true);
     try {
@@ -26,7 +34,11 @@ export default function ReaReadiness() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: testProtocol ? "rea-protocol-check" : "rea-preflight",
+          action: testBrowser
+            ? "rea-browser-self-test"
+            : testProtocol
+              ? "rea-protocol-check"
+              : "rea-preflight",
         }),
         signal: controller.signal,
       });
@@ -34,7 +46,8 @@ export default function ReaReadiness() {
       if (controller.signal.aborted) return;
       if (!response.ok)
         throw Error(result.error || "REA prerequisite check unavailable.");
-      if (testProtocol) setProtocol(result);
+      if (testBrowser) setBrowserTest(result);
+      else if (testProtocol) setProtocol(result);
       else setData(result);
     } catch (failure) {
       if (!controller.signal.aborted) setError((failure as Error).message);
@@ -59,6 +72,24 @@ export default function ReaReadiness() {
       <button disabled={busy} onClick={() => void inspect(true)}>
         Test REA protocol without browser
       </button>
+      <p>
+        The browser self-test opens a fresh temporary headless browser on a
+        fixed local test page, inspects it once and closes it. It stores a small
+        local diagnostic receipt; it does not use personal tabs or accounts.
+      </p>
+      <button disabled={busy} onClick={() => void inspect(false, true)}>
+        Test REA owned browser inspection
+      </button>
+      {browserTest && (
+        <section aria-label="REA owned browser self-test results">
+          <p>{browserTest.notice}</p>
+          <p>
+            Run {browserTest.runId} · Receipt: {browserTest.receiptState} ·
+            Evidence: {browserTest.evidenceId} · Capture status:{" "}
+            {browserTest.completeness}
+          </p>
+        </section>
+      )}
       {busy && (
         <button
           onClick={() => {
