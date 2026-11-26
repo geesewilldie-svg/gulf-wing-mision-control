@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import HubAcquisitionPreview from "./hub-acquisition-preview";
 import type { HubModelMetadata } from "@/lib/hub-model";
 function size(bytes: number | null) {
   return bytes === null ? "Unknown" : `${bytes.toLocaleString()} bytes`;
@@ -181,6 +182,10 @@ export default function HubModelCatalog({ disabled }: { disabled: boolean }) {
               ))}
             </ul>
           </details>
+          <HubAcquisitionPreview
+            key={data.repository + data.revision + data.checkedAt}
+            metadata={data}
+          />
           <p>
             Checked at {data.checkedAt}. Missing license, hashes, size or
             runtime support must be resolved before any future acquisition.

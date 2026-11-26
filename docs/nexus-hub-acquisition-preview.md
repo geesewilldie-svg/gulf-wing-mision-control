@@ -1,0 +1,11 @@
+# Model artifact acquisition preview
+
+After a public model lookup, **Review one artifact** selects from its displayed file metadata. **Review artifact acquisition** re-reads the exact immutable commit and compares the selected filename, expected bytes and reported SHA-256 with that response. A change or disappearance invalidates the preview. The API accepts exactly those five source-identity fields; it accepts no destination, token, download URL, transfer flag or branch name.
+
+The preview checks the initial planned archive profile: one non-split GGUF file, public ungated access, known positive size up to 4 GiB, reported SHA-256 and reported license identifier. License terms and runtime/hardware suitability remain separate review requirements. Passing metadata/capacity checks is not legal approval, executable transfer authorization, or evidence that the laptop can run the model.
+
+The planned destination is the installation's private `model-assets` archive, separate from selected-folder knowledge ingestion. Capacity is read from the nearest existing ancestor on that future destination volume without creating directories or enumerating their contents. Directory/file/symlink or identity problems keep capacity unknown. The volume check requires twice the file size plus a 1 GiB reserve, reports its timestamp and never reserves space or tests write permission. Recheck before any future transfer; these bytes can change immediately.
+
+No directory, archive catalog entry, download job, partial model file, runtime import or model selection is created. **Download acquisition preview** exports the visible metadata/checks as JSON to the controller device, not model weights. Changing the artifact, starting another repository lookup, cancellation, errors or access denial remove the previous preview. UI controls use the shared spacing contract on desktop and phone.
+
+This implements exact-file/capacity review before acquisition. The actual download/resume/cancellation/hash-verification state machine, durable asset registration and runtime import remain future work. Live Hub API acceptance is still unverified due to the cloud network-policy block recorded in `nexus-hub-model-metadata.md`; no network policy or account configuration was changed.
