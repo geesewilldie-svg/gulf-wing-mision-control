@@ -492,3 +492,9 @@ Validation: production webpack build, TypeScript and all 32 desktop/mobile catal
 Added up to five most-linked indexed notes based on explicit incoming wiki links, plus metadata-only focus across catalog pages. Shortcuts preserve the original spiral, quiet labels, no connection lines and explicit content opening. Freshness/controller checks reject missing targets; rank/count coverage remains limited to the current selected index and bounded extracted text.
 
 Validation: production webpack build, TypeScript and all 34 desktop/mobile catalog, source-map, Galaxy workspace, file-access, storage and visual-navigation checks passed. New coverage verifies incoming-link deduplication/ranking, focus on the third 80-star page, no automatic content read, removed-target exclusion/unresolved counts and unavailable-target rejection. Existing quiet-label, full-rotation, fullscreen and explicit opening checks remain green. No owner data or provider/model calls were used.
+
+### Shared memory for the local task planner
+
+Connected local planning to the same scoped/versioned owner/work retrieval contract used by local answers. Current owner corrections/deletions and task history are reflected in new plans; retained exports and other-workspace task artifacts remain excluded. Before/after generation checks reject changed context, including stale partial plans. No additional agent account, provider, permission or schema change is introduced.
+
+Validation: production webpack build, TypeScript and all 48 desktop/mobile planning, Foundation, shared-memory, answer-source and task-context checks passed. New planner fixtures verify reuse of current owner/work identities, owner correction/deletion, cross-workspace and retained-snapshot exclusion, source changes before dispatch/during generation, and stale incomplete-draft rejection. All model calls were mocked local requests; no owner data, provider account or external model was used.

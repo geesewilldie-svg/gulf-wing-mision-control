@@ -95,3 +95,5 @@ Saved-note lifecycle refinement: new saves now have a private logical identity/s
 Indexed catalog continuation: name/source-label search and 80-star paging now reach all current selected-index files, with bounded explicit wiki-link metrics and coverage. This advances stage 5 within the existing 200-file selected index; global owner-memory/host search and larger clustering remain pending. See `nexus-indexed-catalog.md`.
 
 Linked-note navigation now ranks up to five current indexed notes by resolved incoming wiki links and focuses the selected note across 80-star pages without a content read. This supplies the optional reference hub list within declared index/extraction coverage, not inferred importance or usage ranking. See `nexus-indexed-catalog.md`.
+
+The local planning adapter now reuses the same current scoped owner/work envelope as local answers, with pre-dispatch and post-generation freshness checks (including incomplete results). This is a second implemented local consumer of the shared contract; private coding-worker/hosted-agent access remains unconnected. See `nexus-shared-memory-context.md`.
