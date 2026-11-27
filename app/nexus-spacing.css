@@ -287,3 +287,21 @@
 .nexus-app-frame .nexus-capture-video[hidden] {
   display: none;
 }
+
+.nexus-app-frame .nexus-current-record-search form {
+  display: grid;
+  gap: var(--nexus-space-4);
+}
+.nexus-app-frame
+  .nexus-card
+  .nexus-current-record-search
+  form
+  > label:not(.business-check):not(.nexus-sharing) {
+  display: grid;
+  gap: var(--nexus-space-2);
+  margin-block: 0;
+}
+.nexus-app-frame .nexus-current-record-search form > p,
+.nexus-app-frame .nexus-current-record-search form > .nexus-actions {
+  margin-block: 0;
+}

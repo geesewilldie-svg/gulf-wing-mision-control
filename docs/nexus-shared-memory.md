@@ -100,3 +100,5 @@ The local answer route now consumes a versioned internal shared-memory context e
 ## Saved-note lifecycle tracking
 
 The first version/identity catalog is now delivered for new reviewed snapshots and new automatic journal notes. Stable logical note groups and source-version/file hashes support read-only inspection of unchanged, externally edited, missing, unavailable and historical copies. Foundation's **Saved note versions** panel checks ten tracked files at a time. Existing files are never overwritten or imported, and registration failure remains separate from a confirmed save. Older unregistered exports are not automatically adopted. See `nexus-note-versions.md`; managed current-note replacement/conflict resolution and metadata recovery remain later stages.
+
+Explicit owner retrieval now includes [current memory/task search](nexus-current-record-search.md) under Memory. This reads live scoped Foundation records with coverage and freshness checks; it neither changes adapter-facing context nor imports historical snapshots or task claims into owner memory. All-workspace search is an explicit trusted-controller view, not cross-company tenant authorization.

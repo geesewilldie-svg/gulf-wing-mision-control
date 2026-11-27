@@ -1,4 +1,5 @@
 "use client";
+import CurrentRecordSearch from "./current-record-search";
 import LocalCapturePreview from "./local-capture-preview";
 import NexusFileGalaxy from "./nexus-file-galaxy";
 import HubModelCatalog from "./hub-model-catalog";
@@ -157,6 +158,10 @@ export default function NexusConsole() {
             for indexed sources or Storage galaxy to explore your selected
             locations. Use fullscreen and drag or arrow keys to rotate.
           </p>
+          <CurrentRecordSearch
+            enabled={!disabled}
+            onFoundation={() => setTab("Foundation")}
+          />
           <ExpandableVisual name="memory galaxy">
             <NexusFileGalaxy enabled={!disabled} />
           </ExpandableVisual>
