@@ -1,3 +1,4 @@
+import { GGUF_METADATA_LIMIT, parseGgufMetadata } from "../gguf-metadata";
 import fs from "node:fs/promises";
 import { constants, type Stats } from "node:fs";
 import path from "node:path";
@@ -608,4 +609,99 @@ export async function archiveResumeSource(
     },
   };
   return { record, prefix };
+}
+
+// Bounded metadata prefix read; deliberately does not claim whole-file integrity.
+export async function inspectHubArchiveMetadata(
+  slot: unknown,
+  receiptSha256: unknown,
+  signal: AbortSignal,
+) {
+  if (
+    !slotValid(slot) ||
+    typeof receiptSha256 !== "string" ||
+    !/^[a-f0-9]{64}$/.test(receiptSha256)
+  )
+    throw new SyncError(
+      400,
+      "Choose an inspected archive slot and receipt identity.",
+    );
+  let handle;
+  try {
+    const source = await readReceipt(slot, signal);
+    if (source.digest !== receiptSha256) throw Error("Receipt changed");
+    const name = path.join(source.directory, "model.gguf");
+    const before = await fs.lstat(/* turbopackIgnore: true */ name);
+    if (
+      !before.isFile() ||
+      before.isSymbolicLink() ||
+      before.size !== source.record.recordedBytes
+    )
+      throw Error("Unsafe model");
+    handle = await fs.open(
+      /* turbopackIgnore: true */ name,
+      constants.O_RDONLY | (constants.O_NOFOLLOW || 0),
+    );
+    const opened = await handle.stat();
+    if (
+      !same(before, opened) ||
+      opened.size !== before.size ||
+      opened.mtimeMs !== before.mtimeMs ||
+      opened.ctimeMs !== before.ctimeMs
+    )
+      throw Error("Model changed");
+    const buffer = Buffer.alloc(Math.min(before.size, GGUF_METADATA_LIMIT));
+    let offset = 0;
+    while (offset < buffer.length) {
+      signal.throwIfAborted();
+      const read = await handle.read(
+        buffer,
+        offset,
+        buffer.length - offset,
+        offset,
+      );
+      if (!read.bytesRead) throw Error("Short metadata read");
+      offset += read.bytesRead;
+    }
+    const metadata = parseGgufMetadata(buffer);
+    const after = await handle.stat(),
+      current = await fs.lstat(/* turbopackIgnore: true */ name);
+    const again = await readReceipt(slot, signal);
+    for (const item of [after, current])
+      if (
+        !same(before, item) ||
+        !item.isFile() ||
+        item.isSymbolicLink() ||
+        item.size !== before.size ||
+        item.mtimeMs !== before.mtimeMs ||
+        item.ctimeMs !== before.ctimeMs
+      )
+        throw Error("Model changed");
+    if (
+      again.digest !== source.digest ||
+      !same(source.identity, again.identity)
+    )
+      throw Error("Receipt changed");
+    await source.guard();
+    signal.throwIfAborted();
+    return {
+      slot,
+      runId: source.record.runId,
+      receiptSha256,
+      inspectedAt: new Date().toISOString(),
+      metadata,
+      notice:
+        "Declared GGUF metadata from a bounded local prefix only. Tensor layout, full-file integrity, hardware fit and runtime compatibility were not verified. No model was imported or activated.",
+    };
+  } catch (error) {
+    if (error instanceof SyncError) throw error;
+    throw new SyncError(
+      signal.aborted ? 499 : 409,
+      signal.aborted
+        ? "Metadata inspection cancelled."
+        : "GGUF metadata could not be inspected safely or the file/receipt changed. Inspect the archive again; unsupported or malformed files are not runtime-ready.",
+    );
+  } finally {
+    await handle?.close().catch(() => {});
+  }
 }

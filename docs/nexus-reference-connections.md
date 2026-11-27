@@ -86,3 +86,5 @@ Archive review continuation: [local archive inspection and recheck](nexus-hub-ar
 Uncertain archive publication now supports [source-bound local reconciliation](nexus-hub-archive-recovery.md) into separate recovery metadata. This records observed byte agreement without changing original receipts or performing a source request, download retry, partial resume or runtime activation.
 
 Retained partials now support [explicit resume into a new archive run](nexus-hub-archive-resume.md) after renewed license/source/capacity checks. Exact remaining-byte responses and full new-file verification are required; originals remain unchanged. Live Hub/CDN range support and native Windows behavior remain unverified, and this does not enable model inference.
+
+Runtime-review prerequisite: [local GGUF metadata inspection](nexus-gguf-metadata.md) now projects bounded declared model fields from an explicitly selected archived file. It does not import weights or establish hardware/runtime support. The official Venice documentation probe still returned HTTP 403 through this environment, so live API/schema verification and provider routing remain unimplemented.

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import HubArchiveMetadata from "./hub-archive-metadata";
 import HubArchiveResume from "./hub-archive-resume";
 import type {
   HubArchiveHistory as History,
@@ -252,6 +253,13 @@ export default function HubArchiveHistory({ disabled }: { disabled: boolean }) {
                         No fresh source or license check was made.
                       </p>
                     </details>
+                    {record.fileState === "size-matches-record" && (
+                      <HubArchiveMetadata
+                        key={record.runId + record.receiptSha256 + "metadata"}
+                        record={record}
+                        disabled={disabled || busy}
+                      />
+                    )}
                     {record.resumedFrom && (
                       <p>
                         {record.state === "verified"

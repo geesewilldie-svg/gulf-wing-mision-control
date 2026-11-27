@@ -1,5 +1,6 @@
 import { resumeHubArtifact } from "@/lib/server/hub-archive-resume";
 import {
+  inspectHubArchiveMetadata,
   readHubArchive,
   verifyHubArchive,
   reconcileHubArchive,
@@ -19,6 +20,20 @@ export async function POST(request: Request) {
     sameOrigin(request);
     await authorized(request, true);
     const body = (await readBody(request, 1000)) as any;
+    if (
+      body?.action === "metadata" &&
+      Object.keys(body).length === 3 &&
+      Object.keys(body).every((key) =>
+        ["action", "slot", "receiptSha256"].includes(key),
+      )
+    )
+      return response(
+        await inspectHubArchiveMetadata(
+          body.slot,
+          body.receiptSha256,
+          request.signal,
+        ),
+      );
     if (body?.action === "resume")
       return response(await resumeHubArtifact(body, request.signal));
     if (body?.action === "list" && Object.keys(body).length === 1)
