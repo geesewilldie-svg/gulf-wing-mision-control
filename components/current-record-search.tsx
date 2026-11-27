@@ -10,13 +10,17 @@ import type {
 export default function CurrentRecordSearch({
   enabled,
   onFoundation,
+  initialResult,
 }: {
   enabled: boolean;
-  onFoundation: () => void;
+  onFoundation?: () => void;
+  initialResult?: Results;
 }) {
-  const [query, setQuery] = useState(""),
-    [workspace, setWorkspace] = useState<RecordWorkspace>("Personal");
-  const [data, setData] = useState<Results | null>(null),
+  const [query, setQuery] = useState(initialResult?.query || ""),
+    [workspace, setWorkspace] = useState<RecordWorkspace>(
+      initialResult?.workspace || "Personal",
+    );
+  const [data, setData] = useState<Results | null>(initialResult || null),
     [inspection, setInspection] = useState<CurrentRecordInspection | null>(
       null,
     );
@@ -121,7 +125,10 @@ export default function CurrentRecordSearch({
     }
   }
   return (
-    <details className="nexus-current-record-search">
+    <details
+      className="nexus-current-record-search"
+      open={initialResult ? true : undefined}
+    >
       <summary>Search current memory and work</summary>
       <p>
         Find live owner memory and task records in Foundation. Choose a
@@ -283,7 +290,11 @@ export default function CurrentRecordSearch({
             </p>
           </details>
           <div className="nexus-actions">
-            <button onClick={onFoundation}>Manage records in Foundation</button>
+            {onFoundation && (
+              <button onClick={onFoundation}>
+                Manage records in Foundation
+              </button>
+            )}
           </div>
         </section>
       )}

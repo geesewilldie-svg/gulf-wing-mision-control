@@ -1,3 +1,5 @@
+import { currentRecordIntent } from "@/lib/current-record-intent";
+import { conversationCurrentRecords } from "@/lib/server/conversation-current-records";
 import { journalIntent } from "@/lib/journal-intent";
 import { conversationJournal } from "@/lib/server/conversation-journal";
 import { workContextStamp } from "@/lib/server/work-memory-context";
@@ -195,6 +197,17 @@ export async function POST(request: Request) {
           data.resetHistory === true,
       });
     };
+    const recordCommand = currentRecordIntent(body.query);
+    if (recordCommand) {
+      if (!["auto", "local"].includes(body.mode as string))
+        throw new SyncError(
+          403,
+          "Current-record search is local-only. Choose Auto or local mode.",
+        );
+      return reply(
+        conversationCurrentRecords(recordCommand, workScope, request.signal),
+      );
+    }
     const journalCommand = journalIntent(body.query);
     if (journalCommand) {
       if (!["auto", "local"].includes(body.mode as string))

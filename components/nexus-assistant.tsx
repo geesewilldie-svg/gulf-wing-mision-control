@@ -1,4 +1,6 @@
 "use client";
+import CurrentRecordSearch from "./current-record-search";
+import type { CurrentRecordSearch as RecordResults } from "@/lib/current-record-search";
 import LocalAnswerModel from "./local-answer-model";
 import OriginalFileLinks from "./original-file-links";
 import JournalReceipt from "./journal-receipt";
@@ -22,6 +24,7 @@ const AssistantContext = createContext({
 });
 export const useNexusAssistant = () => useContext(AssistantContext);
 type Answer = {
+  recordSearch?: RecordResults;
   engine: string;
   journalEntries?: JournalReceiptView[];
   journalEntry?: JournalReceiptView;
@@ -114,6 +117,7 @@ export default function NexusAssistant({
     taskContext.current = undefined;
     memoryReference.current = undefined;
     workStamp.current = undefined;
+    setAnswer((current) => (current?.recordSearch ? null : current));
     window.dispatchEvent(new Event("nexus:context-reset"));
   }, [workspaceScope]);
   useEffect(() => () => pendingAnswer.current?.abort(), []);
@@ -215,6 +219,10 @@ export default function NexusAssistant({
         workStamp.current = data.workContextStamp;
       if (data.resetHistory)
         window.dispatchEvent(new Event("nexus:context-reset"));
+      if (data.clearRecordReferences === true) {
+        taskContext.current = undefined;
+        memoryReference.current = undefined;
+      }
       if (data.memoryChoices || data.memoryCleared)
         memoryReference.current = undefined;
       if (data.memory) memoryReference.current = data.memory;
@@ -392,6 +400,13 @@ export default function NexusAssistant({
               <article className="nexus-answer">
                 <h3>{answer.engine}</h3>
                 <p>{answer.answer}</p>
+                {answer.recordSearch && (
+                  <CurrentRecordSearch
+                    key={answer.recordSearch.stamp + answer.recordSearch.readAt}
+                    initialResult={answer.recordSearch}
+                    enabled={!disabled}
+                  />
+                )}
                 {answer.sourceMap && (
                   <NexusSourceMap
                     map={answer.sourceMap}
