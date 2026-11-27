@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import RuntimeBlobCheck from "./runtime-blob-check";
 import HubImportReview from "./hub-import-review";
 import HubArchiveMetadata from "./hub-archive-metadata";
 import HubArchiveResume from "./hub-archive-resume";
@@ -278,6 +279,18 @@ export default function HubArchiveHistory({ disabled }: { disabled: boolean }) {
                         . Original archive retained; no model creation or
                         inference is recorded by this staging receipt.
                       </p>
+                    )}
+                    {record.runtimeBlob?.state === "recorded" && (
+                      <RuntimeBlobCheck
+                        key={
+                          record.runId +
+                          record.receiptSha256 +
+                          record.runtimeBlob.receipt.runId
+                        }
+                        record={record}
+                        receipt={record.runtimeBlob.receipt}
+                        disabled={disabled || busy}
+                      />
                     )}
                     {record.runtimeBlob?.state === "unavailable" && (
                       <p>

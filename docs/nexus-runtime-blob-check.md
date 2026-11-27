@@ -1,0 +1,13 @@
+# Current runtime blob presence
+
+Archive history now offers **Check runtime blob** for a retained, source-bound staging receipt, including started, staged, unconfirmed, failed and cancelled outcomes. This is an explicit read-only observation. It never retries an upload, rewrites a receipt, creates a model or turns an uncertain historical upload into recorded success.
+
+The controller-only, same-origin action accepts exactly `check-runtime-blob`, fixed archive slot, inspected original receipt SHA-256 and the displayed staging run ID. Caller URLs, paths, hashes for other resources and upload options are rejected. It requires a recorded completed source archive and full current local size/hash agreement, then checks the staging receipt matches the source/run. The existing full-file source-check admission and ten-minute cooperative deadline apply. Large archives can take time even though the runtime request itself is small.
+
+Only one HEAD is sent to the fixed loopback Ollama blob endpoint constructed from the verified source hash. It has a five-second runtime wait bound, no credentials, redirects, request body or automatic retry. Under the Ollama API contract, 200 is projected as present-reported and 404 as missing-reported. Other statuses, network/cancellation errors or changed source/staging evidence produce no accepted presence result. The staging receipt's projected fields are rechecked after HEAD; the source file/receipt identity fence closes before acceptance. No file is written by the check, and archive inspection alone never sends the runtime request.
+
+The page result/export retains source/run/hash/bytes, historical staging state, a fresh check ID and observation time. Presence and the original outcome remain separate: an unconfirmed stage stays unconfirmed even when the current runtime reports the blob present. A missing response does not establish that an older operation stopped or authorize retry. Results are session observations; download explicitly saves the displayed JSON snapshot. Refreshing does not replay a check or save new historical receipts.
+
+This uses the local runtime's HEAD contract, not independent authentication of the runtime process or hash readback of its stored bytes. It does not prove a model manifest exists, compatibility, selected state or inference readiness, and it is not an import authorization token. Future model creation must obtain fresh server-side evidence at execution time rather than trusting an exported/page result.
+
+Validation uses real disposable source/staging files and an owned HTTP runtime fixture. It does not establish native Windows or real Ollama acceptance.

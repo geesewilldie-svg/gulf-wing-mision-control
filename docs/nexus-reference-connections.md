@@ -96,3 +96,5 @@ Local inference acceptance continuation: [fixed installed-model diagnostic](nexu
 Archive-to-runtime continuation: [pre-import review](nexus-hub-import-review.md) now combines a fresh source-bound archive hash, declared metadata, reported local runtime version and host RAM snapshot. Runtime storage/capacity and import remain unimplemented; the review does not claim that an archived model is installed or runnable.
 
 Runtime write continuation: [explicit local blob staging](nexus-runtime-blob-staging.md) now copies a reviewed archive into the local runtime's content-addressed blob store, with preserved originals and separate retained outcomes. A staged blob is not an imported/selected/runnable model. No Hub or hosted-inference request is used by staging.
+
+Staging continuity: [current runtime blob presence checks](nexus-runtime-blob-check.md) now report explicit current HEAD observations against source/run-bound retained stages. They do not retry uploads or convert old uncertainty into success, and they do not create/import a model.
