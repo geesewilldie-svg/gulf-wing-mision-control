@@ -1,3 +1,4 @@
+import { resumeHubArtifact } from "@/lib/server/hub-archive-resume";
 import {
   readHubArchive,
   verifyHubArchive,
@@ -18,6 +19,8 @@ export async function POST(request: Request) {
     sameOrigin(request);
     await authorized(request, true);
     const body = (await readBody(request, 1000)) as any;
+    if (body?.action === "resume")
+      return response(await resumeHubArtifact(body, request.signal));
     if (body?.action === "list" && Object.keys(body).length === 1)
       return response(await readHubArchive(request.signal));
     if (

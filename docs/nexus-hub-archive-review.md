@@ -18,3 +18,5 @@ Local receipts can be edited by someone with host file access. A fresh match pro
 Automatic interrupted-run reconciliation, resume, pruning/deduplication and runtime import remain future work. This review slice adds no model/source network request and does not resolve the prior cloud Hub/CDN egress restriction. Native Windows file-check behavior remains host acceptance work; tests use actual tiny disposable local files and the compiled production API.
 
 A separate [published-file reconciliation action](nexus-hub-archive-recovery.md) now supports unfinished or publication-unconfirmed receipts, binding the inspected original receipt identity and saving independent recovery metadata only after a full local byte match. It does not promote the original outcome, resume a partial or change the completed-file checker’s admission rules.
+
+Inspection now also reports retained partial byte counts and resume provenance. A separate [explicit resume-as-new-run action](nexus-hub-archive-resume.md) can use a stable retained prefix after fresh source/license/capacity checks. It does not alter the read-only inspection or completed-file verification actions.

@@ -9,7 +9,7 @@ import type {
   HubArchiveRecord,
   HubArchiveVerification,
 } from "../hub-archive";
-import { archiveDirectoryGuard } from "./hub-archive";
+import { archiveDirectoryGuard, type ArchiveResumeSource } from "./hub-archive";
 import { SyncError } from "./sync-store";
 import {
   inspectArchiveRecovery,
@@ -93,8 +93,33 @@ export function projectArchiveRecord(
     if (!iso(data.finishedAt) || data.finishedAt < data.startedAt) return null;
     recordedAt = data.finishedAt;
   }
+  let resumedFrom;
+  if (data.resumedFrom) {
+    const r = data.resumedFrom;
+    if (
+      !slotValid(r.slot) ||
+      r.slot === slot ||
+      typeof r.runId !== "string" ||
+      !/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(
+        r.runId,
+      ) ||
+      typeof r.receiptSha256 !== "string" ||
+      !/^[a-f0-9]{64}$/.test(r.receiptSha256) ||
+      !Number.isSafeInteger(r.prefixBytes) ||
+      r.prefixBytes <= 0 ||
+      r.prefixBytes > data.expectedBytes
+    )
+      return null;
+    resumedFrom = {
+      slot: r.slot,
+      runId: r.runId,
+      receiptSha256: r.receiptSha256,
+      prefixBytes: r.prefixBytes,
+    };
+  }
   return {
     slot,
+    ...(resumedFrom ? { resumedFrom } : {}),
     runId: data.runId,
     state: data.state,
     repository: data.repository,
@@ -204,7 +229,8 @@ export async function readHubArchive(
       const source = await readReceipt(slot, signal);
       let fileState: HubArchiveRecord["fileState"] = "unsafe-or-unavailable",
         fileBytes: number | null = null,
-        partialPresent: boolean | null = null;
+        partialPresent: boolean | null = null,
+        partialBytes: number | null = null;
       try {
         const file = await fs.lstat(
           /* turbopackIgnore: true */ path.join(dir, "model.gguf"),
@@ -228,6 +254,12 @@ export async function readHubArchive(
         const partial = await fs.lstat(
           /* turbopackIgnore: true */ path.join(dir, "model.partial"),
         );
+        partialBytes =
+          partial.isFile() &&
+          !partial.isSymbolicLink() &&
+          Number.isSafeInteger(partial.size)
+            ? partial.size
+            : null;
         partialPresent =
           partial.isFile() && !partial.isSymbolicLink() ? true : null;
       } catch (error) {
@@ -240,6 +272,7 @@ export async function readHubArchive(
         fileState,
         fileBytes,
         partialPresent,
+        partialBytes,
         receiptSha256: source.digest,
         recovery: await inspectArchiveRecovery(dir, {
           slot,
@@ -473,4 +506,106 @@ export async function reconcileHubArchive(
     },
   );
   return { verification, recovery };
+}
+
+export async function archiveResumeSource(
+  slot: unknown,
+  receiptSha256: unknown,
+  signal: AbortSignal,
+) {
+  if (
+    !slotValid(slot) ||
+    typeof receiptSha256 !== "string" ||
+    !/^[a-f0-9]{64}$/.test(receiptSha256)
+  )
+    throw new SyncError(
+      400,
+      "Choose an inspected retained partial and its receipt identity.",
+    );
+  const source = await readReceipt(slot, signal),
+    record = source.record;
+  if (source.digest !== receiptSha256 || record.state === "verified")
+    throw new SyncError(
+      409,
+      "The source record changed or already records a completed transfer. Inspect it again.",
+    );
+  const name = path.join(source.directory, "model.partial"),
+    final = path.join(source.directory, "model.gguf");
+  async function noFinal() {
+    try {
+      await fs.lstat(/* turbopackIgnore: true */ final);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
+      throw error;
+    }
+    throw new SyncError(
+      409,
+      "A published file already exists in this slot. Inspect or reconcile it instead of resuming.",
+    );
+  }
+  await noFinal();
+  const before = await fs.lstat(/* turbopackIgnore: true */ name);
+  if (
+    !before.isFile() ||
+    before.isSymbolicLink() ||
+    before.size <= 0 ||
+    before.size > record.recordedBytes
+  )
+    throw new SyncError(
+      409,
+      "The retained partial size or file identity is not suitable for resume.",
+    );
+  const origin = {
+    slot,
+    runId: record.runId,
+    receiptSha256: source.digest,
+    prefixBytes: before.size,
+  };
+  async function validate(signal: AbortSignal) {
+    signal.throwIfAborted();
+    await source.guard();
+    await noFinal();
+    const current = await fs.lstat(/* turbopackIgnore: true */ name),
+      again = await readReceipt(record.slot, signal);
+    if (
+      !same(before, current) ||
+      current.isSymbolicLink() ||
+      current.size !== before.size ||
+      current.mtimeMs !== before.mtimeMs ||
+      current.ctimeMs !== before.ctimeMs ||
+      !same(source.identity, again.identity) ||
+      source.digest !== again.digest
+    )
+      throw new SyncError(
+        409,
+        "The retained partial or its receipt changed. No resume result was accepted.",
+      );
+  }
+  const prefix: ArchiveResumeSource = {
+    origin,
+    open: async (signal) => {
+      await validate(signal);
+      let handle;
+      try {
+        handle = await fs.open(
+          /* turbopackIgnore: true */ name,
+          constants.O_RDONLY | (constants.O_NOFOLLOW || 0),
+        );
+        const opened = await handle.stat();
+        if (
+          !opened.isFile() ||
+          !same(before, opened) ||
+          opened.size !== before.size ||
+          opened.mtimeMs !== before.mtimeMs ||
+          opened.ctimeMs !== before.ctimeMs
+        )
+          throw Error("Partial changed");
+        return { handle, validate };
+      } catch (error) {
+        await handle?.close().catch(() => {});
+        throw error;
+      }
+    },
+  };
+  return { record, prefix };
 }

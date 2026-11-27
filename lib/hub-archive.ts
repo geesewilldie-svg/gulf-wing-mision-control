@@ -1,3 +1,9 @@
+export type HubArchiveResumeOrigin = {
+  slot: string;
+  runId: string;
+  receiptSha256: string;
+  prefixBytes: number;
+};
 export type HubArchiveReceipt = {
   version: 1;
   runId: string;
@@ -15,6 +21,7 @@ export type HubArchiveReceipt = {
   runtimeImported: false;
   inferenceReady: false;
   notice: string;
+  resumedFrom?: HubArchiveResumeOrigin;
 };
 
 export type HubArchiveRecord = {
@@ -40,6 +47,8 @@ export type HubArchiveRecord = {
     | "unsafe-or-unavailable";
   fileBytes: number | null;
   partialPresent: boolean | null;
+  partialBytes?: number | null;
+  resumedFrom?: HubArchiveResumeOrigin;
   receiptSha256?: string;
   recovery?: {
     state: "recorded" | "not-recorded" | "source-changed" | "unavailable";

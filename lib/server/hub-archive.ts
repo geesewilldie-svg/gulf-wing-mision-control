@@ -3,7 +3,7 @@ import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import { previewHubAcquisition } from "./hub-acquisition";
 import { SyncError } from "./sync-store";
-import type { HubArchiveReceipt } from "../hub-archive";
+import type { HubArchiveReceipt, HubArchiveResumeOrigin } from "../hub-archive";
 
 // Exact reviewed candidate delivery hosts only. Unknown redirects fail closed;
 // signed redirect URLs and their query strings never enter receipts or errors.
@@ -25,7 +25,12 @@ export function permittedModelDelivery(url: URL) {
     deliveryHosts.has(url.hostname)
   );
 }
-export async function modelBody(url: URL, signal: AbortSignal) {
+export async function modelBody(
+  url: URL,
+  signal: AbortSignal,
+  start = 0,
+  total?: number,
+) {
   for (let hop = 0; hop < 4; hop++) {
     signal.throwIfAborted();
     if (!permittedModelDelivery(url))
@@ -38,7 +43,10 @@ export async function modelBody(url: URL, signal: AbortSignal) {
       redirect: "manual",
       credentials: "omit",
       cache: "no-store",
-      headers: { Accept: "application/octet-stream" },
+      headers: {
+        Accept: "application/octet-stream",
+        ...(start > 0 ? { Range: `bytes=${start}-` } : {}),
+      },
       signal,
     });
     if ([301, 302, 303, 307, 308].includes(response.status)) {
@@ -49,12 +57,29 @@ export async function modelBody(url: URL, signal: AbortSignal) {
       url = new URL(location, url);
       continue;
     }
-    if (!response.ok || response.status !== 200) {
+    if (!response.ok || response.status !== (start > 0 ? 206 : 200)) {
       await response.body?.cancel();
       throw new SyncError(
         503,
         "The model download was rejected. No automatic retry was attempted.",
       );
+    }
+    if (start > 0) {
+      const range = /^bytes (\d+)-(\d+)\/(\d+)$/.exec(
+        response.headers.get("content-range") || "",
+      );
+      if (
+        !range ||
+        Number(range[1]) !== start ||
+        Number(range[2]) !== total! - 1 ||
+        Number(range[3]) !== total
+      ) {
+        await response.body?.cancel();
+        throw new SyncError(
+          503,
+          "The server did not return the exact reviewed resume range. No full restart was attempted.",
+        );
+      }
     }
     return response;
   }
@@ -137,10 +162,22 @@ async function readChunk(
     },
   );
 }
-let active = false;
+export type ArchiveResumeSource = {
+  origin: HubArchiveResumeOrigin;
+  open: (
+    signal: AbortSignal,
+  ) => Promise<{
+    handle: Awaited<ReturnType<typeof fs.open>>;
+    validate: (signal: AbortSignal) => Promise<void>;
+  }>;
+};
+const gateKey = Symbol.for("nexus.hub.archive.transfer.v1");
+const registry = globalThis as unknown as Record<symbol, { active: boolean }>;
+const gate = (registry[gateKey] ||= { active: false });
 export async function acquireHubArtifact(
   value: any,
   signal: AbortSignal,
+  resume?: ArchiveResumeSource,
 ): Promise<HubArchiveReceipt> {
   if (
     !value ||
@@ -168,12 +205,12 @@ export async function acquireHubArtifact(
       400,
       "Review the exact artifact and license, and choose archive-only transfer. Custom URLs, paths, credentials and runtime imports are not accepted.",
     );
-  if (active)
+  if (gate.active)
     throw new SyncError(
       429,
       "A model archive transfer is already active. Wait or cancel it before another transfer.",
     );
-  active = true;
+  gate.active = true;
   const bounded = AbortSignal.any([signal, AbortSignal.timeout(600000)]),
     runId = randomUUID();
   let directory = "",
@@ -185,6 +222,7 @@ export async function acquireHubArtifact(
   let stat: { ino: number; dev: number } | undefined,
     checkDirs: (() => Promise<void>) | undefined,
     receiptIdentity: { ino: number; dev: number } | undefined;
+  let prefix: Awaited<ReturnType<ArchiveResumeSource["open"]>> | undefined;
   let published = false;
   let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
   const base: Record<string, unknown> = {
@@ -277,36 +315,16 @@ export async function acquireHubArtifact(
       archiveFile: slot + "/model.gguf",
       licenseReviewed: true,
       archiveOnly: true,
+      ...(resume ? { resumedFrom: resume.origin } : {}),
     });
     await save(base);
     await checkDirs();
     file = await fs.open(/* turbopackIgnore: true */ partial, "wx+", 0o600);
     stat = await file.stat();
-    const url = new URL(
-      `https://huggingface.co/${preview.repository.split("/").map(encodeURIComponent).join("/")}/resolve/${preview.revision}/${filename.split("/").map(encodeURIComponent).join("/")}?download=true`,
-    );
-    const response = await modelBody(url, bounded),
-      length = response.headers.get("content-length"),
-      encoding = response.headers.get("content-encoding");
-    if (
-      (length !== null &&
-        (!/^\d+$/.test(length) || Number(length) !== expected)) ||
-      (encoding && encoding !== "identity")
-    ) {
-      await response.body?.cancel();
-      throw new SyncError(
-        503,
-        "The model response size or encoding did not match the reviewed artifact.",
-      );
-    }
-    if (!response.body) throw Error("No model bytes");
-    reader = response.body.getReader();
     let count = 0,
       magic = Buffer.alloc(0);
     const hash = createHash("sha256");
-    while (true) {
-      const { done, value: chunk } = await readChunk(reader, bounded);
-      if (done) break;
+    async function append(chunk: Uint8Array) {
       if (count + chunk.length > expected)
         throw new SyncError(
           503,
@@ -326,7 +344,7 @@ export async function acquireHubArtifact(
       let offset = 0;
       while (offset < chunk.length) {
         bounded.throwIfAborted();
-        const write = await file.write(
+        const write = await file!.write(
           chunk,
           offset,
           chunk.length - offset,
@@ -337,6 +355,53 @@ export async function acquireHubArtifact(
       }
       hash.update(chunk);
       count += chunk.length;
+    }
+    if (resume) {
+      prefix = await resume.open(bounded);
+      const buffer = Buffer.alloc(1024 * 1024);
+      let offset = 0;
+      while (offset < resume.origin.prefixBytes) {
+        bounded.throwIfAborted();
+        const r = await prefix.handle.read(
+          buffer,
+          0,
+          Math.min(buffer.length, resume.origin.prefixBytes - offset),
+          offset,
+        );
+        if (!r.bytesRead) throw Error("Short retained partial");
+        await append(buffer.subarray(0, r.bytesRead));
+        offset += r.bytesRead;
+      }
+      await prefix.validate(bounded);
+      await prefix.handle.close();
+      prefix = undefined;
+    }
+    if (count < expected) {
+      const url = new URL(
+        `https://huggingface.co/${preview.repository.split("/").map(encodeURIComponent).join("/")}/resolve/${preview.revision}/${filename.split("/").map(encodeURIComponent).join("/")}?download=true`,
+      );
+      const remaining = expected - count,
+        response = await modelBody(url, bounded, count, expected),
+        length = response.headers.get("content-length"),
+        encoding = response.headers.get("content-encoding");
+      if (
+        (length !== null &&
+          (!/^\d+$/.test(length) || Number(length) !== remaining)) ||
+        (encoding && encoding !== "identity")
+      ) {
+        await response.body?.cancel();
+        throw new SyncError(
+          503,
+          "The model response size or encoding did not match the reviewed artifact.",
+        );
+      }
+      if (!response.body) throw Error("No model bytes");
+      reader = response.body.getReader();
+      while (true) {
+        const r = await readChunk(reader, bounded);
+        if (r.done) break;
+        await append(r.value);
+      }
     }
     if (
       count !== expected ||
@@ -397,6 +462,7 @@ export async function acquireHubArtifact(
       verifiedAt: new Date().toISOString(),
       archiveFile: slot + "/model.gguf",
       receiptState: "saved",
+      ...(resume ? { resumedFrom: resume.origin } : {}),
       downloaded: true,
       runtimeImported: false,
       inferenceReady: false,
@@ -445,8 +511,9 @@ export async function acquireHubArtifact(
     );
   } finally {
     await reader?.cancel().catch(() => {});
+    await prefix?.handle.close().catch(() => {});
     await file?.close().catch(() => {});
     await receipt?.close().catch(() => {});
-    active = false;
+    gate.active = false;
   }
 }

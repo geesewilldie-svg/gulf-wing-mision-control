@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import HubArchiveResume from "./hub-archive-resume";
 import type {
   HubArchiveHistory as History,
   HubArchiveVerification,
@@ -251,6 +252,25 @@ export default function HubArchiveHistory({ disabled }: { disabled: boolean }) {
                         No fresh source or license check was made.
                       </p>
                     </details>
+                    {record.resumedFrom && (
+                      <p>
+                        {record.state === "verified"
+                          ? "Resumed from"
+                          : "Resume source requested"}
+                        : {record.resumedFrom.slot} · retained prefix{" "}
+                        {record.resumedFrom.prefixBytes.toLocaleString()} bytes.
+                        Original source record is retained.
+                      </p>
+                    )}
+                    {record.state !== "verified" &&
+                      record.fileState === "missing" &&
+                      record.partialPresent && (
+                        <HubArchiveResume
+                          key={record.runId + record.receiptSha256}
+                          record={record}
+                          disabled={disabled || busy}
+                        />
+                      )}
                     {record.recovery?.state === "recorded" && (
                       <p>
                         Separate recovery receipt recorded at{" "}
