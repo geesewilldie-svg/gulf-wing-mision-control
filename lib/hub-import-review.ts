@@ -1,3 +1,4 @@
+import type { RuntimeStorage } from "./runtime-storage";
 import type { GgufMetadata } from "./gguf-metadata";
 export type HubImportReview = {
   slot: string;
@@ -23,6 +24,7 @@ export type HubImportReview = {
   };
   importImplemented: false;
   runtimeStorageVerified: false;
+  runtimeStorage?: RuntimeStorage;
   runtimeImported: false;
   inferenceReady: false;
   blockers: string[];

@@ -1,3 +1,4 @@
+import { inspectRuntimeStorage } from "./runtime-storage";
 import os from "node:os";
 import type { HubImportReview } from "../hub-import-review";
 import { boundedJSON } from "./agent-router";
@@ -7,6 +8,7 @@ const memory = (n: number) => (Number.isSafeInteger(n) && n >= 0 ? n : null);
 export async function reviewHubImport(
   value: any,
   signal: AbortSignal,
+  storageRequested = false,
 ): Promise<HubImportReview> {
   if (
     !value ||
@@ -59,6 +61,9 @@ export async function reviewHubImport(
       signal,
     );
     signal.throwIfAborted();
+    const runtimeStorage = storageRequested
+      ? await inspectRuntimeStorage(record.recordedBytes, signal)
+      : undefined;
     const blockers = [
       "Confirm Ollama’s storage location and free space.",
       "Check this model’s format is supported by the installed runtime.",
@@ -96,6 +101,7 @@ export async function reviewHubImport(
       },
       importImplemented: false,
       runtimeStorageVerified: false,
+      ...(runtimeStorage ? { runtimeStorage } : {}),
       runtimeImported: false,
       inferenceReady: false,
       blockers,

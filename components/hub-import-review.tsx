@@ -22,7 +22,7 @@ export default function HubImportReview({
       setBusy(false);
     }
   }, [disabled]);
-  async function review() {
+  async function review(storageRequested = false) {
     if (disabled || busy) return;
     const controller = new AbortController();
     pending.current = controller;
@@ -34,7 +34,7 @@ export default function HubImportReview({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "import-review",
+          action: storageRequested ? "import-storage-review" : "import-review",
           slot: record.slot,
           receiptSha256: record.receiptSha256,
         }),
@@ -112,6 +112,13 @@ export default function HubImportReview({
           </button>
         )}
       </div>
+      {data && (
+        <div className="nexus-actions">
+          <button disabled={disabled || busy} onClick={() => void review(true)}>
+            Inspect Ollama storage · {record.slot}
+          </button>
+        </div>
+      )}
       {busy && (
         <p role="status">
           Checking the archived file and import prerequisites…
@@ -154,6 +161,36 @@ export default function HubImportReview({
               </div>
             ))}
           </dl>
+          {data.runtimeStorage && (
+            <section aria-label={`Ollama storage result ${record.slot}`}>
+              <h4>Ollama storage evidence</h4>
+              <p>
+                {data.runtimeStorage.state === "observed"
+                  ? "Reported storage matches a known host location. This observation does not reserve space or enable import."
+                  : "Storage could not be matched safely. No runtime directories were created or changed."}
+              </p>
+              <dl className="nexus-source-metadata">
+                <div>
+                  <dt>Observed free space</dt>
+                  <dd>{bytes(data.runtimeStorage.availableBytes)}</dd>
+                </div>
+                <div>
+                  <dt>Required free-space buffer</dt>
+                  <dd>{bytes(data.runtimeStorage.requiredBytes)}</dd>
+                </div>
+                <div>
+                  <dt>Capacity snapshot</dt>
+                  <dd>
+                    {data.runtimeStorage.capacity === "enough-at-check"
+                      ? "Enough at check time; not reserved"
+                      : data.runtimeStorage.capacity === "insufficient"
+                        ? "Insufficient"
+                        : "Unknown"}
+                  </dd>
+                </div>
+              </dl>
+            </section>
+          )}
           <h4>Remaining prerequisites</h4>
           <ul className="nexus-hub-artifacts">
             {data.blockers.map((item) => (

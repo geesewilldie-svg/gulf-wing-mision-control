@@ -21,6 +21,14 @@ export async function POST(request: Request) {
     sameOrigin(request);
     await authorized(request, true);
     const body = (await readBody(request, 1000)) as any;
+    if (body?.action === "import-storage-review")
+      return response(
+        await reviewHubImport(
+          { ...body, action: "import-review" },
+          request.signal,
+          true,
+        ),
+      );
     if (body?.action === "import-review")
       return response(await reviewHubImport(body, request.signal));
     if (
