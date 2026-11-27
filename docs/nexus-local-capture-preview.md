@@ -1,0 +1,19 @@
+# Local camera and screen preview
+
+Under **Connections → Camera and screen**, a paired controller can explicitly preview this device's camera or choose a screen/window/tab through the browser's capture chooser. The first capture milestone is local live preview only. It does not implement model vision, frame extraction, recording, screenshot saves, browser inspection or remote laptop capture. A phone previews its own available sources rather than the laptop's camera/display.
+
+Nothing starts on opening the page or section. Each start button requests video with `audio: false`. Camera resolution/frame rate are browser preferences, not guaranteed resource ceilings; screen capture requests a 15 fps preference. Browser permission and a secure context are required. Unsupported capture methods stay disabled; screen capture is commonly unavailable on phones. No source/device identifier or raw permission error is retained or displayed.
+
+## Lifecycle
+
+One request or stream can be owned by the view at a time. A visible status distinguishes waiting for permission, active camera/screen preview, waiting for a cancelled chooser to settle and off. Stop detaches the video element and stops every track. Browser track end/mute, inactive stream, playback failure, page hiding/pagehide, leaving the connection category/main section, disabled controller state and component unmount stop the owned stream. A 60-second timer stops accepted previews while the page runs; it is cooperative browser lifecycle handling, not a hard operating-system scheduling guarantee.
+
+Permission requests expire in the UI after twenty seconds. JavaScript cannot dismiss the browser's chooser or abort its promise. Stop/expiry invalidates acceptance, tells the owner to close any remaining chooser and keeps new requests disabled until it settles. Any late stream is immediately stopped, including after navigation/unmount. Nothing automatically restarts when visibility, access or permissions return. No accepted stream may contain audio tracks; unexpected audio or missing/non-live video rejects the stream and stops every track.
+
+The preview binds a live `MediaStream` directly to a muted inline video element. It creates no frame buffer, Blob, MediaRecorder, upload, local storage entry, file or provider request. Stop clears `srcObject`; previous frames are hidden rather than shown as current vision. Microphone/conversation settings remain independent. Browser-managed capture indicators and permission controls remain authoritative outside the application's own lifecycle.
+
+## Validation and remaining work
+
+Desktop and Galaxy-profile Chromium tests use owned canvas-generated live streams, not a real camera or personal display. They cover explicit starts, exact video-only request shapes, stop/release, late permission delivery, chooser expiry, navigation, hidden/pagehide, ended/muted tracks, time limit, unsupported browsers, denied permission, unexpected audio and display-role controls. Populated desktop/phone preview layouts are visually reviewed. These fixtures verify application lifecycle behavior; native Windows camera/display choosers, Android platform capability and physical device permission behavior remain unverified.
+
+Future vision needs a separate bounded frame acquisition/expiry contract, explicit local versus hosted processing and sharing controls, source attribution and results that cannot present stale frames as current observations. This preview supplies none of those provider/tool grants and must never be labelled an active model-vision or EYES service.

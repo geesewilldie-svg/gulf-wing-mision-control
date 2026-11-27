@@ -1,4 +1,5 @@
 "use client";
+import LocalCapturePreview from "./local-capture-preview";
 import NexusFileGalaxy from "./nexus-file-galaxy";
 import HubModelCatalog from "./hub-model-catalog";
 import HubArchiveHistory from "./hub-archive-history";
@@ -199,6 +200,7 @@ export default function NexusConsole() {
               "Google files",
               "Laptop files",
               "Device access",
+              "Camera and screen",
               "Models and tools",
             ].map((item) => (
               <button
@@ -227,6 +229,9 @@ export default function NexusConsole() {
             <TeamAccess disabled={disabled} />
             <LaptopMaintenance disabled={disabled} />
           </div>
+          {connection === "Camera and screen" && (
+            <LocalCapturePreview enabled={!disabled} />
+          )}
           <div hidden={connection !== "Models and tools"}>
             <p>
               Local-first routing is available. OpenAI, Claude and Gemini

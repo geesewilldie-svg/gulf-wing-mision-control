@@ -275,3 +275,15 @@
   height: 18px;
   margin-top: var(--nexus-space-1);
 }
+
+.nexus-app-frame .nexus-capture-video {
+  width: 100%;
+  max-height: 60vh;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  background: #02080d;
+  border-radius: var(--nexus-space-3, 12px);
+}
+.nexus-app-frame .nexus-capture-video[hidden] {
+  display: none;
+}
