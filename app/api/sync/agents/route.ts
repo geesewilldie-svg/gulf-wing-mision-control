@@ -1,3 +1,4 @@
+import { inspectLocalModelDetails } from "@/lib/server/local-model-details";
 import { readReaSelfTestHistory } from "@/lib/server/rea-self-test-history";
 import { reaBrowserSelfTest } from "@/lib/server/rea-browser-self-test";
 import { inspectReaProtocol } from "@/lib/server/rea-protocol";
@@ -44,6 +45,16 @@ export async function POST(request: Request) {
     sameOrigin(request);
     await authorized(request, true);
     const body = (await readBody(request, 1000)) as any;
+    if (
+      body?.action === "local-model-details" &&
+      Object.keys(body).length === 3 &&
+      Object.keys(body).every((key) =>
+        ["action", "model", "digest"].includes(key),
+      )
+    )
+      return response(
+        await inspectLocalModelDetails(body.model, body.digest, request.signal),
+      );
     if (
       !body ||
       ![

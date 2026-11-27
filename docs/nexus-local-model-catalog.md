@@ -11,3 +11,5 @@ The controller-only same-origin POST accepts only `action: local-model-catalog`;
 This supplies discovery for the existing installed local runtime. It is not a Hub download connector, model installer, model-selection control, memory permission or performance benchmark. Venice, REA and asset acquisition retain their separate pending contracts.
 
 The same bounded catalog now supports the separate one-answer selector in typed Local Ollama Answer settings. Catalog inspection itself remains read-only; see `nexus-local-model-choice.md` for request-local selection and its generation-time membership recheck.
+
+An explicit [runtime detail inspection](nexus-local-model-details.md) is now available per displayed simple local model/digest. It checks current catalog identity around a bounded metadata request; it does not generate, import or change selection.

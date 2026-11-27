@@ -1,4 +1,5 @@
 "use client";
+import LocalModelDetails from "./local-model-details";
 import { useEffect, useRef, useState } from "react";
 import type { LocalModelCatalog as Catalog } from "@/lib/local-model-catalog";
 export default function LocalModelCatalog() {
@@ -39,9 +40,11 @@ export default function LocalModelCatalog() {
         Inspect Ollama's local model list. This does not run a model or change
         your selection.
       </p>
-      <button disabled={busy} onClick={() => void inspect()}>
-        Inspect installed local models
-      </button>
+      <div className="nexus-actions">
+        <button disabled={busy} onClick={() => void inspect()}>
+          Inspect installed local models
+        </button>
+      </div>
       {busy && <p role="status">Reading local catalog…</p>}
       {error && <p role="status">{error}</p>}
       {data && (
@@ -63,13 +66,14 @@ export default function LocalModelCatalog() {
           {!data.models.length && <p>No valid local models reported.</p>}
           <ul>
             {data.models.map((model) => (
-              <li key={model.name}>
+              <li className="nexus-card" key={model.name + model.digest}>
                 <strong>{model.name}</strong> ·{" "}
                 {model.bytes === null ? "Size unknown" : `${model.bytes} bytes`}
                 <p style={{ overflowWrap: "anywhere" }}>
                   Reported digest: {model.digest || "Not supplied"} · Modified:{" "}
                   {model.modifiedAt || "Not supplied"}
                 </p>
+                <LocalModelDetails model={model} />
               </li>
             ))}
           </ul>
