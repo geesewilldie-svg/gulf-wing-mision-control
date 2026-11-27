@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import { constants } from "node:fs";
 import path from "node:path";
+import type { RuntimeModelReceipt } from "../runtime-model";
 import type { RuntimeBlobReceipt, RuntimeBlobStatus } from "../runtime-blob";
 import { archiveDirectoryGuard } from "./hub-archive";
 const same = (a: any, b: any) =>
@@ -93,15 +94,16 @@ export async function inspectRuntimeBlobReceipt(
     await handle?.close().catch(() => {});
   }
 }
-export async function beginRuntimeBlobReceipt(
+async function beginReceipt<T>(
   directory: string,
-  initial: RuntimeBlobReceipt,
+  filename: "runtime-blob-stage.json" | "runtime-model-create.json",
+  initial: T,
 ) {
   const guard = await archiveDirectoryGuard(directory),
-    name = path.join(directory, "runtime-blob-stage.json"),
+    name = path.join(directory, filename),
     handle = await fs.open(/* turbopackIgnore: true */ name, "wx+", 0o600),
     identity = await handle.stat();
-  async function save(value: RuntimeBlobReceipt) {
+  async function save(value: T) {
     await guard();
     const current = await fs.lstat(/* turbopackIgnore: true */ name);
     if (!same(identity, current) || current.isSymbolicLink())
@@ -138,3 +140,12 @@ export async function beginRuntimeBlobReceipt(
   }
   return { save, close: () => handle.close() };
 }
+
+export const beginRuntimeBlobReceipt = (
+  directory: string,
+  initial: RuntimeBlobReceipt,
+) => beginReceipt(directory, "runtime-blob-stage.json", initial);
+export const beginRuntimeModelReceipt = (
+  directory: string,
+  initial: RuntimeModelReceipt,
+) => beginReceipt(directory, "runtime-model-create.json", initial);

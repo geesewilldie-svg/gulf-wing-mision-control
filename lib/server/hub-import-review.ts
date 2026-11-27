@@ -99,7 +99,7 @@ export async function reviewHubImport(
         freeBytes: memory(os.freemem()),
         sampledAt: new Date().toISOString(),
       },
-      importImplemented: false,
+      importImplemented: true,
       runtimeStorageVerified: false,
       ...(runtimeStorage ? { runtimeStorage } : {}),
       runtimeImported: false,

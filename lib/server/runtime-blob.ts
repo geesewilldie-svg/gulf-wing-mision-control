@@ -3,7 +3,10 @@ import { withLocalInference } from "./agent-router";
 import { withVerifiedHubArchive } from "./hub-archive-history";
 import { inspectRuntimeStorage } from "./runtime-storage";
 import { beginRuntimeBlobReceipt } from "./runtime-blob-store";
-import { GGUF_METADATA_LIMIT, parseGgufMetadata } from "../gguf-metadata";
+import {
+  GGUF_RUNTIME_METADATA_LIMIT,
+  parseGgufMetadata,
+} from "../gguf-metadata";
 import type { RuntimeBlobReceipt } from "../runtime-blob";
 import { SyncError } from "./sync-store";
 export async function stageRuntimeBlob(
@@ -60,7 +63,7 @@ export async function stageRuntimeBlob(
               "The recorded license changed. Inspect and review the source again.",
             );
           const prefix = Buffer.alloc(
-            Math.min(record.recordedBytes, GGUF_METADATA_LIMIT),
+            Math.min(record.recordedBytes, GGUF_RUNTIME_METADATA_LIMIT),
           );
           let p = 0;
           while (p < prefix.length) {
@@ -69,7 +72,10 @@ export async function stageRuntimeBlob(
             if (!r.bytesRead) throw Error("Short metadata read");
             p += r.bytesRead;
           }
-          const metadata = parseGgufMetadata(prefix);
+          const metadata = parseGgufMetadata(
+            prefix,
+            GGUF_RUNTIME_METADATA_LIMIT,
+          );
           if (!metadata.metadataComplete || !metadata.architecture)
             throw new SyncError(
               409,

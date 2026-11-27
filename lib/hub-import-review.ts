@@ -22,7 +22,7 @@ export type HubImportReview = {
     freeBytes: number | null;
     sampledAt: string;
   };
-  importImplemented: false;
+  importImplemented: true;
   runtimeStorageVerified: false;
   runtimeStorage?: RuntimeStorage;
   runtimeImported: false;

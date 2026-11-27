@@ -131,7 +131,7 @@ export default function HubImportReview({
           className="nexus-hub-result"
           aria-label={`Import review result ${record.slot}`}
         >
-          <h4>Archive checked; import remains unavailable</h4>
+          <h4>Archive checked; creation is a separate action</h4>
           <p>
             The file matches the inspected receipt. Storage, runtime support and
             hardware fit still need checking.

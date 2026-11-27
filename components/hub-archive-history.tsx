@@ -292,6 +292,21 @@ export default function HubArchiveHistory({ disabled }: { disabled: boolean }) {
                         disabled={disabled || busy}
                       />
                     )}
+                    {record.runtimeModel?.state === "recorded" && (
+                      <p>
+                        Recorded model creation:{" "}
+                        {record.runtimeModel.receipt.state} ·{" "}
+                        {record.runtimeModel.receipt.alias}. This historical
+                        receipt is not a current inference-readiness check.
+                      </p>
+                    )}
+                    {record.runtimeModel?.state === "unavailable" && (
+                      <p>
+                        A model-creation receipt is unsafe, unavailable or
+                        belongs to changed source evidence. No replay is
+                        available.
+                      </p>
+                    )}
                     {record.runtimeBlob?.state === "unavailable" && (
                       <p>
                         A runtime staging receipt is unavailable or belongs to

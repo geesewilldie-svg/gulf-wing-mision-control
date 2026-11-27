@@ -1,4 +1,5 @@
 "use client";
+import RuntimeModelCreate from "./runtime-model-create";
 import { useEffect, useRef, useState } from "react";
 import type { HubArchiveRecord } from "@/lib/hub-archive";
 import type {
@@ -17,6 +18,7 @@ export default function RuntimeBlobCheck({
   const [result, setResult] = useState<Check | null>(null),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  const [creating, setCreating] = useState(false);
   const pending = useRef<AbortController | null>(null);
   useEffect(() => () => pending.current?.abort(), []);
   useEffect(() => {
@@ -95,7 +97,7 @@ export default function RuntimeBlobCheck({
       </p>
       <div className="nexus-actions">
         <button
-          disabled={disabled || busy || !record.receiptSha256}
+          disabled={disabled || busy || creating || !record.receiptSha256}
           onClick={() => void check()}
         >
           Check runtime blob · {record.slot}
@@ -114,7 +116,7 @@ export default function RuntimeBlobCheck({
           </button>
         )}
         {result && (
-          <button disabled={disabled || busy} onClick={download}>
+          <button disabled={disabled || busy || creating} onClick={download}>
             Download runtime blob check · {record.slot}
           </button>
         )}
@@ -144,6 +146,15 @@ export default function RuntimeBlobCheck({
             model-readiness test. No upload, model creation or generation was
             performed.
           </p>
+          {result.state === "present-reported" && (
+            <RuntimeModelCreate
+              key={record.runId + record.receiptSha256 + receipt.runId}
+              record={record}
+              stage={receipt}
+              onBusyChange={setCreating}
+              disabled={disabled || busy}
+            />
+          )}
         </section>
       )}
     </section>

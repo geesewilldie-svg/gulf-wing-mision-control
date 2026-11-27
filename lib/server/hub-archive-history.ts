@@ -1,3 +1,4 @@
+import { inspectRuntimeModelReceipt } from "./runtime-model-store";
 import { inspectRuntimeBlobReceipt } from "./runtime-blob-store";
 import { GGUF_METADATA_LIMIT, parseGgufMetadata } from "../gguf-metadata";
 import fs, { type FileHandle } from "node:fs/promises";
@@ -276,6 +277,11 @@ export async function readHubArchive(
         partialPresent,
         partialBytes,
         receiptSha256: source.digest,
+        runtimeModel: await inspectRuntimeModelReceipt(dir, {
+          receiptSha256: source.digest,
+          sha256: source.record.recordedSha256,
+          bytes: source.record.recordedBytes,
+        }),
         runtimeBlob: await inspectRuntimeBlobReceipt(dir, {
           receiptSha256: source.digest,
           sha256: source.record.recordedSha256,

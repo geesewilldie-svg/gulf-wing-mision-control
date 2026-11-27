@@ -98,3 +98,5 @@ Archive-to-runtime continuation: [pre-import review](nexus-hub-import-review.md)
 Runtime write continuation: [explicit local blob staging](nexus-runtime-blob-staging.md) now copies a reviewed archive into the local runtime's content-addressed blob store, with preserved originals and separate retained outcomes. A staged blob is not an imported/selected/runnable model. No Hub or hosted-inference request is used by staging.
 
 Staging continuity: [current runtime blob presence checks](nexus-runtime-blob-check.md) now report explicit current HEAD observations against source/run-bound retained stages. They do not retry uploads or convert old uncertainty into success, and they do not create/import a model.
+
+Creation continuation: [a separate explicit local model-creation action](nexus-runtime-model-create.md) is now implemented after current blob presence. It revalidates execution-time evidence and creates only a new generated alias, preserving the original selection/receipts. Model creation is runtime-reported; inference readiness and native real-model acceptance remain separate.

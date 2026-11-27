@@ -1,3 +1,4 @@
+import type { RuntimeModelStatus } from "./runtime-model";
 import type { RuntimeBlobStatus } from "./runtime-blob";
 export type HubArchiveResumeOrigin = {
   slot: string;
@@ -52,6 +53,7 @@ export type HubArchiveRecord = {
   resumedFrom?: HubArchiveResumeOrigin;
   receiptSha256?: string;
   runtimeBlob?: RuntimeBlobStatus;
+  runtimeModel?: RuntimeModelStatus;
   recovery?: {
     state: "recorded" | "not-recorded" | "source-changed" | "unavailable";
     recordedAt?: string;

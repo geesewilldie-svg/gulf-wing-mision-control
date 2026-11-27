@@ -1,4 +1,5 @@
 export const GGUF_METADATA_LIMIT = 1024 * 1024;
+export const GGUF_RUNTIME_METADATA_LIMIT = 8 * 1024 * 1024;
 export type GgufMetadata = {
   version: number;
   tensorCount: number;
@@ -13,8 +14,17 @@ export type GgufMetadata = {
   bytesInspected: number;
 };
 // Little-endian GGUF v2/v3 metadata only. Tensor descriptors/data are not parsed.
-export function parseGgufMetadata(bytes: Buffer): GgufMetadata {
-  const input = bytes.subarray(0, GGUF_METADATA_LIMIT);
+export function parseGgufMetadata(
+  bytes: Buffer,
+  byteLimit = GGUF_METADATA_LIMIT,
+): GgufMetadata {
+  if (
+    !Number.isSafeInteger(byteLimit) ||
+    byteLimit < 24 ||
+    byteLimit > GGUF_RUNTIME_METADATA_LIMIT
+  )
+    throw Error("Unsupported metadata inspection limit");
+  const input = bytes.subarray(0, byteLimit);
   let offset = 0;
   const limit = new Error("Metadata inspection limit");
   function take(n: number) {
@@ -31,10 +41,10 @@ export function parseGgufMetadata(bytes: Buffer): GgufMetadata {
       throw Error("Unsupported GGUF length");
     return Number(n);
   }
-  function string() {
+  function string(decode = true) {
     const n = u64();
     const b = take(n);
-    return n <= 512
+    return decode && n <= 512
       ? new TextDecoder("utf-8", { fatal: true }).decode(b)
       : null;
   }
@@ -46,8 +56,8 @@ export function parseGgufMetadata(bytes: Buffer): GgufMetadata {
         count = u64();
       if (element === 9 || element > 12) throw Error("Unsupported GGUF array");
       if (element === 8) {
-        if (count > GGUF_METADATA_LIMIT / 8) throw limit;
-        for (let i = 0; i < count; i++) string();
+        if (count > byteLimit / 8) throw limit;
+        for (let i = 0; i < count; i++) string(false);
       } else take(count * widths[element]);
       return null;
     }

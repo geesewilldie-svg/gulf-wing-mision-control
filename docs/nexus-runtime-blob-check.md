@@ -11,3 +11,5 @@ The page result/export retains source/run/hash/bytes, historical staging state, 
 This uses the local runtime's HEAD contract, not independent authentication of the runtime process or hash readback of its stored bytes. It does not prove a model manifest exists, compatibility, selected state or inference readiness, and it is not an import authorization token. Future model creation must obtain fresh server-side evidence at execution time rather than trusting an exported/page result.
 
 Validation uses real disposable source/staging files and an owned HTTP runtime fixture. It does not establish native Windows or real Ollama acceptance.
+
+Creation continuation: [a separate explicit local model-creation action](nexus-runtime-model-create.md) is now implemented after current blob presence. It revalidates execution-time evidence and creates only a new generated alias, preserving the original selection/receipts. Model creation is runtime-reported; inference readiness and native real-model acceptance remain separate.

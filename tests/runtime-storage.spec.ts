@@ -217,7 +217,7 @@ test("desktop and phone request storage discovery only explicitly and show obser
     hostMemory: { totalBytes: 8 * 1024 ** 3, freeBytes: 4 * 1024 ** 3 },
     recordedLicense: "apache-2.0",
     blockers: ["Recheck storage before import."],
-    importImplemented: false,
+    importImplemented: true,
   };
   await page.route("**/api/sync/models/hub/archive", (route) => {
     const body = route.request().postDataJSON();
@@ -304,7 +304,7 @@ test("desktop and phone request storage discovery only explicitly and show obser
     await result.evaluate((el) => el.scrollWidth <= el.clientWidth + 1),
   ).toBe(true);
   await expect(
-    panel.getByText("Archive checked; import remains unavailable", {
+    panel.getByText("Archive checked; creation is a separate action", {
       exact: true,
     }),
   ).toBeVisible();
@@ -380,7 +380,7 @@ test("compiled storage-review action preserves archive bytes and returns unknown
     expect(await response.json()).toMatchObject({
       runtimeStorage: { state: "unavailable", capacity: "unknown" },
       runtimeImported: false,
-      importImplemented: false,
+      importImplemented: true,
       runtimeStorageVerified: false,
     });
     expect(calls).toEqual(["GET /api/version", "GET /api/tags"]);

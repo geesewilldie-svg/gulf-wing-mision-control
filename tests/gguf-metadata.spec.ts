@@ -3,7 +3,11 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import { createHash, randomUUID } from "node:crypto";
-import { GGUF_METADATA_LIMIT, parseGgufMetadata } from "../lib/gguf-metadata";
+import {
+  GGUF_RUNTIME_METADATA_LIMIT,
+  GGUF_METADATA_LIMIT,
+  parseGgufMetadata,
+} from "../lib/gguf-metadata";
 import {
   inspectHubArchiveMetadata,
   readHubArchive,
@@ -374,4 +378,40 @@ test("compiled production API reads real local metadata without changing the arc
   } finally {
     await fs.rm(dir, { recursive: true, force: true });
   }
+});
+
+test("runtime staging/creation can inspect bounded larger tokenizer metadata while previews stay limited", () => {
+  const large = model([
+    entry(
+      "tokenizer.large",
+      8,
+      Buffer.concat([u64(2 * 1024 * 1024), Buffer.alloc(2 * 1024 * 1024, 65)]),
+    ),
+    entry("general.architecture", 8, str("llama")),
+  ]);
+  expect(parseGgufMetadata(large).metadataComplete).toBe(false);
+  expect(parseGgufMetadata(large, GGUF_RUNTIME_METADATA_LIMIT)).toMatchObject({
+    metadataComplete: true,
+    architecture: "llama",
+    metadataRead: 2,
+  });
+  expect(() =>
+    parseGgufMetadata(large, GGUF_RUNTIME_METADATA_LIMIT + 1),
+  ).toThrow();
+});
+
+test("opaque tokenizer array bytes are skipped without interpreting them as displayed UTF-8 metadata", () => {
+  const input = model([
+    entry(
+      "tokenizer.tokens",
+      9,
+      Buffer.concat([u32(8), u64(1), u64(1), Buffer.from([255])]),
+    ),
+    entry("general.architecture", 8, str("llama")),
+  ]);
+  expect(parseGgufMetadata(input)).toMatchObject({
+    metadataComplete: true,
+    architecture: "llama",
+    metadataRead: 2,
+  });
 });

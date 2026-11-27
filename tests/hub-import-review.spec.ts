@@ -124,7 +124,7 @@ test("review binds full current archive hash, declared metadata, reported runtim
       bytes: bytes.length,
       metadata: { architecture: "llama", contextLength: 4096 },
       runtime: { state: "version-reported", version: "0.9.0" },
-      importImplemented: false,
+      importImplemented: true,
       runtimeImported: false,
       runtimeStorageVerified: false,
       inferenceReady: false,
@@ -173,7 +173,7 @@ test("unavailable or malformed runtime version stays unknown and never supplies 
       expect(result.runtime.state).toBe(
         data?.version === "0.9.0" ? "version-reported" : "unavailable",
       );
-      expect(result.importImplemented).toBe(false);
+      expect(result.importImplemented).toBe(true);
       expect(JSON.stringify(result)).not.toContain("private");
     }
   }));
@@ -313,7 +313,7 @@ test("desktop and phone explicitly review, export truthful blockers and clear st
     })
     .click();
   await expect(
-    panel.getByText("Archive checked; import remains unavailable", {
+    panel.getByText("Archive checked; creation is a separate action", {
       exact: true,
     }),
   ).toBeVisible();
@@ -349,7 +349,7 @@ test("desktop and phone explicitly review, export truthful blockers and clear st
     panel.getByText("The archive identity changed. Inspect the archive again."),
   ).toBeVisible();
   await expect(
-    panel.getByText("Archive checked; import remains unavailable", {
+    panel.getByText("Archive checked; creation is a separate action", {
       exact: true,
     }),
   ).toHaveCount(0);
@@ -408,7 +408,7 @@ test("compiled production review hashes a real archive and only reads the owned 
       sha256: sha,
       runtime: { version: "0.9.0" },
       runtimeImported: false,
-      importImplemented: false,
+      importImplemented: true,
     });
     expect(calls).toEqual(["GET /api/version"]);
     expect(await fs.readFile(path.join(dir, "model.gguf"))).toEqual(bytes);

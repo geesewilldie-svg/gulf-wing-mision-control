@@ -492,7 +492,7 @@ test("desktop and phone require source/license confirmation before one explicit 
     hostMemory: { totalBytes: 8 * 1024 ** 3, freeBytes: 4 * 1024 ** 3 },
     recordedLicense: "apache-2.0",
     blockers: ["Model creation remains a separate step."],
-    importImplemented: false,
+    importImplemented: true,
   };
   await page.route("**/api/sync/models/hub/archive", (route) => {
     const body = route.request().postDataJSON();
