@@ -1,4 +1,5 @@
 "use client";
+import LocalFrameAnalysis from "./local-frame-analysis";
 import { useEffect, useRef, useState } from "react";
 type Kind = "camera" | "screen";
 export default function LocalCapturePreview({ enabled }: { enabled: boolean }) {
@@ -164,8 +165,8 @@ export default function LocalCapturePreview({ enabled }: { enabled: boolean }) {
       <h3>Camera and screen preview</h3>
       <p>
         Preview this device's camera or a screen you choose. Video stays in this
-        browser: Nexus does not upload, record, save or send these frames to a
-        model. Image analysis is not connected.
+        browser until you separately choose to describe one frame locally. Nexus
+        does not record or save the preview. Continuous vision is not connected.
       </p>
       <p>
         Audio is off. Preview stops when you leave this section, hide this
@@ -215,7 +216,7 @@ export default function LocalCapturePreview({ enabled }: { enabled: boolean }) {
             : phase === "stopping"
               ? "waiting for browser request to settle"
               : "off"}{" "}
-        · Model analysis: not connected
+        · Continuous model vision: not connected
       </p>
       <video
         ref={video}
@@ -227,6 +228,9 @@ export default function LocalCapturePreview({ enabled }: { enabled: boolean }) {
         autoPlay
         onError={() => stop("Preview failed. Capture stopped.")}
       />
+      {phase === "active" && kind && enabled && (
+        <LocalFrameAnalysis video={video} source={kind} />
+      )}
     </section>
   );
 }
