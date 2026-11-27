@@ -45,7 +45,10 @@ export default defineConfig({
     url: "http://127.0.0.1:3000",
     // Always isolate the sync test host from a developer’s running session.
     reuseExistingServer: false,
-    env: { GW_SYNC_DATA_DIR: process.env.GW_SYNC_TEST_ROOT! },
+    env: {
+      GW_SYNC_DATA_DIR: process.env.GW_SYNC_TEST_ROOT!,
+      OLLAMA_MODELS: path.join(process.env.GW_SYNC_TEST_ROOT!, "ollama-models"),
+    },
     timeout: 120000,
   },
 });

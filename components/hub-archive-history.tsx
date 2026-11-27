@@ -269,6 +269,22 @@ export default function HubArchiveHistory({ disabled }: { disabled: boolean }) {
                           disabled={disabled || busy}
                         />
                       )}
+                    {record.runtimeBlob?.state === "recorded" && (
+                      <p>
+                        Recorded runtime blob stage:{" "}
+                        {record.runtimeBlob.receipt.state} ·{" "}
+                        {record.runtimeBlob.receipt.finishedAt ||
+                          record.runtimeBlob.receipt.startedAt}
+                        . Original archive retained; no model creation or
+                        inference is recorded by this staging receipt.
+                      </p>
+                    )}
+                    {record.runtimeBlob?.state === "unavailable" && (
+                      <p>
+                        A runtime staging receipt is unavailable or belongs to
+                        changed source evidence. No replay is available.
+                      </p>
+                    )}
                     {record.resumedFrom && (
                       <p>
                         {record.state === "verified"

@@ -13,3 +13,5 @@ The review explicitly reports remaining blockers: Ollama-managed destination and
 This is a snapshot, not a continuing integrity guarantee, authentication of editable local receipts or an import authorization token. Cancelling/unmounting clears the page result and never creates runtime state. Native Windows acceptance and actual model import remain separate work.
 
 An additional explicit [Ollama storage inspection](nexus-runtime-storage.md) now supplies runtime-reported path agreement and observed host-volume capacity against a known configured/default store. Regular review remains unchanged. Observations do not mark the runtime destination independently verified, reserve capacity or enable import.
+
+After sufficient storage evidence, an explicit [blob-only staging action](nexus-runtime-blob-staging.md) can now write weights to the fixed local runtime endpoint after fresh source/storage checks and source/license acknowledgment. This is separate from runtime model creation/import, which remains unavailable. Existing staging receipts are shown by archive inspection and are not automatically replayed.

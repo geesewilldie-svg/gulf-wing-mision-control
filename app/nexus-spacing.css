@@ -258,3 +258,20 @@
   border-radius: 10px;
   overflow-wrap: anywhere;
 }
+
+/* Keep checkbox controls beside their text instead of inheriting field columns. */
+.nexus-app-frame .nexus-card label.business-check {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--nexus-space-3);
+  min-height: 44px;
+  margin-block: var(--nexus-space-4);
+  line-height: 1.5;
+}
+.nexus-app-frame .nexus-card label.business-check input[type="checkbox"] {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  margin-top: var(--nexus-space-1);
+}

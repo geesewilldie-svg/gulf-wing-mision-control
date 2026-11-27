@@ -1,5 +1,6 @@
+import { inspectRuntimeBlobReceipt } from "./runtime-blob-store";
 import { GGUF_METADATA_LIMIT, parseGgufMetadata } from "../gguf-metadata";
-import fs from "node:fs/promises";
+import fs, { type FileHandle } from "node:fs/promises";
 import { constants, type Stats } from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
@@ -275,6 +276,11 @@ export async function readHubArchive(
         partialPresent,
         partialBytes,
         receiptSha256: source.digest,
+        runtimeBlob: await inspectRuntimeBlobReceipt(dir, {
+          receiptSha256: source.digest,
+          sha256: source.record.recordedSha256,
+          bytes: source.record.recordedBytes,
+        }),
         recovery: await inspectArchiveRecovery(dir, {
           slot,
           runId: source.record.runId,
@@ -320,6 +326,7 @@ async function checkArchiveFile(
     source: Awaited<ReturnType<typeof readReceipt>>,
     before: Stats,
     bounded: AbortSignal,
+    handle: FileHandle,
   ) => Promise<void>,
 ): Promise<HubArchiveVerification> {
   if (!slotValid(slot))
@@ -422,7 +429,7 @@ async function checkArchiveFile(
     bounded.throwIfAborted();
     const digest = hash.digest("hex");
     if (digest === record.recordedSha256 && onMatch) {
-      await onMatch(source, before, bounded);
+      await onMatch(source, before, bounded, handle);
       const finalFile = await fs.lstat(/* turbopackIgnore: true */ name),
         finalReceipt = await readReceipt(slot, bounded);
       if (
@@ -746,4 +753,45 @@ export async function reviewVerifiedHubArchive(
       "The archive bytes do not match the recorded artifact. No import review was accepted.",
     );
   return { verification, ...reviewed };
+}
+
+export async function withVerifiedHubArchive<T>(
+  slot: unknown,
+  receiptSha256: unknown,
+  signal: AbortSignal,
+  operation: (
+    record: Awaited<ReturnType<typeof readReceipt>>["record"],
+    directory: string,
+    handle: FileHandle,
+    bounded: AbortSignal,
+  ) => Promise<T>,
+): Promise<T> {
+  if (
+    typeof receiptSha256 !== "string" ||
+    !/^[a-f0-9]{64}$/.test(receiptSha256)
+  )
+    throw new SyncError(400, "Choose an inspected source receipt.");
+  let result: T | undefined,
+    completed = false;
+  const verification = await checkArchiveFile(
+    slot,
+    signal,
+    "verify",
+    receiptSha256,
+    async (source, _before, bounded, handle) => {
+      result = await operation(
+        source.record,
+        source.directory,
+        handle,
+        bounded,
+      );
+      completed = true;
+    },
+  );
+  if (verification.state !== "matches-record" || !completed)
+    throw new SyncError(
+      409,
+      "The archived file does not match its inspected receipt.",
+    );
+  return result as T;
 }

@@ -1,3 +1,4 @@
+import { stageRuntimeBlob } from "@/lib/server/runtime-blob";
 import { reviewHubImport } from "@/lib/server/hub-import-review";
 import { resumeHubArtifact } from "@/lib/server/hub-archive-resume";
 import {
@@ -21,6 +22,8 @@ export async function POST(request: Request) {
     sameOrigin(request);
     await authorized(request, true);
     const body = (await readBody(request, 1000)) as any;
+    if (body?.action === "stage-runtime-blob")
+      return response(await stageRuntimeBlob(body, request.signal));
     if (body?.action === "import-storage-review")
       return response(
         await reviewHubImport(

@@ -1,4 +1,5 @@
 "use client";
+import RuntimeBlobStage from "./runtime-blob-stage";
 import { useEffect, useRef, useState } from "react";
 import type { HubImportReview as Review } from "@/lib/hub-import-review";
 import type { HubArchiveRecord } from "@/lib/hub-archive";
@@ -191,6 +192,13 @@ export default function HubImportReview({
               </dl>
             </section>
           )}
+          {data.runtimeStorage?.state === "observed" &&
+            data.runtimeStorage.capacity === "enough-at-check" && (
+              <RuntimeBlobStage
+                key={record.runId + record.receiptSha256}
+                record={record}
+              />
+            )}
           <h4>Remaining prerequisites</h4>
           <ul className="nexus-hub-artifacts">
             {data.blockers.map((item) => (
