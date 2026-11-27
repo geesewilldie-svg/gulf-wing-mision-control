@@ -1,3 +1,4 @@
+import { checkLocalModel } from "@/lib/server/local-model-check";
 import { inspectLocalModelDetails } from "@/lib/server/local-model-details";
 import { readReaSelfTestHistory } from "@/lib/server/rea-self-test-history";
 import { reaBrowserSelfTest } from "@/lib/server/rea-browser-self-test";
@@ -45,6 +46,8 @@ export async function POST(request: Request) {
     sameOrigin(request);
     await authorized(request, true);
     const body = (await readBody(request, 1000)) as any;
+    if (body?.action === "local-model-check")
+      return response(await checkLocalModel(body, request.signal));
     if (
       body?.action === "local-model-details" &&
       Object.keys(body).length === 3 &&

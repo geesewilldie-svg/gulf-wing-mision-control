@@ -330,6 +330,14 @@ export async function askProvider(
     );
   if (id !== "local")
     return callProvider(id, query, system, history, signal, options);
+  return withLocalInference(() =>
+    callProvider(id, query, system, history, signal, options),
+  );
+}
+
+export async function withLocalInference<T>(
+  operation: () => Promise<T>,
+): Promise<T> {
   if (localInference.nexusLocalInferenceBusy)
     throw new SyncError(
       429,
@@ -337,7 +345,7 @@ export async function askProvider(
     );
   localInference.nexusLocalInferenceBusy = true;
   try {
-    return await callProvider(id, query, system, history, signal, options);
+    return await operation();
   } finally {
     localInference.nexusLocalInferenceBusy = false;
   }

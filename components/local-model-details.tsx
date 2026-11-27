@@ -1,4 +1,5 @@
 "use client";
+import LocalModelCheck from "./local-model-check";
 import { useEffect, useRef, useState } from "react";
 import {
   localDetailModel,
@@ -116,9 +117,13 @@ export default function LocalModelDetails({
             </div>
           </dl>
           <p>
-            Checked {result.checkedAt}. Inference readiness and hardware fit
-            remain untested.
+            Checked {result.checkedAt}. Metadata alone does not test inference
+            readiness or hardware fit.
           </p>
+          {result.capabilitiesKnown &&
+            result.capabilities.includes("completion") && (
+              <LocalModelCheck model={result.model} digest={result.digest} />
+            )}
         </section>
       )}
     </section>
