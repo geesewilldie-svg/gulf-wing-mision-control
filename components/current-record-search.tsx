@@ -11,10 +11,12 @@ export default function CurrentRecordSearch({
   enabled,
   onFoundation,
   initialResult,
+  initialInspection,
 }: {
   enabled: boolean;
   onFoundation?: () => void;
   initialResult?: Results;
+  initialInspection?: CurrentRecordInspection;
 }) {
   const [query, setQuery] = useState(initialResult?.query || ""),
     [workspace, setWorkspace] = useState<RecordWorkspace>(
@@ -22,12 +24,15 @@ export default function CurrentRecordSearch({
     );
   const [data, setData] = useState<Results | null>(initialResult || null),
     [inspection, setInspection] = useState<CurrentRecordInspection | null>(
-      null,
+      initialInspection || null,
     );
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
   const pending = useRef<AbortController | null>(null);
+  const notifyChange = () =>
+    window.dispatchEvent(new Event("nexus:record-search-changed"));
   function clear() {
+    notifyChange();
     pending.current?.abort();
     setData(null);
     setInspection(null);
@@ -40,6 +45,7 @@ export default function CurrentRecordSearch({
   }, [enabled]);
   async function search(page = 0, paging = false) {
     if (!enabled || busy) return;
+    notifyChange();
     const stamp = paging ? data?.stamp : undefined;
     const controller = new AbortController();
     pending.current = controller;
@@ -117,6 +123,7 @@ export default function CurrentRecordSearch({
       setInspection(result);
     } catch (e) {
       if (!controller.signal.aborted) {
+        notifyChange();
         setData(null);
         setMessage((e as Error).message);
       }
@@ -216,9 +223,10 @@ export default function CurrentRecordSearch({
           {!data.records.length && (
             <p>No matches in this current search profile.</p>
           )}
-          {data.records.map((row) => (
+          {data.records.map((row, index) => (
             <article className="nexus-card" key={row.type + row.id}>
               <h4>
+                Result {data.page * 20 + index + 1} ·{" "}
                 {row.type === "owner"
                   ? "Owner-stated memory"
                   : "Unverified task record"}{" "}

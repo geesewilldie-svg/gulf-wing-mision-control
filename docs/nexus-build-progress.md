@@ -15,3 +15,5 @@ November 27, 2026: approximately **55–60%** of the full reconciled architectur
 Venice API/schema/live-access verification remains blocked/unresolved; it is not an enabled inference provider. Native Windows/Android capture and actual vision inference have not been established by synthetic browser or owned HTTP fixtures. No specific vision model from a video or catalog is presumed suitable for the owner's 8 GB laptop. These remaining integration and acceptance items are material, so the architecture is not close to a defensible 90–100% claim.
 
 Use the same full scope for later estimates. Track concrete accepted milestones and remaining capabilities before adjusting this range; do not add a fixed percentage for every small phase.
+
+Follow-up assessment, November 27: the new local record-search and numbered-inspection slices improve an established retrieval area. The overall estimate remains approximately 55–60%; broader execution, provider/tool connections, continuous vision, telephony and native end-to-end acceptance still account for substantial unfinished architecture.

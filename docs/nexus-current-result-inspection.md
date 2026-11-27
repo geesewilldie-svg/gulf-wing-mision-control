@@ -1,0 +1,19 @@
+# Inspect a numbered current result through conversation
+
+After “Search current records for Samsung”, type or say **“Inspect current result one”** in the same conversation. Numeric (1–20), cardinal (one–twenty) and ordinal (first–twentieth) forms are supported, including “Inspect current result number 2”. Results are visibly numbered. This selects from the first page of the latest conversational current-record search, not arbitrary files, other lists or model-generated references.
+
+Nexus identifies the selected record in its short spoken reply and displays its bounded current content inside the assistant. Owner memory remains owner-stated; task output remains unverified work history. Record contents are not automatically spoken, sent to a model, added to history or turned into edit/delete references. The existing explicit memory/task selection and mutation flows remain separate.
+
+## Reference lifetime and currentness
+
+The search response supplies a five-minute signed reference to the exact query, selected/all scope, first page, bounded corpus stamp and originating assistant workspace. The HMAC uses the installation's existing private signing secret and a separate protocol domain. The browser keeps the reference in memory; it is not a persistent receipt or standalone access credential. It contains encoded search metadata, not encryption; the signing secret and record bodies are not included. Controller/same-origin/local-mode checks still apply on every request.
+
+Inspection verifies the reference signature, exact payload, original lifetime, workspace and requested number. It reruns the search with its original stamp, selects the exact row, checks its type/ID/revision/profile hash through fresh inspection, then checks the complete bounded corpus again before accepting the response. Changed, removed, moved, expired, unsupported or out-of-range selections fail without guessing another record or calling a provider. The reference is not renewed by inspection; a new search creates a new five-minute selection. It is a freshness/selection contract, not independent database or full-artifact authentication.
+
+## UI and history behavior
+
+A new unrelated assistant request, workspace/access change or invalid inspection clears the conversational reference. Editing/filtering/paging a current-record search through either same-window UI view also invalidates numbered conversational selection. This avoids reading result one from an earlier page after the visible list changes. Run a fresh conversational search before using result numbers again. Explicit inspection buttons still use the normal current-record checks and do not require a conversational reference.
+
+The inspection response supplies both current results and selected detail directly, so opening the response performs no automatic duplicate lookup. It resets recent conversation history and clears old memory/task mutator selections. It never makes the inspected row an implicit “that memory/task” edit target. Page controls and explicit record inspections remain available; conversation-based paging, arbitrary ordinal selection outside the first twenty and automatic full-content speech are not introduced.
+
+Validation includes numeric/word grammar, signature tampering, missing/expired references, scope binding, unchanged logical records/events, correction/deletion without ordinal shifting, cancellation, unsupported modes and zero provider calls. A compiled production API test performs search → signed inspection → correction → stale rejection using actual disposable Foundation rows. Desktop/phone UI tests verify reference forwarding only for inspection, detail reuse without another query, numbered labels and invalidation after filter edits. Normal/background voice, memory mutation, current-search, model-identity and spacing regressions remain covered. Native microphone/ASR recognition and Windows scale acceptance remain unverified by these fixtures.

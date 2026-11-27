@@ -1,4 +1,6 @@
 "use client";
+import { currentRecordIntent } from "@/lib/current-record-intent";
+import type { CurrentRecordInspection } from "@/lib/current-record-search";
 import CurrentRecordSearch from "./current-record-search";
 import type { CurrentRecordSearch as RecordResults } from "@/lib/current-record-search";
 import LocalAnswerModel from "./local-answer-model";
@@ -25,6 +27,7 @@ const AssistantContext = createContext({
 export const useNexusAssistant = () => useContext(AssistantContext);
 type Answer = {
   recordSearch?: RecordResults;
+  recordInspection?: CurrentRecordInspection;
   engine: string;
   journalEntries?: JournalReceiptView[];
   journalEntry?: JournalReceiptView;
@@ -110,10 +113,12 @@ export default function NexusAssistant({
   const [busy, setBusy] = useState(false);
   const pendingAnswer = useRef<AbortController | null>(null);
   const taskContext = useRef<Answer["task"]>(undefined);
+  const recordSearchReference = useRef<string | undefined>(undefined);
   const memoryReference = useRef<Answer["memory"]>(undefined);
   const workStamp = useRef<string | undefined>(undefined);
   const contextRevision = useRef<number | undefined>(undefined);
   useEffect(() => {
+    recordSearchReference.current = undefined;
     taskContext.current = undefined;
     memoryReference.current = undefined;
     workStamp.current = undefined;
@@ -121,6 +126,14 @@ export default function NexusAssistant({
     window.dispatchEvent(new Event("nexus:context-reset"));
   }, [workspaceScope]);
   useEffect(() => () => pendingAnswer.current?.abort(), []);
+  useEffect(() => {
+    const clear = () => {
+      recordSearchReference.current = undefined;
+    };
+    window.addEventListener("nexus:record-search-changed", clear);
+    return () =>
+      window.removeEventListener("nexus:record-search-changed", clear);
+  }, []);
   const [conversationActive, setConversationActive] = useState(false);
   const [message, setMessage] = useState("");
   const [lastQuestion, setLastQuestion] = useState("");
@@ -158,6 +171,7 @@ export default function NexusAssistant({
   useEffect(() => {
     if (disabled) {
       pendingAnswer.current?.abort();
+      recordSearchReference.current = undefined;
       setAnswer(null);
       taskContext.current = undefined;
       memoryReference.current = undefined;
@@ -176,6 +190,11 @@ export default function NexusAssistant({
     signal?: AbortSignal,
     displayText?: string,
   ) => {
+    const inspectingRecord = currentRecordIntent(text)?.kind === "inspect";
+    const selectedRecords = inspectingRecord
+      ? recordSearchReference.current
+      : undefined;
+    if (!inspectingRecord) recordSearchReference.current = undefined;
     const controller = signal ? null : new AbortController();
     if (controller) pendingAnswer.current = controller;
     const requestSignal = signal || controller!.signal;
@@ -195,6 +214,7 @@ export default function NexusAssistant({
           requestId: globalThis.crypto?.randomUUID?.(),
           taskContext: taskContext.current,
           memoryReference: memoryReference.current,
+          recordSearchReference: selectedRecords,
           contextRevision: contextRevision.current,
           workContextStamp: workStamp.current,
           voiceConversation: Boolean(signal),
@@ -228,9 +248,14 @@ export default function NexusAssistant({
       if (data.memory) memoryReference.current = data.memory;
       if (data.taskChoices) taskContext.current = undefined;
       if (data.task) taskContext.current = data.task;
+      recordSearchReference.current =
+        typeof data.recordSearchReference === "string"
+          ? data.recordSearchReference
+          : undefined;
       setAnswer(data);
       return data.answer as string;
     } catch (e) {
+      if (inspectingRecord) recordSearchReference.current = undefined;
       if ((e as Error).name !== "AbortError") setMessage((e as Error).message);
       throw e;
     } finally {
@@ -404,6 +429,7 @@ export default function NexusAssistant({
                   <CurrentRecordSearch
                     key={answer.recordSearch.stamp + answer.recordSearch.readAt}
                     initialResult={answer.recordSearch}
+                    initialInspection={answer.recordInspection}
                     enabled={!disabled}
                   />
                 )}

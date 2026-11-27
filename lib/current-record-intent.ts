@@ -1,12 +1,69 @@
 export type CurrentRecordIntent =
   | { kind: "search"; query: string; allWorkspaces: boolean }
-  | { kind: "help" };
+  | { kind: "help" }
+  | { kind: "inspect"; number: number };
 export function currentRecordIntent(query: string): CurrentRecordIntent | null {
   const text = query
     .trim()
     .replace(/^(?:hey\s+)?nexus[, ]+/i, "")
     .replace(/^please\s+/i, "")
     .replace(/[.!?]+$/, "");
+  const inspect =
+    /^inspect current result (?:number )?([a-z-]+|[0-9]{1,3})$/i.exec(text);
+  if (inspect) {
+    const cardinal = [
+      "one",
+      "two",
+      "three",
+      "four",
+      "five",
+      "six",
+      "seven",
+      "eight",
+      "nine",
+      "ten",
+      "eleven",
+      "twelve",
+      "thirteen",
+      "fourteen",
+      "fifteen",
+      "sixteen",
+      "seventeen",
+      "eighteen",
+      "nineteen",
+      "twenty",
+    ];
+    const ordinal = [
+      "first",
+      "second",
+      "third",
+      "fourth",
+      "fifth",
+      "sixth",
+      "seventh",
+      "eighth",
+      "ninth",
+      "tenth",
+      "eleventh",
+      "twelfth",
+      "thirteenth",
+      "fourteenth",
+      "fifteenth",
+      "sixteenth",
+      "seventeenth",
+      "eighteenth",
+      "nineteenth",
+      "twentieth",
+    ];
+    const word = inspect[1].toLowerCase();
+    return {
+      kind: "inspect",
+      number: /^[0-9]+$/.test(word)
+        ? Number(word)
+        : Math.max(cardinal.indexOf(word), ordinal.indexOf(word)) + 1,
+    };
+  }
+  if (/^inspect current result(?:\s|$)/i.test(text)) return { kind: "help" };
   const head = "search (?:my )?current (?:records|memory and work)";
   if (
     new RegExp(

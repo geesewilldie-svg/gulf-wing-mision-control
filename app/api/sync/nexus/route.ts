@@ -1,3 +1,7 @@
+import {
+  currentRecordReference,
+  inspectConversationRecord,
+} from "@/lib/server/current-record-reference";
 import { currentRecordIntent } from "@/lib/current-record-intent";
 import { conversationCurrentRecords } from "@/lib/server/conversation-current-records";
 import { journalIntent } from "@/lib/journal-intent";
@@ -103,6 +107,7 @@ export async function POST(request: Request) {
       requestId?: unknown;
       taskContext?: unknown;
       memoryReference?: unknown;
+      recordSearchReference?: unknown;
       contextRevision?: unknown;
       workContextStamp?: unknown;
       workspaceScope?: unknown;
@@ -204,9 +209,40 @@ export async function POST(request: Request) {
           403,
           "Current-record search is local-only. Choose Auto or local mode.",
         );
-      return reply(
-        conversationCurrentRecords(recordCommand, workScope, request.signal),
+      if (recordCommand.kind === "inspect") {
+        const selected = await inspectConversationRecord(
+          recordCommand.number,
+          body.recordSearchReference,
+          workScope,
+          request.signal,
+        );
+        return reply({
+          engine: "Nexus current records",
+          sources: [],
+          warnings: [],
+          resetHistory: true,
+          clearRecordReferences: true,
+          routing: {
+            mode: "local",
+            selected: [],
+            reason:
+              "Current search result inspected locally; no model or mutation.",
+          },
+          ...selected,
+          answer: `Result ${recordCommand.number} is ${selected.recordInspection.type === "owner" ? "owner-stated memory" : "an unverified task record"} in ${selected.recordInspection.scope}. Its current content is displayed below; this is not independent verification or permission to edit it.`,
+        });
+      }
+      const found = conversationCurrentRecords(
+        recordCommand,
+        workScope,
+        request.signal,
       );
+      const reference =
+        "recordSearch" in found
+          ? await currentRecordReference(found.recordSearch, workScope)
+          : null;
+      request.signal.throwIfAborted();
+      return reply({ ...found, recordSearchReference: reference });
     }
     const journalCommand = journalIntent(body.query);
     if (journalCommand) {
