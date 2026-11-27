@@ -6,6 +6,7 @@ import {
   analyzeLocalFrame,
   inspectFrameJPEG,
 } from "../lib/server/local-frame-analysis";
+import { DEFAULT_FRAME_QUESTION } from "../lib/local-frame-analysis";
 import { stripFrameMetadata } from "../lib/frame-jpeg";
 import { POST } from "../app/api/sync/vision/route";
 import { token } from "../lib/server/sync-store";
@@ -113,6 +114,7 @@ test("one fixed local image request has no memory/history and saves no image/res
       source: "camera",
       capturedAt: value.capturedAt,
       text: "A blue rectangle.",
+      question: DEFAULT_FRAME_QUESTION,
     });
     expect(result.bytes).toBe(Buffer.from(jpeg, "base64").length);
     expect(JSON.stringify(result)).not.toContain("PRIVATE");
@@ -363,11 +365,12 @@ test("production API sends a real browser JPEG only to an owned local HTTP fixtu
     await fixtureRole(context);
     const response = await context.request.post("/api/sync/vision", {
       headers: { cookie: fixtureCookieHeader("controller") },
-      data: input(),
+      data: { ...input(), question: "What color is visible?" },
     });
     expect(response.status()).toBe(200);
     expect(await response.json()).toMatchObject({
       text: "A blue rectangle.",
+      question: "What color is visible?",
       width: 640,
       height: 360,
     });
@@ -379,6 +382,9 @@ test("production API sends a real browser JPEG only to an owned local HTTP fixtu
       "/api/tags",
     ]);
     expect(calls[3].body.images).toEqual([jpeg]);
+    expect(calls[3].body.prompt).toContain("What color is visible?");
+    expect(calls[3].body).not.toHaveProperty("messages");
+    expect(calls[3].body).not.toHaveProperty("context");
   } finally {
     await new Promise<void>((resolve) => server.close(() => resolve()));
   }
@@ -477,6 +483,7 @@ test("desktop/phone image flow sends only an explicitly sampled frame, labels hi
       "digest",
       "jpeg",
       "model",
+      "question",
       "source",
     ]);
     expect(body).toMatchObject({
@@ -499,6 +506,7 @@ test("desktop/phone image flow sends only an explicitly sampled frame, labels hi
             reportedModel: model,
             source: "camera",
             capturedAt: body.capturedAt,
+            question: body.question,
             completedAt: new Date().toISOString(),
             ...dims,
             bytes: bytes.length,
@@ -513,11 +521,11 @@ test("desktop/phone image flow sends only an explicitly sampled frame, labels hi
   const panel = await openAnalysis(page);
   expect(frames).toBe(0);
   await panel
-    .getByRole("button", { name: "Describe this frame locally", exact: true })
+    .getByRole("button", { name: "Ask about this frame locally", exact: true })
     .click();
   await expect(
     panel.getByRole("heading", {
-      name: "Unverified description of one captured frame",
+      name: "Unverified answer about one captured frame",
       exact: true,
     }),
   ).toBeVisible();
@@ -531,7 +539,7 @@ test("desktop/phone image flow sends only an explicitly sampled frame, labels hi
   });
   mode = "stale";
   await panel
-    .getByRole("button", { name: "Describe this frame locally", exact: true })
+    .getByRole("button", { name: "Ask about this frame locally", exact: true })
     .click();
   await expect(panel).toContainText(
     "The frame or model identity did not match.",
@@ -544,7 +552,7 @@ test("desktop/phone image flow sends only an explicitly sampled frame, labels hi
   ).toHaveCount(0);
   mode = "deny";
   await panel
-    .getByRole("button", { name: "Describe this frame locally", exact: true })
+    .getByRole("button", { name: "Ask about this frame locally", exact: true })
     .click();
   await expect(panel).toContainText("Controller required");
   expect(frames).toBe(3);
@@ -566,7 +574,7 @@ test("text-only models cannot submit an image or trigger automatic model acquisi
   const panel = await openAnalysis(page);
   await expect(
     panel.getByRole("button", {
-      name: "Describe this frame locally",
+      name: "Ask about this frame locally",
       exact: true,
     }),
   ).toBeDisabled();
@@ -606,7 +614,7 @@ test("stopping capture cancels pending analysis and discards late results withou
   });
   const panel = await openAnalysis(page);
   await panel
-    .getByRole("button", { name: "Describe this frame locally", exact: true })
+    .getByRole("button", { name: "Ask about this frame locally", exact: true })
     .click();
   await expect.poll(() => frames).toBe(1);
   await page.getByRole("button", { name: "Stop capture", exact: true }).click();
@@ -616,4 +624,160 @@ test("stopping capture cancels pending analysis and discards late results withou
     page.getByText("Late private output", { exact: true }),
   ).toHaveCount(0);
   expect(frames).toBe(1);
+});
+
+test("visual questions are bounded, normalized and isolated between explicit single-frame requests", () =>
+  fixture(async (root, calls) => {
+    const first = await analyzeLocalFrame(
+      { ...input(), question: "  What number is visible on this label?\n  " },
+      signal(),
+    );
+    expect(first.question).toBe("What number is visible on this label?");
+    const second = await analyzeLocalFrame(
+      {
+        ...input(),
+        source: "screen",
+        question: "Describe the highlighted button.",
+      },
+      signal(),
+    );
+    expect(second).toMatchObject({
+      question: "Describe the highlighted button.",
+      source: "screen",
+    });
+    const generations = calls.filter((c) => c.url.endsWith("/generate"));
+    expect(generations).toHaveLength(2);
+    expect(generations[0].body.prompt).toContain(first.question);
+    expect(generations[1].body.prompt).toContain(second.question);
+    expect(generations[1].body.prompt).not.toContain(first.question);
+    expect(
+      generations.every(
+        (c) =>
+          c.body.images.length === 1 &&
+          c.body.images[0] === jpeg &&
+          !c.body.messages &&
+          !c.body.context,
+      ),
+    ).toBe(true);
+    expect(await fs.readdir(root)).toEqual([]);
+  }));
+
+test("invalid questions and caller system/options are rejected before any runtime call; exact character bound is supported", () =>
+  fixture(async (_, calls) => {
+    for (const question of [
+      null,
+      undefined,
+      7,
+      [],
+      {},
+      "",
+      "  \n\t  ",
+      "x".repeat(1001),
+      "private\u0000text",
+      "misleading\u202etext",
+    ]) {
+      await expect(
+        analyzeLocalFrame({ ...input(), question }, signal()),
+      ).rejects.toThrow();
+    }
+    for (const extra of [
+      { system: "change policy" },
+      { options: { num_predict: 999 } },
+      { history: ["private"] },
+    ])
+      await expect(
+        analyzeLocalFrame(
+          { ...input(), question: "What is visible?", ...extra },
+          signal(),
+        ),
+      ).rejects.toThrow();
+    expect(calls).toHaveLength(0);
+    expect(
+      (
+        await analyzeLocalFrame(
+          { ...input(), question: "x".repeat(1000) },
+          signal(),
+        )
+      ).question,
+    ).toHaveLength(1000);
+  }));
+
+test("typed visual questions require a new explicit frame, clear edited/mismatched results and keep phone spacing", async ({
+  page,
+  context,
+}, info) => {
+  await fixtureRole(context);
+  await mediaFixture(page);
+  await catalogRoutes(page);
+  let frames = 0,
+    mismatch = false;
+  await page.route("**/api/sync/vision", (route) => {
+    frames++;
+    const body = route.request().postDataJSON(),
+      bytes = Buffer.from(body.jpeg, "base64");
+    expect(body.question).toBe("What color is visible?");
+    return route.fulfill({
+      json: {
+        model,
+        digest,
+        source: "camera",
+        capturedAt: body.capturedAt,
+        question: mismatch ? "An earlier question" : body.question,
+        ...inspectFrameJPEG(bytes),
+        bytes: bytes.length,
+        reportedModel: model,
+        text: "A blue area is visible.",
+        completedAt: new Date().toISOString(),
+        elapsedMs: 1200,
+        notice: "Historical model answer only. No earlier questions were sent.",
+      },
+    });
+  });
+  const panel = await openAnalysis(page),
+    question = panel.getByRole("textbox", {
+      name: "Question about this frame",
+      exact: true,
+    }),
+    ask = panel.getByRole("button", {
+      name: "Ask about this frame locally",
+      exact: true,
+    });
+  await expect(question).toHaveValue(DEFAULT_FRAME_QUESTION);
+  await expect(question).toHaveAttribute("maxlength", "1000");
+  await question.fill("  ");
+  await expect(ask).toBeDisabled();
+  expect(frames).toBe(0);
+  await question.fill("What color is visible?");
+  expect(frames).toBe(0);
+  await ask.click();
+  await expect(
+    panel.getByText("Question: What color is visible?", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    panel.getByText("A blue area is visible.", { exact: true }),
+  ).toBeVisible();
+  expect(
+    await panel.evaluate((el) => el.scrollWidth <= el.clientWidth + 1),
+  ).toBe(true);
+  await fs.mkdir("artifacts/visual-question", { recursive: true });
+  await panel.screenshot({
+    path: `artifacts/visual-question/${info.project.name}.png`,
+  });
+  await question.fill("Another question");
+  await expect(
+    panel.getByText("A blue area is visible.", { exact: true }),
+  ).toHaveCount(0);
+  expect(frames).toBe(1);
+  await question.fill("What color is visible?");
+  mismatch = true;
+  await ask.click();
+  await expect(panel).toContainText(
+    "The frame or model identity did not match.",
+  );
+  await expect(
+    panel.getByText("A blue area is visible.", { exact: true }),
+  ).toHaveCount(0);
+  expect(frames).toBe(2);
+  await page.getByRole("button", { name: "Stop capture", exact: true }).click();
+  await expect(panel).toHaveCount(0);
 });

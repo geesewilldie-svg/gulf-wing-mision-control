@@ -72,3 +72,5 @@ The first archive transfer slice is now implemented behind explicit per-file lic
 Capture prerequisite continuation: [local camera/screen preview](nexus-local-capture-preview.md) supplies explicit browser-only start/stop and late-stream cleanup. It performs no recording, frame upload or model analysis; native device acceptance remains separate.
 
 Single-frame continuation: [local image description](nexus-local-frame-analysis.md) sends one explicitly sampled preview JPEG to a digest-bound local vision/completion model without memory, conversation or hosted fallback. It returns unverified historical text; native/real-model acceptance remains separate.
+
+Visual-question continuation: [questions about one frame](nexus-visual-questions.md) now let the owner supply one bounded question with an explicit newly sampled local image. Results remain unverified historical text, with no memory/history or tool authority; voice and continuous vision integration remain later work.

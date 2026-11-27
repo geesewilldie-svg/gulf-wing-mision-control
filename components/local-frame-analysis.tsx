@@ -6,6 +6,8 @@ import type { LocalModelDetails } from "@/lib/local-model-details";
 import {
   FRAME_MAX_BYTES,
   FRAME_MAX_EDGE,
+  DEFAULT_FRAME_QUESTION,
+  frameQuestion,
   type LocalFrameAnalysis as Result,
 } from "@/lib/local-frame-analysis";
 export default function LocalFrameAnalysis({
@@ -21,6 +23,7 @@ export default function LocalFrameAnalysis({
     [result, setResult] = useState<Result | null>(null);
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
+  const [question, setQuestion] = useState(DEFAULT_FRAME_QUESTION);
   const pending = useRef<AbortController | null>(null);
   useEffect(() => () => pending.current?.abort(), []);
   const model = catalog?.models.find((item) => item.name === selected);
@@ -60,6 +63,8 @@ export default function LocalFrameAnalysis({
           digest: model?.digest,
         };
       else {
+        if (!frameQuestion(question))
+          throw Error("Enter a question of 1–1000 supported characters.");
         if (!ready)
           throw Error(
             "Inspect an installed model with vision and completion support first.",
@@ -125,6 +130,7 @@ export default function LocalFrameAnalysis({
             capturedAt,
             jpeg,
             analyzeOnce: true,
+            question: frameQuestion(question),
           };
         } finally {
           canvas.width = 0;
@@ -155,6 +161,7 @@ export default function LocalFrameAnalysis({
           data.model !== selected ||
           data.digest !== model?.digest ||
           data.source !== source ||
+          data.question !== frameQuestion(question) ||
           !dimensions ||
           data.capturedAt !== dimensions.capturedAt ||
           data.width !== dimensions.width ||
@@ -177,12 +184,12 @@ export default function LocalFrameAnalysis({
   }
   return (
     <section className="nexus-card" aria-label="Single-frame local analysis">
-      <h4>Describe one frame locally</h4>
+      <h4>Ask about one frame locally</h4>
       <p>
-        Choose an installed model, then explicitly send one reduced JPEG frame
-        from this device to your Nexus laptop and its local Ollama service. No
-        hosted provider, owner memory or conversation is used. Nothing is saved
-        by Nexus.
+        Choose an installed model, then explicitly send your question and one
+        reduced JPEG frame from this device to your Nexus laptop and its local
+        Ollama service. No hosted provider, owner memory or conversation is
+        used. Nothing is saved by Nexus.
       </p>
       <p>
         This can use laptop RAM/CPU/GPU. It requests 128 output tokens, a
@@ -244,12 +251,32 @@ export default function LocalFrameAnalysis({
             : "Vision/completion support is missing or unknown. Choose another installed model; no model is downloaded automatically."}
         </p>
       )}
+      <label>
+        Question about this frame
+        <textarea
+          rows={3}
+          aria-label="Question about this frame"
+          maxLength={1000}
+          value={question}
+          disabled={busy}
+          onChange={(event) => {
+            setQuestion(event.target.value);
+            setResult(null);
+            setMessage("");
+          }}
+        />
+      </label>
+      <p>
+        {question.length} / 1000 characters. This question and one newly
+        captured frame are sent together. Earlier questions and answers are not
+        included.
+      </p>
       <div className="nexus-actions">
         <button
-          disabled={busy || !ready}
+          disabled={busy || !ready || !frameQuestion(question)}
           onClick={() => void request("analyze")}
         >
-          Describe this frame locally
+          Ask about this frame locally
         </button>
         {busy && (
           <button
@@ -273,10 +300,13 @@ export default function LocalFrameAnalysis({
           aria-label="Captured frame description"
           className="nexus-hub-result"
         >
-          <h4>Unverified description of one captured frame</h4>
+          <h4>Unverified answer about one captured frame</h4>
           <p>
             Source: {result.source} · Captured {result.capturedAt} · Completed{" "}
             {result.completedAt}
+          </p>
+          <p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+            Question: {result.question}
           </p>
           <p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
             {result.text}
