@@ -1,4 +1,5 @@
 export type LocalModelCheck = {
+  receiptState?: "saved" | "pending";
   runId: string;
   model: string;
   digest: string;

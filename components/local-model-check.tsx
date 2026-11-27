@@ -103,6 +103,31 @@ export default function LocalModelCheck({
               : "Diagnostic completed; expected marker not returned"}
           </h4>
           <p>{result.notice}</p>
+          {result.receiptState && (
+            <p>
+              {result.receiptState === "saved"
+                ? "Completed result saved locally. Review it under Saved local model diagnostics."
+                : "The test completed, but its history save is unconfirmed or full. Do not rerun solely to save it; the session result remains available."}
+            </p>
+          )}
+          <div className="nexus-actions">
+            <button
+              onClick={() => {
+                const url = URL.createObjectURL(
+                  new Blob([JSON.stringify(result, null, 2)], {
+                    type: "application/json",
+                  }),
+                );
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = "nexus-local-model-check.json";
+                link.click();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+              }}
+            >
+              Download this model diagnostic
+            </button>
+          </div>
           <p>
             Requested: {result.model} · Reported: {result.reportedModel}
           </p>

@@ -1,5 +1,6 @@
 "use client";
 import ReaReadiness from "./rea-readiness";
+import LocalModelCheckHistory from "./local-model-check-history";
 import LocalModelCatalog from "./local-model-catalog";
 import ExpandableVisual from "./expandable-visual";
 import { useEffect, useState } from "react";
@@ -180,7 +181,12 @@ export default function NexusAgentActivity({ enabled }: { enabled: boolean }) {
             {message ||
               "Short requests may finish between refreshes; their completed paths remain highlighted briefly. Signals are shown for 15 minutes; durable coding-worker history remains in Foundation."}
           </p>
-          {state && <LocalModelCatalog />}
+          {state && (
+            <>
+              <LocalModelCatalog />
+              <LocalModelCheckHistory />
+            </>
+          )}
           {state && <ReaReadiness />}
           <details>
             <summary>Configured inference models</summary>

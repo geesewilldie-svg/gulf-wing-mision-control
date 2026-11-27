@@ -1,3 +1,4 @@
+import { readLocalModelCheckHistory } from "@/lib/server/local-model-check-history";
 import { checkLocalModel } from "@/lib/server/local-model-check";
 import { inspectLocalModelDetails } from "@/lib/server/local-model-details";
 import { readReaSelfTestHistory } from "@/lib/server/rea-self-test-history";
@@ -62,6 +63,7 @@ export async function POST(request: Request) {
       !body ||
       ![
         "local-model-catalog",
+        "local-model-check-history",
         "rea-preflight",
         "rea-protocol-check",
         "rea-browser-self-test",
@@ -70,6 +72,8 @@ export async function POST(request: Request) {
       Object.keys(body).some((key) => key !== "action")
     )
       throw new SyncError(400, "Choose a supported metadata inspection.");
+    if (body.action === "local-model-check-history")
+      return response(await readLocalModelCheckHistory(request.signal));
     if (body.action === "rea-test-history")
       return response(await readReaSelfTestHistory(request.signal));
     if (body.action === "rea-browser-self-test")

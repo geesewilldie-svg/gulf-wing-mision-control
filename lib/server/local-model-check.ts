@@ -1,3 +1,4 @@
+import { saveLocalModelCheck } from "./local-model-check-history";
 import { randomUUID } from "node:crypto";
 import { localDetailModel } from "../local-model-details";
 import type { LocalModelCheck } from "../local-model-check";
@@ -102,7 +103,7 @@ export async function checkLocalModel(
         Number.isSafeInteger(data.eval_count) && data.eval_count >= 0
           ? data.eval_count
           : null;
-      return {
+      const result: LocalModelCheck = {
         runId: randomUUID(),
         model: value.model,
         digest: value.digest,
@@ -117,6 +118,8 @@ export async function checkLocalModel(
         notice:
           "One fixed local diagnostic completed at the recorded time. No owner memory, files, conversation or caller prompt was supplied. The runtime was asked for at most 8 output tokens and immediate unload; loaded state was not independently checked. This does not establish sustained performance, larger-context hardware fit or future readiness. No model selection or provider grant changed.",
       };
+      const receiptState = await saveLocalModelCheck(result);
+      return { ...result, receiptState };
     } catch (error) {
       if (signal.aborted)
         throw new SyncError(

@@ -102,3 +102,5 @@ Staging continuity: [current runtime blob presence checks](nexus-runtime-blob-ch
 Creation continuation: [a separate explicit local model-creation action](nexus-runtime-model-create.md) is now implemented after current blob presence. It revalidates execution-time evidence and creates only a new generated alias, preserving the original selection/receipts. Model creation is runtime-reported; inference readiness and native real-model acceptance remain separate.
 
 Created-model continuity: [current runtime model inspection](nexus-runtime-model-check.md) connects a retained creation run to fresh local catalog/metadata evidence and, when matched and completion-capable, a separate explicit diagnostic. Historical uncertainty is preserved; no creation retry, provider request or default-model change is added.
+
+Inference-test continuity: [saved local diagnostics](nexus-local-model-check-history.md) preserve completed fixed-test metadata and provide explicit controller history/export after refresh. Historical results remain separate from current model identity/readiness; no runtime request, provider activation or model selection occurs when reading history.
