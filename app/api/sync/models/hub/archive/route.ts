@@ -1,6 +1,7 @@
 import {
   readHubArchive,
   verifyHubArchive,
+  reconcileHubArchive,
 } from "@/lib/server/hub-archive-history";
 import {
   authorized,
@@ -25,6 +26,20 @@ export async function POST(request: Request) {
       Object.keys(body).every((key) => ["action", "slot"].includes(key))
     )
       return response(await verifyHubArchive(body.slot, request.signal));
+    if (
+      body?.action === "reconcile" &&
+      Object.keys(body).length === 3 &&
+      Object.keys(body).every((key) =>
+        ["action", "slot", "receiptSha256"].includes(key),
+      )
+    )
+      return response(
+        await reconcileHubArchive(
+          body.slot,
+          body.receiptSha256,
+          request.signal,
+        ),
+      );
     throw new SyncError(
       400,
       "Choose archive list or an explicit recorded-slot verification. Paths and transfer options are not accepted.",

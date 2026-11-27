@@ -1,5 +1,5 @@
 import fs from "node:fs/promises";
-import { constants } from "node:fs";
+import { constants, type Stats } from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import { hubRepository } from "../hub-model";
@@ -11,6 +11,14 @@ import type {
 } from "../hub-archive";
 import { archiveDirectoryGuard } from "./hub-archive";
 import { SyncError } from "./sync-store";
+import {
+  inspectArchiveRecovery,
+  saveArchiveRecovery,
+} from "./hub-archive-recovery";
+import type {
+  HubArchiveReconciliation,
+  HubArchiveRecovery,
+} from "../hub-archive";
 const root = () =>
   path.resolve(
     process.env.GW_SYNC_DATA_DIR || path.join(process.cwd(), ".gulf-wing"),
@@ -227,7 +235,21 @@ export async function readHubArchive(
           partialPresent = false;
       }
       await source.guard();
-      records.push({ ...source.record, fileState, fileBytes, partialPresent });
+      records.push({
+        ...source.record,
+        fileState,
+        fileBytes,
+        partialPresent,
+        receiptSha256: source.digest,
+        recovery: await inspectArchiveRecovery(dir, {
+          slot,
+          runId: source.record.runId,
+          receiptSha256: source.digest,
+          bytes: source.record.recordedBytes,
+          sha256: source.record.recordedSha256,
+          sourceState: source.record.state,
+        }),
+      });
     } catch (error) {
       if (exists || (error as NodeJS.ErrnoException).code !== "ENOENT") {
         withheldRecords++;
@@ -255,9 +277,16 @@ export async function readHubArchive(
   };
 }
 let checking = false;
-export async function verifyHubArchive(
+async function checkArchiveFile(
   slot: unknown,
   signal: AbortSignal,
+  mode: "verify" | "reconcile",
+  expectedReceipt?: string,
+  onMatch?: (
+    source: Awaited<ReturnType<typeof readReceipt>>,
+    before: Stats,
+    bounded: AbortSignal,
+  ) => Promise<void>,
 ): Promise<HubArchiveVerification> {
   if (!slotValid(slot))
     throw new SyncError(400, "Choose a recorded archive slot, not a path.");
@@ -269,10 +298,21 @@ export async function verifyHubArchive(
   try {
     const source = await readReceipt(slot, bounded),
       record = source.record;
-    if (record.state !== "verified")
+    if (expectedReceipt && source.digest !== expectedReceipt)
       throw new SyncError(
         409,
-        "Only a recorded completed transfer can be rechecked here. Unfinished or uncertain runs need reconciliation.",
+        "The archive record changed. Inspect it again before reconciliation.",
+      );
+    if (
+      mode === "verify"
+        ? record.state !== "verified"
+        : !["started", "publication-unconfirmed"].includes(record.state)
+    )
+      throw new SyncError(
+        409,
+        mode === "verify"
+          ? "Only a recorded completed transfer can be rechecked here. Unfinished or uncertain runs need reconciliation."
+          : "Only unfinished or publication-unconfirmed records support this reconciliation action.",
       );
     const name = path.join(source.directory, "model.gguf"),
       before = await fs.lstat(/* turbopackIgnore: true */ name);
@@ -284,6 +324,7 @@ export async function verifyHubArchive(
     const base = {
       slot,
       runId: record.runId,
+      receiptSha256: source.digest,
       checkedAt: new Date().toISOString(),
       recordedBytes: record.recordedBytes,
       observedBytes: before.size,
@@ -346,6 +387,23 @@ export async function verifyHubArchive(
     await source.guard();
     bounded.throwIfAborted();
     const digest = hash.digest("hex");
+    if (digest === record.recordedSha256 && onMatch) {
+      await onMatch(source, before, bounded);
+      const finalFile = await fs.lstat(/* turbopackIgnore: true */ name),
+        finalReceipt = await readReceipt(slot, bounded);
+      if (
+        !same(before, finalFile) ||
+        finalFile.isSymbolicLink() ||
+        finalFile.size !== before.size ||
+        finalFile.mtimeMs !== before.mtimeMs ||
+        finalFile.ctimeMs !== before.ctimeMs ||
+        !same(source.identity, finalReceipt.identity) ||
+        source.digest !== finalReceipt.digest
+      )
+        throw Error("Archive changed while recording recovery");
+      await source.guard();
+      bounded.throwIfAborted();
+    }
     return {
       ...base,
       checkedAt: new Date().toISOString(),
@@ -364,4 +422,55 @@ export async function verifyHubArchive(
     await handle?.close().catch(() => {});
     checking = false;
   }
+}
+
+export async function verifyHubArchive(
+  slot: unknown,
+  signal: AbortSignal,
+): Promise<HubArchiveVerification> {
+  return checkArchiveFile(slot, signal, "verify");
+}
+export async function reconcileHubArchive(
+  slot: unknown,
+  receiptSha256: unknown,
+  signal: AbortSignal,
+): Promise<HubArchiveReconciliation> {
+  if (
+    typeof receiptSha256 !== "string" ||
+    !/^[a-f0-9]{64}$/.test(receiptSha256)
+  )
+    throw new SyncError(
+      400,
+      "A current inspected receipt identity is required for reconciliation.",
+    );
+  let recovery: HubArchiveRecovery | null = null;
+  const verification = await checkArchiveFile(
+    slot,
+    signal,
+    "reconcile",
+    receiptSha256,
+    async (source, before, bounded) => {
+      await source.guard();
+      bounded.throwIfAborted();
+      const current = await readReceipt(source.record.slot, bounded);
+      if (
+        !same(source.identity, current.identity) ||
+        source.digest !== current.digest
+      )
+        throw Error("Source receipt changed");
+      recovery = await saveArchiveRecovery(
+        source.directory,
+        {
+          slot: source.record.slot,
+          runId: source.record.runId,
+          receiptSha256: source.digest,
+          bytes: source.record.recordedBytes,
+          sha256: source.record.recordedSha256,
+          sourceState: source.record.state,
+        },
+        bounded,
+      );
+    },
+  );
+  return { verification, recovery };
 }

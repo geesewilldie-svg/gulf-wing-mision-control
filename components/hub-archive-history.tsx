@@ -4,6 +4,7 @@ import type {
   HubArchiveHistory as History,
   HubArchiveVerification,
   HubArchiveRecord,
+  HubArchiveReconciliation,
 } from "@/lib/hub-archive";
 const stateLabel = (state: HubArchiveRecord["state"]) =>
   ({
@@ -27,6 +28,8 @@ export default function HubArchiveHistory({ disabled }: { disabled: boolean }) {
     ),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  const [reconciliation, setReconciliation] =
+    useState<HubArchiveReconciliation | null>(null);
   const pending = useRef<AbortController | null>(null);
   useEffect(() => () => pending.current?.abort(), []);
   useEffect(() => {
@@ -34,25 +37,40 @@ export default function HubArchiveHistory({ disabled }: { disabled: boolean }) {
       pending.current?.abort();
       setHistory(null);
       setVerification(null);
+      setReconciliation(null);
       setBusy(false);
       setError("");
     }
   }, [disabled]);
-  async function request(slot?: string) {
+  async function request(slot?: string, reconcile = false) {
     if (disabled) return;
     pending.current?.abort();
     const controller = new AbortController();
     pending.current = controller;
     setError("");
     setVerification(null);
+    setReconciliation(null);
     setBusy(true);
     if (!slot) setHistory(null);
     try {
+      const recorded = history?.records.find((record) => record.slot === slot);
+      if (reconcile && !recorded?.receiptSha256)
+        throw Error(
+          "Inspect the current archive receipt before reconciliation.",
+        );
       const response = await fetch("/api/sync/models/hub/archive", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(
-          slot ? { action: "verify", slot } : { action: "list" },
+          slot
+            ? reconcile
+              ? {
+                  action: "reconcile",
+                  slot,
+                  receiptSha256: recorded!.receiptSha256,
+                }
+              : { action: "verify", slot }
+            : { action: "list" },
         ),
         signal: controller.signal,
       });
@@ -61,19 +79,39 @@ export default function HubArchiveHistory({ disabled }: { disabled: boolean }) {
       if (!response.ok)
         throw Error(data.error || "Archive inspection unavailable.");
       if (slot) {
-        const recorded = history?.records.find(
-          (record) => record.slot === slot,
-        );
+        const checked = reconcile ? data.verification : data;
         if (
           !recorded ||
-          recorded.runId !== data.runId ||
-          recorded.recordedBytes !== data.recordedBytes ||
-          recorded.recordedSha256 !== data.recordedSha256
+          recorded.runId !== checked.runId ||
+          recorded.recordedBytes !== checked.recordedBytes ||
+          recorded.recordedSha256 !== checked.recordedSha256 ||
+          (recorded.receiptSha256 &&
+            recorded.receiptSha256 !== checked.receiptSha256)
         )
           throw Error(
             "The archive record changed. Inspect the archive again before accepting a file check.",
           );
-        setVerification(data);
+        if (reconcile) {
+          setReconciliation(data);
+          if (data.recovery)
+            setHistory(
+              (current) =>
+                current && {
+                  ...current,
+                  records: current.records.map((record) =>
+                    record.slot === slot
+                      ? {
+                          ...record,
+                          recovery: {
+                            state: "recorded",
+                            recordedAt: data.recovery.recordedAt,
+                          },
+                        }
+                      : record,
+                  ),
+                },
+            );
+        } else setVerification(data);
       } else setHistory(data);
     } catch (error) {
       if (!controller.signal.aborted) {
@@ -121,7 +159,9 @@ export default function HubArchiveHistory({ disabled }: { disabled: boolean }) {
               pending.current?.abort();
               setBusy(false);
               setVerification(null);
-              setError("Archive inspection cancelled. No model was changed.");
+              setError(
+                "Archive inspection cancelled. No model bytes were changed. Any completed recovery metadata is retained.",
+              );
             }}
           >
             Cancel archive inspection
@@ -211,6 +251,78 @@ export default function HubArchiveHistory({ disabled }: { disabled: boolean }) {
                         No fresh source or license check was made.
                       </p>
                     </details>
+                    {record.recovery?.state === "recorded" && (
+                      <p>
+                        Separate recovery receipt recorded at{" "}
+                        {record.recovery.recordedAt}. The original transfer
+                        outcome is retained; this is not a fresh hash check.
+                      </p>
+                    )}
+                    {record.recovery?.state === "source-changed" && (
+                      <p>
+                        Existing recovery metadata belongs to a different source
+                        record and is not current.
+                      </p>
+                    )}
+                    {record.recovery?.state === "unavailable" && (
+                      <p>Recovery metadata could not be inspected safely.</p>
+                    )}
+                    {["started", "publication-unconfirmed"].includes(
+                      record.state,
+                    ) && (
+                      <>
+                        <p>
+                          Reconciliation checks an existing published file
+                          against this exact local receipt and saves separate
+                          recovery metadata if its bytes match. It does not
+                          change the original receipt, resume a partial file or
+                          establish that an older process has stopped.
+                        </p>
+                        <div className="nexus-actions">
+                          <button
+                            disabled={
+                              busy ||
+                              !record.receiptSha256 ||
+                              ![
+                                "size-matches-record",
+                                "size-mismatch",
+                              ].includes(record.fileState)
+                            }
+                            onClick={() => void request(record.slot, true)}
+                          >
+                            Reconcile published file · {record.slot}
+                          </button>
+                        </div>
+                      </>
+                    )}
+                    {reconciliation?.verification.slot === record.slot && (
+                      <section
+                        className="nexus-hub-result"
+                        aria-label={`Archive reconciliation ${record.slot}`}
+                      >
+                        <h4>
+                          {reconciliation.recovery
+                            ? reconciliation.recovery.state === "saved"
+                              ? "Separate recovery receipt saved"
+                              : "Recovery receipt already recorded"
+                            : "Published file differs; no recovery receipt saved"}
+                        </h4>
+                        <p>{reconciliation.verification.notice}</p>
+                        <p>
+                          File checked at{" "}
+                          {reconciliation.verification.checkedAt}. Original
+                          transfer outcome: {stateLabel(record.state)}.
+                        </p>
+                        {reconciliation.recovery && (
+                          <p>
+                            Recovery {reconciliation.recovery.recoveryId} ·
+                            Recorded at {reconciliation.recovery.recordedAt}. No
+                            model bytes or original receipt were changed; no
+                            runtime import or activation was performed.
+                          </p>
+                        )}
+                      </section>
+                    )}
                     {record.state === "verified" && (
                       <div className="nexus-actions">
                         <button

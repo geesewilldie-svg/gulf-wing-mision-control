@@ -40,6 +40,11 @@ export type HubArchiveRecord = {
     | "unsafe-or-unavailable";
   fileBytes: number | null;
   partialPresent: boolean | null;
+  receiptSha256?: string;
+  recovery?: {
+    state: "recorded" | "not-recorded" | "source-changed" | "unavailable";
+    recordedAt?: string;
+  };
 };
 export type HubArchiveHistory = {
   state: "available" | "not-created" | "unavailable";
@@ -61,7 +66,18 @@ export type HubArchiveVerification = {
   observedBytes: number;
   recordedSha256: string;
   observedSha256: string | null;
+  receiptSha256?: string;
   runtimeImported: false;
   inferenceReady: false;
   notice: string;
+};
+
+export type HubArchiveRecovery = {
+  recoveryId: string;
+  recordedAt: string;
+  state: "saved" | "already-recorded";
+};
+export type HubArchiveReconciliation = {
+  verification: HubArchiveVerification;
+  recovery: HubArchiveRecovery | null;
 };
