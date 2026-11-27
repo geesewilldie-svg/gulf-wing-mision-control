@@ -21,31 +21,38 @@ export async function currentRecordReference(
       503,
       "Current search selection could not be prepared. Run a fresh search.",
     );
-  const issuedAt = Date.now(),
-    payload = Buffer.from(
-      JSON.stringify({
-        version: 1,
-        issuedAt,
-        expiresAt: issuedAt + lifetime,
-        workScope,
-        workspace: results.workspace,
-        query: results.query,
-        page: results.page,
-        stamp: results.stamp,
-      }),
-    ).toString("base64url");
-  return (
-    payload + "." + sign(payload, settings.signingSecret).toString("base64url")
+  return encodeReference(
+    results,
+    workScope,
+    Date.now(),
+    settings.signingSecret,
   );
 }
-export async function inspectConversationRecord(
-  number: number,
+function encodeReference(
+  results: CurrentRecordSearch,
+  workScope: string,
+  issuedAt: number,
+  secret: string,
+) {
+  const payload = Buffer.from(
+    JSON.stringify({
+      version: 1,
+      issuedAt,
+      expiresAt: issuedAt + lifetime,
+      workScope,
+      workspace: results.workspace,
+      query: results.query,
+      page: results.page,
+      stamp: results.stamp,
+    }),
+  ).toString("base64url");
+  return payload + "." + sign(payload, secret).toString("base64url");
+}
+async function readReference(
   token: unknown,
   workScope: string,
   signal: AbortSignal,
 ) {
-  if (!Number.isInteger(number) || number < 1 || number > 20)
-    throw new SyncError(400, "Choose a current result number from 1 to 20.");
   if (typeof token !== "string" || token.length > 2000)
     throw new SyncError(
       409,
@@ -107,7 +114,9 @@ export async function inspectConversationRecord(
     data.expiresAt - data.issuedAt !== lifetime ||
     data.issuedAt > now + 5000 ||
     data.expiresAt <= now ||
-    data.page !== 0 ||
+    !Number.isInteger(data.page) ||
+    data.page < 0 ||
+    data.page > 74 ||
     data.workScope !== workScope ||
     !scopes.includes(data.workScope) ||
     !(data.workspace === "all" || data.workspace === workScope)
@@ -121,11 +130,52 @@ export async function inspectConversationRecord(
     action: "search-current-records",
     workspace: data.workspace,
     query: data.query,
-    page: 0,
+    page: data.page,
     stamp: data.stamp,
   };
-  const found = searchCurrentRecords(value, signal),
-    row = found.records[number - 1];
+  const found = searchCurrentRecords(value, signal);
+  return { data, settings, value, found };
+}
+export async function pageConversationRecords(
+  direction: "next" | "previous",
+  token: unknown,
+  workScope: string,
+  signal: AbortSignal,
+) {
+  if (direction !== "next" && direction !== "previous")
+    throw new SyncError(400, "Choose next or previous current results.");
+  const { data, settings, value, found } = await readReference(
+    token,
+    workScope,
+    signal,
+  );
+  const page = data.page + (direction === "next" ? 1 : -1);
+  if (page < 0 || page * 20 >= found.matchedRecords)
+    throw new SyncError(
+      409,
+      "There is no current result page in that direction. Run a fresh search.",
+    );
+  const recordSearch = searchCurrentRecords({ ...value, page }, signal);
+  return {
+    recordSearch,
+    recordSearchReference: encodeReference(
+      recordSearch,
+      workScope,
+      data.issuedAt,
+      settings.signingSecret,
+    ),
+  };
+}
+export async function inspectConversationRecord(
+  number: number,
+  token: unknown,
+  workScope: string,
+  signal: AbortSignal,
+) {
+  if (!Number.isInteger(number) || number < 1 || number > 1500)
+    throw new SyncError(400, "Choose a current result number from 1 to 1500.");
+  const { value, found } = await readReference(token, workScope, signal);
+  const row = found.records[number - found.page * 20 - 1];
   if (!row)
     throw new SyncError(
       409,

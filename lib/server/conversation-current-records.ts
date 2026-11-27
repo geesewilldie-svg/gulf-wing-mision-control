@@ -1,7 +1,7 @@
 import type { CurrentRecordIntent } from "../current-record-intent";
 import { searchCurrentRecords } from "./current-record-search";
 export function conversationCurrentRecords(
-  intent: Exclude<CurrentRecordIntent, { kind: "inspect" }>,
+  intent: Exclude<CurrentRecordIntent, { kind: "inspect" | "page" }>,
   workspace: string,
   signal: AbortSignal,
 ) {
@@ -22,7 +22,7 @@ export function conversationCurrentRecords(
     return {
       ...base,
       answer:
-        "Say ‘Search current records for Samsung’ to search the selected workspace, or ‘Search current records in all workspaces for Samsung’. Use up to eight words and 200 characters. This searches current owner memory and task text, not laptop files or historical snapshots. After searching, say ‘Inspect current result one’ within five minutes.",
+        "Say ‘Search current records for Samsung’ to search the selected workspace, or ‘Search current records in all workspaces for Samsung’. Use up to eight words and 200 characters. This searches current owner memory and task text, not laptop files or historical snapshots. After searching, say ‘Inspect current result one’ within five minutes. Say ‘Next current results’ or ‘Previous current results’ to navigate; inspect using the displayed result number.",
     };
   signal.throwIfAborted();
   const recordSearch = searchCurrentRecords(

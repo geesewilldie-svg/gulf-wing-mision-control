@@ -17,3 +17,5 @@ Venice API/schema/live-access verification remains blocked/unresolved; it is not
 Use the same full scope for later estimates. Track concrete accepted milestones and remaining capabilities before adjusting this range; do not add a fixed percentage for every small phase.
 
 Follow-up assessment, November 27: the new local record-search and numbered-inspection slices improve an established retrieval area. The overall estimate remains approximately 55–60%; broader execution, provider/tool connections, continuous vision, telephony and native end-to-end acceptance still account for substantial unfinished architecture.
+
+November 27 continuation: signed conversational page navigation now supports next/previous results and current-page global result inspection, with original expiry and corpus fences preserved. This closes a bounded retrieval interaction; the whole-build estimate remains 55–60%.

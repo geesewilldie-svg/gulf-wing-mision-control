@@ -1,6 +1,7 @@
 export type CurrentRecordIntent =
   | { kind: "search"; query: string; allWorkspaces: boolean }
   | { kind: "help" }
+  | { kind: "page"; direction: "next" | "previous" }
   | { kind: "inspect"; number: number };
 export function currentRecordIntent(query: string): CurrentRecordIntent | null {
   const text = query
@@ -8,8 +9,16 @@ export function currentRecordIntent(query: string): CurrentRecordIntent | null {
     .replace(/^(?:hey\s+)?nexus[, ]+/i, "")
     .replace(/^please\s+/i, "")
     .replace(/[.!?]+$/, "");
+  const paging = /^(next|previous) current results$/i.exec(text);
+  if (paging)
+    return {
+      kind: "page",
+      direction: paging[1].toLowerCase() as "next" | "previous",
+    };
+  if (/^(?:next|previous) current results(?:\s|$)/i.test(text))
+    return { kind: "help" };
   const inspect =
-    /^inspect current result (?:number )?([a-z-]+|[0-9]{1,3})$/i.exec(text);
+    /^inspect current result (?:number )?([a-z-]+|[0-9]{1,4})$/i.exec(text);
   if (inspect) {
     const cardinal = [
       "one",

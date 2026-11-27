@@ -1,5 +1,6 @@
 import {
   currentRecordReference,
+  pageConversationRecords,
   inspectConversationRecord,
 } from "@/lib/server/current-record-reference";
 import { currentRecordIntent } from "@/lib/current-record-intent";
@@ -209,6 +210,28 @@ export async function POST(request: Request) {
           403,
           "Current-record search is local-only. Choose Auto or local mode.",
         );
+      if (recordCommand.kind === "page") {
+        const selected = await pageConversationRecords(
+          recordCommand.direction,
+          body.recordSearchReference,
+          workScope,
+          request.signal,
+        );
+        return reply({
+          engine: "Nexus current records",
+          sources: [],
+          warnings: [],
+          resetHistory: true,
+          clearRecordReferences: true,
+          routing: {
+            mode: "local",
+            selected: [],
+            reason: "Current search page read locally; no model or mutation.",
+          },
+          ...selected,
+          answer: `Page ${selected.recordSearch.page + 1} of ${Math.ceil(selected.recordSearch.matchedRecords / 20)} is displayed with ${selected.recordSearch.records.length} current results. Use the displayed result number to inspect a record.`,
+        });
+      }
       if (recordCommand.kind === "inspect") {
         const selected = await inspectConversationRecord(
           recordCommand.number,

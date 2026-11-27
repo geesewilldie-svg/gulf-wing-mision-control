@@ -5,6 +5,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import {
   currentRecordReference,
+  pageConversationRecords,
   inspectConversationRecord,
 } from "../lib/server/current-record-reference";
 import { currentRecordIntent } from "../lib/current-record-intent";
@@ -75,6 +76,107 @@ test("numbered inspection accepts numeric/cardinal/ordinal current-result wordin
     currentRecordIntent("A task says inspect current result one"),
   ).toBeNull();
 });
+test("conversational pages preserve the original lifetime and corpus, and inspection uses displayed global numbers", () =>
+  fixture(async () => {
+    expect(currentRecordIntent("Nexus, next current results.")).toEqual({
+      kind: "page",
+      direction: "next",
+    });
+    expect(currentRecordIntent("Please previous current results")).toEqual({
+      kind: "page",
+      direction: "previous",
+    });
+    expect(currentRecordIntent("Don't next current results")).toBeNull();
+    expect(currentRecordIntent("next current results from files")).toEqual({
+      kind: "help",
+    });
+    for (let i = 0; i < 45; i++)
+      saveMemory({
+        scope: "Personal",
+        kind: "fact",
+        content: `QUARTZ page record ${i}`,
+      });
+    const first = search(),
+      proof = await currentRecordReference(first, "Personal");
+    const second = await pageConversationRecords(
+      "next",
+      proof,
+      "Personal",
+      signal(),
+    );
+    expect(second.recordSearch.page).toBe(1);
+    expect(second.recordSearch.records).toHaveLength(20);
+    const read = await inspectConversationRecord(
+      21,
+      second.recordSearchReference,
+      "Personal",
+      signal(),
+    );
+    expect(read.recordInspection.id).toBe(second.recordSearch.records[0].id);
+    await expect(
+      inspectConversationRecord(
+        1,
+        second.recordSearchReference,
+        "Personal",
+        signal(),
+      ),
+    ).rejects.toThrow(/not in/);
+    const third = await pageConversationRecords(
+      "next",
+      second.recordSearchReference,
+      "Personal",
+      signal(),
+    );
+    expect(third.recordSearch.records).toHaveLength(5);
+    await expect(
+      pageConversationRecords(
+        "next",
+        third.recordSearchReference,
+        "Personal",
+        signal(),
+      ),
+    ).rejects.toThrow(/no current result page/);
+    await expect(
+      pageConversationRecords("previous", proof, "Personal", signal()),
+    ).rejects.toThrow(/no current result page/);
+    const back = await pageConversationRecords(
+      "previous",
+      second.recordSearchReference,
+      "Personal",
+      signal(),
+    );
+    expect(back.recordSearch.records).toEqual(first.records);
+    const decode = (token: string) =>
+      JSON.parse(Buffer.from(token.split(".")[0], "base64url").toString());
+    expect(decode(third.recordSearchReference).expiresAt).toBe(
+      decode(proof).expiresAt,
+    );
+    await expect(
+      pageConversationRecords("next", proof + "x", "Personal", signal()),
+    ).rejects.toThrow(/invalid/);
+    await expect(
+      pageConversationRecords("next", proof, "Aviation", signal()),
+    ).rejects.toThrow(/workspace/);
+    const original = Date.now;
+    Date.now = () => original() + 300001;
+    try {
+      await expect(
+        pageConversationRecords(
+          "previous",
+          third.recordSearchReference,
+          "Personal",
+          signal(),
+        ),
+      ).rejects.toThrow(/expired/);
+    } finally {
+      Date.now = original;
+    }
+    const row = first.records[0];
+    deleteMemory({ id: row.id, revision: row.revision });
+    await expect(
+      pageConversationRecords("next", proof, "Personal", signal()),
+    ).rejects.toThrow(/changed/);
+  }));
 test("signed selection binds exact corpus/scope and returns current content without mutator authority or writes", () =>
   fixture(async () => {
     saveMemory({
@@ -141,7 +243,7 @@ test("missing, tampered, expired or out-of-range selections cannot read a guesse
       await expect(
         inspectConversationRecord(1, bad, "Personal", signal()),
       ).rejects.toThrow();
-    for (const number of [0, 21, 1.2])
+    for (const number of [0, 1501, 1.2])
       await expect(
         inspectConversationRecord(number, proof, "Personal", signal()),
       ).rejects.toThrow(/number/);
@@ -291,7 +393,14 @@ test("compiled search/inspection API resolves a signed current ordinal and rejec
   process.env.GW_SYNC_DATA_DIR = process.env.GW_SYNC_TEST_ROOT;
   const phrase = "SIGNEDSEARCH" + randomUUID().replaceAll("-", "");
   let row: any;
+  const extras: any[] = [];
   try {
+    for (let i = 0; i < 20; i++)
+      saveMemory({
+        scope: "Personal",
+        kind: "fact",
+        content: phrase + " extra " + i,
+      });
     saveMemory({
       scope: "Personal",
       kind: "fact",
@@ -310,6 +419,28 @@ test("compiled search/inspection API resolves a signed current ordinal and rejec
     const found = await (
       await ask("Search current records for " + phrase)
     ).json();
+    const next = await ask("Next current results", found.recordSearchReference);
+    expect(next.status()).toBe(200);
+    const pageTwo = await next.json();
+    expect(pageTwo.recordSearch.page).toBe(1);
+    const twentyOne = await ask(
+      "Inspect current result 21",
+      pageTwo.recordSearchReference,
+    );
+    expect(twentyOne.status()).toBe(200);
+    expect((await twentyOne.json()).recordInspection.id).toBe(
+      pageTwo.recordSearch.records[0].id,
+    );
+    const back = await ask(
+      "Previous current results",
+      pageTwo.recordSearchReference,
+    );
+    expect(back.status()).toBe(200);
+    expect((await back.json()).recordSearch.page).toBe(0);
+    extras.push(
+      ...found.recordSearch.records.slice(1),
+      ...pageTwo.recordSearch.records,
+    );
     row = found.recordSearch.records[0];
     const selected = await ask(
       "Inspect current result one",
@@ -335,6 +466,8 @@ test("compiled search/inspection API resolves a signed current ordinal and rejec
     ).toBe(409);
   } finally {
     if (row) deleteMemory({ id: row.id, revision: row.revision });
+    for (const extra of extras)
+      deleteMemory({ id: extra.id, revision: extra.revision });
     if (previous === undefined) delete process.env.GW_SYNC_DATA_DIR;
     else process.env.GW_SYNC_DATA_DIR = previous;
   }
@@ -395,6 +528,34 @@ test("assistant sends result references only for inspection, renders detail with
         },
       });
     }
+    if (
+      body.query === "Next current results" ||
+      body.query === "Previous current results"
+    ) {
+      const next = body.query === "Next current results";
+      expect(body.recordSearchReference).toBe(
+        next ? "fixture-signed-reference" : "fixture-second-page",
+      );
+      return route.fulfill({
+        json: {
+          engine: "Nexus current records",
+          sources: [],
+          warnings: [],
+          answer: next ? "Page 2 displayed" : "Page 1 displayed",
+          recordSearch: {
+            ...results,
+            matchedRecords: 21,
+            page: next ? 1 : 0,
+            readAt: next ? "page-two" : "page-one",
+          },
+          recordSearchReference: next
+            ? "fixture-second-page"
+            : "fixture-signed-reference",
+          resetHistory: true,
+          clearRecordReferences: true,
+        },
+      });
+    }
     expect(body.query).toBe("Inspect current result one");
     inspections++;
     if (inspections > 1) {
@@ -438,6 +599,22 @@ test("assistant sends result references only for inspection, renders detail with
     input = drawer.getByRole("textbox", { name: "Ask Nexus", exact: true }),
     submit = drawer.getByRole("button", { name: "Ask Nexus", exact: true });
   await input.fill("Search current records for QUARTZ");
+  await submit.click();
+  await expect(
+    drawer.getByRole("heading", { name: /Result 1 · Owner-stated memory/ }),
+  ).toBeVisible();
+  await input.fill("Next current results");
+  await submit.click();
+  await expect(
+    drawer.getByRole("heading", { name: /Result 21 · Owner-stated memory/ }),
+  ).toBeVisible();
+  await fs.mkdir("artifacts/current-record-pages", { recursive: true });
+  await drawer
+    .getByRole("region", { name: "Current record search results", exact: true })
+    .screenshot({
+      path: `artifacts/current-record-pages/${info.project.name}.png`,
+    });
+  await input.fill("Previous current results");
   await submit.click();
   await expect(
     drawer.getByRole("heading", { name: /Result 1 · Owner-stated memory/ }),

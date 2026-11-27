@@ -190,7 +190,8 @@ export default function NexusAssistant({
     signal?: AbortSignal,
     displayText?: string,
   ) => {
-    const inspectingRecord = currentRecordIntent(text)?.kind === "inspect";
+    const recordKind = currentRecordIntent(text)?.kind;
+    const inspectingRecord = recordKind === "inspect" || recordKind === "page";
     const selectedRecords = inspectingRecord
       ? recordSearchReference.current
       : undefined;
