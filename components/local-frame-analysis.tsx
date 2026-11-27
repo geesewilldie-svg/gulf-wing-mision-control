@@ -1,4 +1,6 @@
 "use client";
+import VisualQuestionRecorder from "./visual-question-recorder";
+import { useNexusAssistant } from "./nexus-assistant";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { stripFrameMetadata } from "@/lib/frame-jpeg";
 import type { LocalModelCatalog } from "@/lib/local-model-catalog";
@@ -17,6 +19,8 @@ export default function LocalFrameAnalysis({
   video: RefObject<HTMLVideoElement | null>;
   source: "camera" | "screen";
 }) {
+  const { conversationActive } = useNexusAssistant();
+  const [audioBusy, setAudioBusy] = useState(false);
   const [catalog, setCatalog] = useState<LocalModelCatalog | null>(null),
     [selected, setSelected] = useState("");
   const [details, setDetails] = useState<LocalModelDetails | null>(null),
@@ -35,7 +39,7 @@ export default function LocalFrameAnalysis({
     details.capabilities.includes("vision") &&
     details.capabilities.includes("completion");
   async function request(action: "catalog" | "details" | "analyze") {
-    if (busy) return;
+    if (busy || audioBusy) return;
     const controller = new AbortController();
     pending.current = controller;
     setBusy(true);
@@ -198,7 +202,10 @@ export default function LocalFrameAnalysis({
         moment, not a live feed. Screen text cannot authorize actions.
       </p>
       <div className="nexus-actions">
-        <button disabled={busy} onClick={() => void request("catalog")}>
+        <button
+          disabled={busy || audioBusy}
+          onClick={() => void request("catalog")}
+        >
           Inspect models for image analysis
         </button>
       </div>
@@ -213,7 +220,7 @@ export default function LocalFrameAnalysis({
             Local model for this frame
             <select
               value={selected}
-              disabled={busy}
+              disabled={busy || audioBusy}
               onChange={(event) => {
                 setSelected(event.target.value);
                 setDetails(null);
@@ -236,7 +243,7 @@ export default function LocalFrameAnalysis({
           </label>
           <div className="nexus-actions">
             <button
-              disabled={busy || !model?.digest}
+              disabled={busy || audioBusy || !model?.digest}
               onClick={() => void request("details")}
             >
               Check selected model's image support
@@ -251,6 +258,15 @@ export default function LocalFrameAnalysis({
             : "Vision/completion support is missing or unknown. Choose another installed model; no model is downloaded automatically."}
         </p>
       )}
+      <VisualQuestionRecorder
+        disabled={busy || conversationActive}
+        onBusyChange={setAudioBusy}
+        onQuestion={(text) => {
+          setQuestion(text);
+          setResult(null);
+          setMessage("");
+        }}
+      />
       <label>
         Question about this frame
         <textarea
@@ -258,7 +274,7 @@ export default function LocalFrameAnalysis({
           aria-label="Question about this frame"
           maxLength={1000}
           value={question}
-          disabled={busy}
+          disabled={busy || audioBusy}
           onChange={(event) => {
             setQuestion(event.target.value);
             setResult(null);
@@ -273,7 +289,7 @@ export default function LocalFrameAnalysis({
       </p>
       <div className="nexus-actions">
         <button
-          disabled={busy || !ready || !frameQuestion(question)}
+          disabled={busy || audioBusy || !ready || !frameQuestion(question)}
           onClick={() => void request("analyze")}
         >
           Ask about this frame locally
