@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import HubImportReview from "./hub-import-review";
 import HubArchiveMetadata from "./hub-archive-metadata";
 import HubArchiveResume from "./hub-archive-resume";
 import type {
@@ -260,6 +261,14 @@ export default function HubArchiveHistory({ disabled }: { disabled: boolean }) {
                         disabled={disabled || busy}
                       />
                     )}
+                    {record.state === "verified" &&
+                      record.fileState === "size-matches-record" && (
+                        <HubImportReview
+                          key={record.runId + record.receiptSha256 + "import"}
+                          record={record}
+                          disabled={disabled || busy}
+                        />
+                      )}
                     {record.resumedFrom && (
                       <p>
                         {record.state === "verified"

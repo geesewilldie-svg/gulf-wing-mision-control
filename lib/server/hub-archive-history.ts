@@ -705,3 +705,45 @@ export async function inspectHubArchiveMetadata(
     await handle?.close().catch(() => {});
   }
 }
+
+// Keep metadata inspection inside the successful hash check's final identity fence.
+export async function reviewVerifiedHubArchive(
+  slot: unknown,
+  receiptSha256: unknown,
+  signal: AbortSignal,
+) {
+  if (
+    typeof receiptSha256 !== "string" ||
+    !/^[a-f0-9]{64}$/.test(receiptSha256)
+  )
+    throw new SyncError(
+      400,
+      "Inspect the source receipt before requesting an import review.",
+    );
+  let reviewed:
+    | {
+        record: Awaited<ReturnType<typeof readReceipt>>["record"];
+        metadata: ReturnType<typeof parseGgufMetadata>;
+      }
+    | undefined;
+  const verification = await checkArchiveFile(
+    slot,
+    signal,
+    "verify",
+    receiptSha256,
+    async (source, _before, bounded) => {
+      const inspected = await inspectHubArchiveMetadata(
+        slot,
+        receiptSha256,
+        bounded,
+      );
+      reviewed = { record: source.record, metadata: inspected.metadata };
+    },
+  );
+  if (verification.state !== "matches-record" || !reviewed)
+    throw new SyncError(
+      409,
+      "The archive bytes do not match the recorded artifact. No import review was accepted.",
+    );
+  return { verification, ...reviewed };
+}

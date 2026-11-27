@@ -22,3 +22,5 @@ A separate [published-file reconciliation action](nexus-hub-archive-recovery.md)
 Inspection now also reports retained partial byte counts and resume provenance. A separate [explicit resume-as-new-run action](nexus-hub-archive-resume.md) can use a stable retained prefix after fresh source/license/capacity checks. It does not alter the read-only inspection or completed-file verification actions.
 
 A separate [GGUF metadata inspection](nexus-gguf-metadata.md) action reads a bounded local prefix and reports declared fields with coverage. It is distinct from current whole-file checksum verification and does not establish runtime readiness.
+
+Completed archive records can also request a [read-only import review](nexus-hub-import-review.md), combining full local file agreement and metadata with runtime/host observations. Remaining import blockers stay explicit; no runtime write or activation is performed.

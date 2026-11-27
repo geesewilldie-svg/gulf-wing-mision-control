@@ -1,3 +1,4 @@
+import { reviewHubImport } from "@/lib/server/hub-import-review";
 import { resumeHubArtifact } from "@/lib/server/hub-archive-resume";
 import {
   inspectHubArchiveMetadata,
@@ -20,6 +21,8 @@ export async function POST(request: Request) {
     sameOrigin(request);
     await authorized(request, true);
     const body = (await readBody(request, 1000)) as any;
+    if (body?.action === "import-review")
+      return response(await reviewHubImport(body, request.signal));
     if (
       body?.action === "metadata" &&
       Object.keys(body).length === 3 &&

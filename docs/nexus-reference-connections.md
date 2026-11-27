@@ -92,3 +92,5 @@ Runtime-review prerequisite: [local GGUF metadata inspection](nexus-gguf-metadat
 Installed-runtime review continuation: [Ollama model details](nexus-local-model-details.md) now exposes bounded runtime-reported architecture, quantization, context and capabilities separately from archived GGUF declarations. It does not connect a Hub archive to a runtime model, import weights or verify runnable hardware fit.
 
 Local inference acceptance continuation: [fixed installed-model diagnostic](nexus-local-model-check.md) now tests one explicit local model with no owner context and shared generation admission. Its single-test result is separate from metadata, archive import and broad hardware readiness. Venice's official specification request still returned HTTP 403 through this cloud environment; no hosted-provider enablement was inferred.
+
+Archive-to-runtime continuation: [pre-import review](nexus-hub-import-review.md) now combines a fresh source-bound archive hash, declared metadata, reported local runtime version and host RAM snapshot. Runtime storage/capacity and import remain unimplemented; the review does not claim that an archived model is installed or runnable.
