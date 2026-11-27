@@ -18,7 +18,7 @@ Nexus generates the name and requires `/api/show` to return 404 for it before cl
 
 Acceptance requires the runtime's success response, non-remote GGUF metadata with the source's declared architecture, a current catalog entry for the generated name with a valid reported manifest digest, unchanged configured selection and unchanged staging/source evidence. The source identity fence closes before the creation receipt is finalized and read back. A runtime manifest digest is distinct from the source weight-file SHA-256.
 
-A `created` receipt means runtime-reported creation corroborated by metadata/catalog at the recorded time. It sets `runtimeImported: true` for this creation operation and keeps `inferenceReady: false`. Refresh **Installed local models** to inspect the alias and request the existing explicit local diagnostic. No diagnostic is automatic, and a created model is not proof of sustained performance or a safe larger context on the 8 GB laptop. Original archive/transfer/staging receipts remain unchanged; their original flags describe those earlier actions.
+A `created` receipt means runtime-reported creation corroborated by metadata/catalog at the recorded time. It sets `runtimeImported: true` for this creation operation and keeps `inferenceReady: false`. Use **Inspect runtime model** in archive history to compare current identity; matching completion-capable models offer a separate explicit local diagnostic. The installed-model catalog remains another inspection route. No diagnostic is automatic, and a created model is not proof of sustained performance or a safe larger context on the 8 GB laptop. Original archive/transfer/staging receipts remain unchanged; their original flags describe those earlier actions.
 
 ## Retained outcomes and limits
 
@@ -29,3 +29,5 @@ Once creation is attempted, response failure, cancellation, changed evidence, po
 The adapter trusts the existing loopback Ollama service boundary and its reported blob/catalog/metadata, not independent process or stored-byte authentication. It sends no owner memory, file excerpts or conversation to inference and requests no external hosted service, pull or generation. Native Windows/installed Ollama support and real-model inference remain unverified by cloud fixtures.
 
 Contract reviewed November 27, 2026: [official Ollama Create a Model](https://github.com/ollama/ollama/blob/main/docs/api.md#create-a-model), including GGUF blob files and non-streaming output. Validation uses tiny synthetic GGUF sources, disposable stores and an owned HTTP runtime fixture, not an actual Ollama model parser/inference runtime.
+
+Continuation: [current recorded-model inspection](nexus-runtime-model-check.md) now checks retained aliases without rewriting creation outcomes or automatically retrying effects.

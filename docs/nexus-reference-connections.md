@@ -100,3 +100,5 @@ Runtime write continuation: [explicit local blob staging](nexus-runtime-blob-sta
 Staging continuity: [current runtime blob presence checks](nexus-runtime-blob-check.md) now report explicit current HEAD observations against source/run-bound retained stages. They do not retry uploads or convert old uncertainty into success, and they do not create/import a model.
 
 Creation continuation: [a separate explicit local model-creation action](nexus-runtime-model-create.md) is now implemented after current blob presence. It revalidates execution-time evidence and creates only a new generated alias, preserving the original selection/receipts. Model creation is runtime-reported; inference readiness and native real-model acceptance remain separate.
+
+Created-model continuity: [current runtime model inspection](nexus-runtime-model-check.md) connects a retained creation run to fresh local catalog/metadata evidence and, when matched and completion-capable, a separate explicit diagnostic. Historical uncertainty is preserved; no creation retry, provider request or default-model change is added.

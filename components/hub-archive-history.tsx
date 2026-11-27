@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import RuntimeModelCheck from "./runtime-model-check";
 import RuntimeBlobCheck from "./runtime-blob-check";
 import HubImportReview from "./hub-import-review";
 import HubArchiveMetadata from "./hub-archive-metadata";
@@ -299,6 +300,18 @@ export default function HubArchiveHistory({ disabled }: { disabled: boolean }) {
                         {record.runtimeModel.receipt.alias}. This historical
                         receipt is not a current inference-readiness check.
                       </p>
+                    )}
+                    {record.runtimeModel?.state === "recorded" && (
+                      <RuntimeModelCheck
+                        key={
+                          record.runId +
+                          record.receiptSha256 +
+                          record.runtimeModel.receipt.runId
+                        }
+                        record={record}
+                        receipt={record.runtimeModel.receipt}
+                        disabled={disabled || busy}
+                      />
                     )}
                     {record.runtimeModel?.state === "unavailable" && (
                       <p>

@@ -4,15 +4,26 @@ import type { LocalModelCheck as Check } from "@/lib/local-model-check";
 export default function LocalModelCheck({
   model,
   digest,
+  onBusyChange,
 }: {
   model: string;
   digest: string;
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const [result, setResult] = useState<Check | null>(null),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const pending = useRef<AbortController | null>(null);
-  useEffect(() => () => pending.current?.abort(), []);
+  useEffect(
+    () => () => {
+      pending.current?.abort();
+      onBusyChange?.(false);
+    },
+    [onBusyChange],
+  );
+  useEffect(() => {
+    onBusyChange?.(busy);
+  }, [busy, onBusyChange]);
   async function run() {
     if (busy) return;
     const controller = new AbortController();

@@ -1,3 +1,4 @@
+import { checkRuntimeModel } from "@/lib/server/runtime-model-check";
 import { createRuntimeModel } from "@/lib/server/runtime-model-create";
 import { checkRuntimeBlob } from "@/lib/server/runtime-blob-check";
 import { stageRuntimeBlob } from "@/lib/server/runtime-blob";
@@ -24,6 +25,8 @@ export async function POST(request: Request) {
     sameOrigin(request);
     await authorized(request, true);
     const body = (await readBody(request, 1000)) as any;
+    if (body?.action === "check-runtime-model")
+      return response(await checkRuntimeModel(body, request.signal));
     if (body?.action === "create-runtime-model")
       return response(await createRuntimeModel(body, request.signal));
     if (body?.action === "check-runtime-blob")
