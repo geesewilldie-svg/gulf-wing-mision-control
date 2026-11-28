@@ -564,3 +564,6 @@ Capability-overview continuity — November 27, 2026: the versioned laptop regis
 
 
 Conversational installed-model discovery — November 27, 2026: “Show local models” now connects the existing bounded fixed-loopback Ollama metadata service to Auto/Local conversation, with direct structured catalog display and explicit existing detail/diagnostic controls. Count-only speech, history/reference reset and controller/origin/mode gates preserve metadata-only effects. No model is run, downloaded or selected by discovery. See [conversational local models](../nexus-conversation-local-models.md).
+
+
+Named conversational model inspection — November 27, 2026: “Inspect local model” followed by an exact displayed simple local name now resolves a fresh catalog digest and uses the existing before/show/after identity-fenced metadata adapter. Direct assistant details reuse the returned observation without duplicate automatic calls; unknown/changed identities reject and names/tags are not guessed. Inference tests, selection changes and tool grants remain separate explicit actions. See [named model inspection](../nexus-conversation-local-models.md).

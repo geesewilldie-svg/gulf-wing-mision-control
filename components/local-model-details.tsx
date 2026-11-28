@@ -7,10 +7,17 @@ import {
 } from "@/lib/local-model-details";
 export default function LocalModelDetails({
   model,
+  initialResult,
 }: {
   model: { name: string; digest: string | null };
+  initialResult?: Details;
 }) {
-  const [result, setResult] = useState<Details | null>(null),
+  const [result, setResult] = useState<Details | null>(
+      initialResult?.model === model.name &&
+        initialResult.digest === model.digest
+        ? initialResult
+        : null,
+    ),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const pending = useRef<AbortController | null>(null);

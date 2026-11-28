@@ -49,6 +49,113 @@ test("local catalog wording is explicit and malformed follow-ups stay help-only"
   expect(localModelIntent("Don't show local models")).toBeNull();
   expect(localModelIntent("Explain the phrase show local models")).toBeNull();
 });
+test("named model inspection accepts only exact simple identifiers and never guesses voice aliases", () => {
+  expect(localModelIntent("Nexus, inspect local model fixture:latest")).toEqual(
+    { kind: "details", model: "fixture:latest" },
+  );
+  expect(localModelIntent("inspect local model name.")).toEqual({
+    kind: "details",
+    model: "name.",
+  });
+  for (const text of [
+    "inspect local model",
+    "inspect local model https://example.test",
+    "inspect local model foo-cloud",
+    "inspect local model provider/model",
+    "inspect local model fixture and run it",
+  ])
+    expect(localModelIntent(text)).toBe("help");
+  expect(localModelIntent("Don't inspect local model fixture")).toBeNull();
+});
+test("named metadata inspection fences catalog identity and withholds stale/unknown selections without generation", () =>
+  fixture(async () => {
+    const paths: string[] = [];
+    let tags = 0,
+      changeAt = Infinity;
+    global.fetch = async (url, init) => {
+      paths.push(String(url));
+      if (String(url).endsWith("/api/tags")) {
+        tags++;
+        return Response.json({
+          models: [
+            {
+              ...item,
+              digest: tags >= changeAt ? "b".repeat(64) : item.digest,
+            },
+          ],
+        });
+      }
+      expect(String(url)).toBe("http://127.0.0.1:11434/api/show");
+      expect(JSON.parse(init!.body as string)).toEqual({
+        model: item.name,
+        verbose: false,
+      });
+      return Response.json({
+        capabilities: ["completion"],
+        details: { format: "gguf" },
+        model_info: {
+          "general.architecture": "fixture",
+          "fixture.context_length": 2048,
+        },
+        template: "PRIVATE_TEMPLATE",
+        system: "PRIVATE_SYSTEM",
+      });
+    };
+    const read = await conversationLocalModels(
+      { kind: "details", model: item.name },
+      new AbortController().signal,
+    );
+    expect("localModelDetails" in read && read.localModelDetails).toMatchObject(
+      {
+        model: item.name,
+        digest: item.digest,
+        contextLength: 2048,
+        capabilities: ["completion"],
+      },
+    );
+    expect(read.answer).not.toContain(item.name);
+    expect(JSON.stringify(read)).not.toMatch(/PRIVATE_TEMPLATE|PRIVATE_SYSTEM/);
+    expect(paths.map((p) => p.split("/").pop())).toEqual([
+      "tags",
+      "tags",
+      "show",
+      "tags",
+    ]);
+    paths.length = 0;
+    tags = 0;
+    await expect(
+      conversationLocalModels(
+        { kind: "details", model: "fixture" },
+        new AbortController().signal,
+      ),
+    ).rejects.toThrow(/exact model/);
+    expect(paths).toHaveLength(1);
+    paths.length = 0;
+    tags = 0;
+    changeAt = 2;
+    await expect(
+      conversationLocalModels(
+        { kind: "details", model: item.name },
+        new AbortController().signal,
+      ),
+    ).rejects.toThrow(/changed/);
+    expect(paths).toHaveLength(2);
+    paths.length = 0;
+    tags = 0;
+    changeAt = 3;
+    await expect(
+      conversationLocalModels(
+        { kind: "details", model: item.name },
+        new AbortController().signal,
+      ),
+    ).rejects.toThrow(/changed/);
+    expect(paths.map((p) => p.split("/").pop())).toEqual([
+      "tags",
+      "tags",
+      "show",
+      "tags",
+    ]);
+  }));
 test("conversation metadata lookup calls only local tags, with truthful coverage and no spoken model names", () =>
   fixture(async () => {
     let calls = 0;
@@ -144,6 +251,15 @@ test("compiled conversational API reads the owned local metadata fixture without
   const server = createServer((req, res) => {
     paths.push(req.url!);
     res.setHeader("content-type", "application/json");
+    if (req.url === "/api/show" && req.method === "POST") {
+      res.end(
+        JSON.stringify({
+          capabilities: ["completion"],
+          details: { format: "gguf" },
+        }),
+      );
+      return;
+    }
     if (req.url !== "/api/tags" || req.method !== "GET") {
       res.statusCode = 400;
       res.end("{}");
@@ -166,6 +282,26 @@ test("compiled conversational API reads the owned local metadata fixture without
     expect(response.status()).toBe(200);
     expect((await response.json()).localModels.models[0].name).toBe(item.name);
     expect(paths).toEqual(["/api/tags"]);
+    const detail = await context.request.post("/api/sync/nexus", {
+      data: {
+        query: "Inspect local model fixture:latest",
+        mode: "auto",
+        voiceConversation: true,
+      },
+    });
+    expect(detail.status()).toBe(200);
+    expect((await detail.json()).localModelDetails).toMatchObject({
+      model: item.name,
+      digest: item.digest,
+      format: "gguf",
+    });
+    expect(paths).toEqual([
+      "/api/tags",
+      "/api/tags",
+      "/api/tags",
+      "/api/show",
+      "/api/tags",
+    ]);
   } finally {
     server.closeAllConnections();
     await new Promise<void>((resolve) => server.close(() => resolve()));
@@ -187,39 +323,76 @@ test("assistant displays the returned catalog without duplicate requests and kee
     }
     return route.fulfill({ json: { providers: [], events: [], workers: [] } });
   });
+  const detailResult = {
+    model: item.name,
+    digest: item.digest,
+    checkedAt: "2026-11-27T20:00:00.000Z",
+    format: "gguf",
+    family: "fixture",
+    parameterSize: "1B",
+    parameterCount: 1000000,
+    quantization: "Q4",
+    architecture: "fixture",
+    contextLength: 2048,
+    embeddingLength: 128,
+    capabilities: ["completion"],
+    capabilitiesKnown: true,
+    capabilitiesOmitted: 0,
+    notice:
+      "Runtime metadata only. Hardware fit and inference readiness were not tested.",
+  };
   await page.route("**/api/sync/nexus", (route) =>
-    route.request().method() === "POST"
+    route.request().method() === "POST" &&
+    route.request().postDataJSON().query ===
+      "Inspect local model fixture:latest"
       ? route.fulfill({
           json: {
-            engine: "Nexus local model catalog",
+            engine: "Nexus local model details",
             sources: [],
             warnings: [],
-            answer: "One reported local model. No model was run or changed.",
+            answer: "Requested metadata displayed; no model was run.",
             resetHistory: true,
             clearRecordReferences: true,
-            localModels: {
-              checkedAt: "2026-11-27T20:00:00.000Z",
-              configuredModel: "fixture:latest",
-              configuredListed: true,
-              reportedEntries: 1,
-              uniqueModels: 1,
-              omitted: 0,
-              rejectedEntries: 0,
-              models: [
-                {
-                  name: item.name,
-                  digest: item.digest,
-                  bytes: 1024,
-                  modifiedAt: null,
-                },
-              ],
-              notice: "Metadata only; no proof of hardware fit.",
-            },
+            localModelDetails: detailResult,
           },
         })
-      : route.fulfill({
-          json: { sources: [], providers: [], sections: 0, localModel: false },
-        }),
+      : route.request().method() === "POST"
+        ? route.fulfill({
+            json: {
+              engine: "Nexus local model catalog",
+              sources: [],
+              warnings: [],
+              answer: "One reported local model. No model was run or changed.",
+              resetHistory: true,
+              clearRecordReferences: true,
+              localModels: {
+                checkedAt: "2026-11-27T20:00:00.000Z",
+                configuredModel: "fixture:latest",
+                configuredListed: true,
+                reportedEntries: 1,
+                uniqueModels: 1,
+                omitted: 0,
+                rejectedEntries: 0,
+                models: [
+                  {
+                    name: item.name,
+                    digest: item.digest,
+                    bytes: 1024,
+                    modifiedAt: null,
+                  },
+                ],
+                notice: "Metadata only; no proof of hardware fit.",
+              },
+            },
+          })
+        : route.fulfill({
+            json: {
+              sources: [],
+              providers: [],
+              sections: 0,
+              localModel: false,
+            },
+          }),
   );
   await page.goto("/nexus");
   await openAssistant(page);
@@ -244,5 +417,42 @@ test("assistant displays the returned catalog without duplicate requests and kee
   await fs.mkdir("artifacts/conversation-local-models", { recursive: true });
   await region.screenshot({
     path: `artifacts/conversation-local-models/${info.project.name}.png`,
+  });
+  await drawer
+    .getByRole("textbox", { name: "Ask Nexus", exact: true })
+    .fill("Inspect local model fixture:latest");
+  await drawer.getByRole("button", { name: "Ask Nexus", exact: true }).click();
+  const detailRegion = drawer.getByRole("region", {
+    name: "Runtime model result fixture:latest",
+    exact: true,
+  });
+  await expect(detailRegion).toContainText("2048");
+  await expect(detailRegion).toContainText(
+    "Hardware fit and inference readiness were not tested",
+  );
+  expect(metadataRequests).toBe(0);
+  expect(
+    await detailRegion.evaluate((el) => el.scrollWidth <= el.clientWidth + 1),
+  ).toBe(true);
+  await detailRegion.screenshot({
+    path: `artifacts/conversation-local-models/${info.project.name}-details.png`,
+  });
+  const checkButton = detailRegion.getByRole("button", {
+    name: "Run local model check · fixture:latest",
+    exact: true,
+  });
+  await checkButton.evaluate((el) => el.scrollIntoView({ block: "center" }));
+  expect((await checkButton.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  expect(
+    await checkButton.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return el.contains(
+        document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2),
+      );
+    }),
+  ).toBe(true);
+  expect(metadataRequests).toBe(0);
+  await page.screenshot({
+    path: `artifacts/conversation-local-models/${info.project.name}-detail-control.png`,
   });
 });
