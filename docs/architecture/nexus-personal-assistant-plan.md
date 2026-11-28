@@ -558,3 +558,6 @@ Conversational result-page navigation — November 27, 2026: explicit “Next cu
 
 
 Visual-result handoff — November 27, 2026: a displayed single-frame local answer now supports an explicit browser JSON download with question/text, model identity, historical timestamps and unverified provenance. A fixed projection excludes image/runtime context and unknown fields; no new inference, server receipt, memory ingestion or automatic persistence is added. Existing capture/result-clear behavior removes the control while completed downloads remain owner-managed copies. See [visual-answer export](../nexus-visual-answer-export.md).
+
+
+Capability-overview continuity — November 27, 2026: the versioned laptop registry and local deterministic answer now describe current-record retrieval, reviewed model lifecycle, explicit single-frame questions and the fixed REA owned diagnostic. Cards expose effects and evidence limits, while stale REA/Hub connection summaries reflect implemented partial flows without claiming setup/live readiness. No registry read dispatches tools, enables providers or changes grants. See [capability registry](../nexus-laptop-capabilities.md).

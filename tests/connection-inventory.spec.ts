@@ -69,12 +69,15 @@ test("connection inventory separates public/private setup, selected vaults, save
   expect(card("google-drive").status).toBe("No saved authorization");
   expect(card("github-copilot").status).toBe("Integration not built");
   expect(card("microsoft-copilot").status).toBe("Integration not built");
-  for (const id of ["rea", "venice"]) {
+  for (const id of ["venice"]) {
     expect(card(id).status).toBe("Planned — not connected");
     expect(card(id).authorization).toBeTruthy();
     expect(card(id).detail).not.toContain("Enabled");
   }
-  expect(card("hugging-face").status).toBe("Metadata lookup available");
+  expect(card("rea").status).toBe("Owned diagnostic implemented");
+  expect(card("hugging-face").status).toBe(
+    "Reviewed model lifecycle implemented",
+  );
   expect(card("hugging-face").detail).toContain(
     "live Hub access is unverified",
   );
@@ -216,11 +219,7 @@ test("connection setup cards remain readable on controller screens", async ({
   for (const target of plannedConnectionTargets) {
     await expect(
       page.getByRole("region", { name: target.name, exact: true }),
-    ).toContainText(
-      target.id === "hugging-face"
-        ? "Metadata lookup available"
-        : "Planned — not connected",
-    );
+    ).toContainText(target.status);
   }
   await page
     .getByRole("region", { name: "Microsoft Copilot", exact: true })

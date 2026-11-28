@@ -53,12 +53,14 @@ export async function laptopCapabilitiesAnswer() {
       status,
       detail,
       authorization: capability.authorization,
+      effects: capability.effects,
+      verification: capability.verification,
     };
   });
   return {
     engine: "Nexus laptop capabilities",
     answer:
-      "For laptop files and services, this build includes selected-file reading, reviewed draft files, Nexus service checks and reviewed HTTPS link opening when locally enabled. Reading or clicking web pages and general computer control are not built yet. Setup settings are listed below; they do not prove live service health. No action was started.",
+      "This build includes selected-file reading, reviewed drafts/links, service checks, current-record search, reviewed local model lifecycle, single-frame local visual questions and a fixed REA owned-browser diagnostic. Each has separate setup and explicit controls; this overview checks no runtime, captures no image and starts no tool. General computer control, arbitrary website inspection and continuous vision remain unconnected. Included does not mean configured, currently available or verified on your hardware.",
     capabilities,
     sources: [],
     warnings: [],

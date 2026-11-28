@@ -155,7 +155,7 @@ test("capability command requires controller identity, origin and local-only mod
   expect(result.ok()).toBe(true);
   const body = await result.json();
   expect(body.engine).toBe("Nexus laptop capabilities");
-  expect(body.capabilities).toHaveLength(6);
+  expect(body.capabilities).toHaveLength(laptopCapabilities.length);
   expect(body.routing.selected).toEqual([]);
 });
 test("capability cards show honest unsupported actions in the assistant", async ({
@@ -173,6 +173,26 @@ test("capability cards show honest unsupported actions in the assistant", async 
     .locator("form")
     .getByRole("button", { name: "Ask Nexus", exact: true })
     .click();
+  for (const name of [
+    "Current memory and task search",
+    "Reviewed local model lifecycle",
+    "Local camera and screen questions",
+    "REA owned browser diagnostic",
+  ]) {
+    const card = page.getByRole("region", { name, exact: true });
+    await expect(card).toContainText("Included in this build");
+    await expect(card).toContainText("Effects:");
+    await expect(card).toContainText("Evidence and limits:");
+  }
+  await mkdir("artifacts/capability-overview", { recursive: true });
+  await page
+    .getByRole("region", {
+      name: "Local camera and screen questions",
+      exact: true,
+    })
+    .screenshot({
+      path: `artifacts/capability-overview/${info.project.name}.png`,
+    });
   const browser = page.getByRole("region", {
     name: "Browser control",
     exact: true,

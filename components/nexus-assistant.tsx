@@ -42,6 +42,8 @@ type Answer = {
   }[];
   linkPreview?: LinkPreview;
   capabilities?: {
+    effects?: string;
+    verification?: string;
     id: string;
     name: string;
     status: string;
@@ -466,6 +468,18 @@ export default function NexusAssistant({
                         <h4>{capability.name}</h4>
                         <p className="nexus-draft-meta">{capability.status}</p>
                         <p>{capability.detail}</p>
+                        {capability.effects && (
+                          <p>
+                            <strong>Effects: </strong>
+                            {capability.effects}
+                          </p>
+                        )}
+                        {capability.verification && (
+                          <p>
+                            <strong>Evidence and limits: </strong>
+                            {capability.verification}
+                          </p>
+                        )}
                         <p className="nexus-router-note">
                           {capability.authorization}
                         </p>

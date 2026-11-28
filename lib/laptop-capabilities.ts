@@ -65,6 +65,62 @@ export const laptopCapabilities: readonly LaptopCapability[] = [
       "Saved operation receipts; a child exit does not establish full readiness.",
   },
   {
+    id: "foundation.current-records",
+    version: 1,
+    name: "Current memory and task search",
+    implemented: true,
+    description:
+      "Search bounded current owner memory and task text in one workspace or all six. Signed conversational next/previous pages and numbered inspection preserve currentness. Historical snapshots and files are separate sources.",
+    effects:
+      "Read current Foundation rows only; no memory/task edit or provider request.",
+    authorization:
+      "Paired controller; Auto or Local conversational commands, or explicit Memory controls.",
+    verification:
+      "Scoped corpus stamps and selected revision/profile hashes. Owner statements and task output are not independently verified facts.",
+  },
+  {
+    id: "models.reviewed-lifecycle",
+    version: 1,
+    name: "Reviewed local model lifecycle",
+    implemented: true,
+    description:
+      "Review Hub metadata, archive/resume one reviewed GGUF, inspect and stage it locally, and create a new generated Ollama alias through separate explicit controls. Saved diagnostics and current identity checks remain distinct.",
+    effects:
+      "Explicit acquisition can use the network and disk; staging/creation writes to local Ollama. Reading this overview starts none of these operations.",
+    authorization:
+      "Paired controller; source/license, integrity, capacity and runtime prerequisites are rechecked for each applicable action. No automatic activation or default-model change.",
+    verification:
+      "Historical receipts, current source/runtime identity and a separate fixed inference test. Real-model compatibility, live Hub access and native hardware fit remain unverified.",
+  },
+  {
+    id: "vision.single-frame",
+    version: 1,
+    name: "Local camera and screen questions",
+    implemented: true,
+    description:
+      "Explicit video-only camera/screen preview, one newly sampled frame per local question, optional reviewed spoken-question draft and explicit answer JSON download. A phone captures its own available source, not the laptop screen remotely.",
+    effects:
+      "Preview uses device capture. Asking sends one bounded JPEG and question to the paired server and local Ollama. Downloads retain private text metadata without the image; no automatic memory ingestion.",
+    authorization:
+      "Paired controller, browser capture permission and an inspected installed vision/completion model. Each frame question and download is explicit; the saved voice preference is unchanged.",
+    verification:
+      "Reported model/digest and historical timestamps; generated descriptions are unverified. Native device/ASR, actual image decoding and hardware acceptance remain unverified. No continuous vision or hosted image adapter.",
+  },
+  {
+    id: "rea.owned-diagnostic",
+    version: 1,
+    name: "REA owned browser diagnostic",
+    implemented: true,
+    description:
+      "Pinned isolated REA preflight, protocol check and one fixed Nexus-owned browser fixture, with retained metadata review/export. General website inspection and signed-in browser control remain unconnected.",
+    effects:
+      "Explicit diagnostics can launch one owned tool process and temporary headless browser; this overview launches neither.",
+    authorization:
+      "Paired controller and separate checks over the compatible pinned package/runtime. No caller URL, browser attachment or arbitrary command is accepted.",
+    verification:
+      "Package/protocol identity, owned target evidence and cleanup acceptance for that run. Historical success does not establish current tool readiness.",
+  },
+  {
     id: "desktop.browser-control",
     version: 1,
     name: "Browser control",
