@@ -2,8 +2,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReaSelfTestHistory as History } from "@/lib/rea-self-test-history";
 
-export default function ReaSelfTestHistory() {
-  const [history, setHistory] = useState<History | null>(null);
+export default function ReaSelfTestHistory({
+  initialResult,
+}: { initialResult?: History } = {}) {
+  const [history, setHistory] = useState<History | null>(initialResult || null);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const pending = useRef<AbortController | null>(null);
@@ -83,8 +85,8 @@ export default function ReaSelfTestHistory() {
           <p>{history.notice}</p>
           {history.state === "not-created" ? (
             <p>
-              No saved test history yet. Run the owned browser self-test above
-              to create a receipt.
+              No saved test history yet. Use the owned browser self-test in
+              Connections to create a receipt.
             </p>
           ) : history.state === "unavailable" ? (
             <p>Saved history could not be read safely. No records are shown.</p>

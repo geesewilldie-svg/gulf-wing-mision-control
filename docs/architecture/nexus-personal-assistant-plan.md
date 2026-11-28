@@ -570,3 +570,6 @@ Named conversational model inspection — November 27, 2026: “Inspect local mo
 
 
 Conversational diagnostic continuity — November 27, 2026: “Show saved local model checks” now reads the existing bounded projected receipt store directly into the assistant, retaining historical/current-readiness separation, missing/unavailable/withheld states and explicit refresh/export controls. It makes no runtime/provider request or automatic second read; history/reference reset preserves context boundaries. See [conversational model review](../nexus-conversation-local-models.md).
+
+
+Conversational REA result continuity — November 28, 2026: “Show saved REA tests” now exposes the fixed owned-browser diagnostic’s retained projected outcomes directly in the assistant. State/coverage counts, preservation and explicit refresh/export remain unchanged; no tool/runtime/browser/provider request is dispatched. Historical success never enables general site inspection or current readiness. See [REA conversation review](../nexus-conversation-rea-history.md).

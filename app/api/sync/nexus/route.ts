@@ -1,3 +1,5 @@
+import { reaHistoryIntent } from "@/lib/rea-history-intent";
+import { conversationReaHistory } from "@/lib/server/conversation-rea-history";
 import { localModelIntent } from "@/lib/local-model-intent";
 import { conversationLocalModels } from "@/lib/server/conversation-local-models";
 import {
@@ -205,6 +207,17 @@ export async function POST(request: Request) {
           data.resetHistory === true,
       });
     };
+    const reaHistoryCommand = reaHistoryIntent(body.query);
+    if (reaHistoryCommand) {
+      if (!["auto", "local"].includes(body.mode as string))
+        throw new SyncError(
+          403,
+          "Saved REA history requires Auto or Local mode.",
+        );
+      return reply(
+        await conversationReaHistory(reaHistoryCommand, request.signal),
+      );
+    }
     const localModelCommand = localModelIntent(body.query);
     if (localModelCommand) {
       if (!["auto", "local"].includes(body.mode as string))

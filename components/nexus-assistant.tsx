@@ -1,4 +1,6 @@
 "use client";
+import ReaSelfTestHistory from "./rea-self-test-history";
+import type { ReaSelfTestHistory as ReaHistory } from "@/lib/rea-self-test-history";
 import LocalModelCheckHistory from "./local-model-check-history";
 import type { LocalModelCheckHistory as ModelHistory } from "@/lib/local-model-check-history";
 import LocalModelDetails from "./local-model-details";
@@ -33,6 +35,7 @@ const AssistantContext = createContext({
 export const useNexusAssistant = () => useContext(AssistantContext);
 type Answer = {
   localModels?: ModelCatalog;
+  reaHistory?: ReaHistory;
   localModelHistory?: ModelHistory;
   localModelDetails?: ModelDetails;
   recordSearch?: RecordResults;
@@ -437,6 +440,12 @@ export default function NexusAssistant({
               <article className="nexus-answer">
                 <h3>{answer.engine}</h3>
                 <p>{answer.answer}</p>
+                {answer.reaHistory && (
+                  <ReaSelfTestHistory
+                    key={answer.reaHistory.readAt}
+                    initialResult={answer.reaHistory}
+                  />
+                )}
                 {answer.localModelHistory && (
                   <LocalModelCheckHistory
                     key={answer.localModelHistory.readAt}
