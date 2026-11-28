@@ -1,3 +1,4 @@
+import { checkLocalModel } from "./local-model-check";
 import { readLocalModelCheckHistory } from "./local-model-check-history";
 import type { LocalModelIntent } from "../local-model-intent";
 import { inspectLocalModelDetails } from "./local-model-details";
@@ -42,7 +43,7 @@ export async function conversationLocalModels(
     return {
       ...base,
       answer:
-        "Say ‘Show local models’ to read installed Ollama model metadata. This does not run, download or switch a model. Say ‘Inspect local model’ followed by the exact displayed model name for metadata details. Model names must match the catalog exactly; inference tests and selection changes remain separate. Say ‘Show saved local model checks’ to review past diagnostics without running a model.",
+        "Say ‘Show local models’ to read installed Ollama model metadata. This does not run, download or switch a model. Say ‘Inspect local model’ followed by the exact displayed model name for metadata details. Model names must match the catalog exactly; inference tests and selection changes remain separate. Say ‘Show saved local model checks’ to review past diagnostics without running a model. To explicitly load one model for the fixed diagnostic, say ‘Run local model check’ followed by its exact catalog name. This can use laptop RAM/CPU/GPU; no owner context is supplied.",
     };
   const localModels = await inspectLocalModels(signal);
   signal.throwIfAborted();
@@ -55,6 +56,30 @@ export async function conversationLocalModels(
         409,
         "That exact model name and reported digest are not in the current displayed catalog. Say ‘Show local models’ and use an exact displayed simple local name.",
       );
+    if (intent.kind === "check") {
+      const localModelCheck = await checkLocalModel(
+        {
+          action: "local-model-check",
+          model: selected.name,
+          digest: selected.digest,
+          runTest: true,
+        },
+        signal,
+      );
+      signal.throwIfAborted();
+      return {
+        ...base,
+        engine: "Nexus local model diagnostic",
+        localModelCheck,
+        routing: {
+          mode: "local",
+          selected: [],
+          reason:
+            "Explicit fixed local diagnostic only; no owner context, provider fallback or model-selection change.",
+        },
+        answer: `${localModelCheck.state === "passed" ? "The fixed local model test passed for this run." : "The local diagnostic completed, but the expected marker was not returned."} ${localModelCheck.receiptState === "saved" ? "Its metadata was saved locally." : "Its history save is unconfirmed or full; the session result is displayed. Do not rerun solely to save it."} This is not a hardware benchmark or future readiness guarantee. No default model was changed.`,
+      };
+    }
     const localModelDetails = await inspectLocalModelDetails(
       selected.name,
       selected.digest,

@@ -5,12 +5,18 @@ export default function LocalModelCheck({
   model,
   digest,
   onBusyChange,
+  initialResult,
 }: {
   model: string;
   digest: string;
   onBusyChange?: (busy: boolean) => void;
+  initialResult?: Check;
 }) {
-  const [result, setResult] = useState<Check | null>(null),
+  const [result, setResult] = useState<Check | null>(
+      initialResult?.model === model && initialResult.digest === digest
+        ? initialResult
+        : null,
+    ),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const pending = useRef<AbortController | null>(null);

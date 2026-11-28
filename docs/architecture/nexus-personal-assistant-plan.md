@@ -573,3 +573,6 @@ Conversational diagnostic continuity — November 27, 2026: “Show saved local 
 
 
 Conversational REA result continuity — November 28, 2026: “Show saved REA tests” now exposes the fixed owned-browser diagnostic’s retained projected outcomes directly in the assistant. State/coverage counts, preservation and explicit refresh/export remain unchanged; no tool/runtime/browser/provider request is dispatched. Historical success never enables general site inspection or current readiness. See [REA conversation review](../nexus-conversation-rea-history.md).
+
+
+Explicit conversational local diagnostic — November 28, 2026: an exact “Run local model check” command now resolves fresh catalog identity and invokes the existing bounded fixed inference diagnostic. Controller/origin/local-mode, capability/digest/default fences, shared admission, cancellation uncertainty and separate history-save state remain authoritative. No owner context, arbitrary prompt, provider fallback or model-selection change is introduced. Direct result reuse/export avoids automatic repeat execution. See [conversational model checks](../nexus-conversation-local-models.md).

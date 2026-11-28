@@ -13,3 +13,6 @@ The result is a page-session observation of this one test: run ID, selected/repo
 Contract reference: [official Ollama generate API](https://github.com/ollama/ollama/blob/main/docs/api.md#generate-a-completion), reviewed November 26, 2026. Test evidence uses synthetic responses and an owned loopback runtime fixture; no actual model generation on the owner's Windows laptop is inferred.
 
 Completed tests now support [bounded local history and exports](nexus-local-model-check-history.md). Save failure is reported separately from test completion and never triggers another generation. Historical records are not current readiness proof; failed/cancelled/uncertain requests are not included in this completed-result history.
+
+
+The same fixed adapter is now reachable through the explicit Auto/Local conversational command **Run local model check** followed by an exact displayed simple local name. A fresh catalog resolves its digest before the existing diagnostic gates. This command can load the model; listing/inspection still do not. The assistant reuses the completed result directly without running it again. See [conversational diagnostic execution](nexus-conversation-local-models.md).

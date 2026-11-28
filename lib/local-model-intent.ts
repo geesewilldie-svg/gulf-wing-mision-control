@@ -3,7 +3,7 @@ export type LocalModelIntent =
   | "catalog"
   | "help"
   | "history"
-  | { kind: "details"; model: string };
+  | { kind: "details" | "check"; model: string };
 export function localModelIntent(query: string): LocalModelIntent | null {
   const command = query
     .trim()
@@ -21,6 +21,12 @@ export function localModelIntent(query: string): LocalModelIntent | null {
     )
   )
     return "help";
+  const check = /^run local model check (.+)$/i.exec(command);
+  if (check)
+    return localDetailModel(check[1])
+      ? { kind: "check", model: check[1] }
+      : "help";
+  if (/^run local model check(?:\s|$)/i.test(command)) return "help";
   const detail = /^inspect local model (.+)$/i.exec(command);
   if (detail)
     return localDetailModel(detail[1])
