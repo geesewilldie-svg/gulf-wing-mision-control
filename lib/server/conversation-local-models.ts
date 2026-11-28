@@ -1,3 +1,4 @@
+import { readLocalModelCheckHistory } from "./local-model-check-history";
 import type { LocalModelIntent } from "../local-model-intent";
 import { inspectLocalModelDetails } from "./local-model-details";
 import { SyncError } from "./sync-store";
@@ -19,11 +20,29 @@ export async function conversationLocalModels(
         "Explicit local model metadata lookup only; no generation, download or configuration change.",
     },
   };
+  if (intent === "history") {
+    const localModelHistory = await readLocalModelCheckHistory(signal);
+    signal.throwIfAborted();
+    const summary =
+      localModelHistory.state === "unavailable"
+        ? "Saved model diagnostic history is unavailable; existing records were preserved."
+        : localModelHistory.state === "not-created"
+          ? "No saved model diagnostic history store was found."
+          : `${localModelHistory.records.length} historical model checks are displayed from ${localModelHistory.validRecords} valid saved results; ${localModelHistory.withheldRecords} records were withheld.`;
+    return {
+      ...base,
+      engine: "Nexus saved model diagnostics",
+      localModelHistory,
+      answer:
+        summary +
+        " These are historical observations, not a current readiness check. No runtime request or inference test was started.",
+    };
+  }
   if (intent === "help")
     return {
       ...base,
       answer:
-        "Say ‘Show local models’ to read installed Ollama model metadata. This does not run, download or switch a model. Say ‘Inspect local model’ followed by the exact displayed model name for metadata details. Model names must match the catalog exactly; inference tests and selection changes remain separate.",
+        "Say ‘Show local models’ to read installed Ollama model metadata. This does not run, download or switch a model. Say ‘Inspect local model’ followed by the exact displayed model name for metadata details. Model names must match the catalog exactly; inference tests and selection changes remain separate. Say ‘Show saved local model checks’ to review past diagnostics without running a model.",
     };
   const localModels = await inspectLocalModels(signal);
   signal.throwIfAborted();

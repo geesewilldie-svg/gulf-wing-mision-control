@@ -17,3 +17,6 @@ The diagnostic's accepted session result and its history save are separate: `rec
 The controller-only, same-origin POST accepts exactly `{ "action": "local-model-check-history" }`. Caller paths, filters, runtime options and extra fields are rejected. The normal fixed diagnostic keeps its separate explicit run button and existing source-independent digest/current-selection checks; saving does not rerun it or change any model/creation receipt.
 
 Validation covers real disposable filesystem preservation, bounded capacity and newest-first coverage, known-field projection, unsafe/duplicate/malformed records, storage failure without repeated inference, controller/origin guards, the compiled production history endpoint and populated desktop/phone reads/exports. Owned HTTP fixtures establish API behavior; they do not establish actual Ollama inference or native Windows model acceptance.
+
+
+Conversation access is now available through **Show saved local model checks** in Auto/Local mode. It reuses this same bounded history service and display/export controls without an automatic second request, runtime probe or inference test. The short spoken reply reports history state/counts rather than private model names. See [conversational review](nexus-conversation-local-models.md).

@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import type { LocalModelCheckHistory as History } from "@/lib/local-model-check-history";
-export default function LocalModelCheckHistory() {
-  const [data, setData] = useState<History | null>(null),
+export default function LocalModelCheckHistory({
+  initialResult,
+}: { initialResult?: History } = {}) {
+  const [data, setData] = useState<History | null>(initialResult || null),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const pending = useRef<AbortController | null>(null);
@@ -50,7 +52,10 @@ export default function LocalModelCheckHistory() {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   return (
-    <details className="nexus-local-model-check-history">
+    <details
+      className="nexus-local-model-check-history"
+      open={initialResult ? true : undefined}
+    >
       <summary>Saved local model diagnostics</summary>
       <p>
         Review completed fixed tests after a refresh. These are historical

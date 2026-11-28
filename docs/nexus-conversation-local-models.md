@@ -1,4 +1,4 @@
-# Conversational local model catalog
+# Conversational local model review
 
 In Auto or Local mode, type or say **Show local models**, **List my local models** or **Show installed local models**. Nexus reads the existing bounded Ollama catalog and displays it in the assistant using the same installed-model detail controls as Connections. The initial result performs no duplicate catalog lookup. Model detail inspection and its separate fixed diagnostic remain explicit controls with their existing identity and resource gates.
 
@@ -18,3 +18,14 @@ After listing, type or say **Inspect local model qwen2.5:1.5b**, substituting th
 The server first reads the current bounded catalog, requiring that exact name and reported digest within its first 100 displayed entries. It then uses the existing before/show/after identity-fenced detail service. This makes three fixed local catalog reads and one fixed local metadata POST for a successful inspection; no generation endpoint, default-model write, hosted provider or download is called. Missing/unknown/unreported-digest entries and identity/selection changes reject, retaining no detail result. The existing shared detail admission and response/time limits apply.
 
 The assistant renders the returned detail directly without another automatic request. Refresh inspection and fixed inference testing remain explicit buttons with their established currentness/admission checks. Capabilities/context length stay runtime-reported metadata, and no capability grants an execution tool. The short spoken reply excludes the model name and raw metadata, resets recent history and clears prior mutator references. General voice-driven model switching and automatic diagnostic execution remain separate architecture work.
+
+
+## Review saved diagnostics through conversation
+
+Say **Show saved local model checks** or **Show saved model diagnostics** in Auto/Local mode. This reads the existing fixed private receipt store and displays the saved diagnostic history directly in the assistant. It does not inspect current catalog/model details, load a model, call Ollama, rerun a test, refresh a provider or change settings. Opening the returned history performs no duplicate automatic read. Explicit refresh and JSON export remain available in the reused history controls.
+
+The response distinguishes a missing store, an unavailable/unsafe store and available history. Available results report shown/valid/withheld counts rather than treating unreadable records as absent. The existing newest-twenty display and fixed hundred-slot storage bounds, safe-file checks and known-field projection remain unchanged. Raw response text, thinking and runtime notices are not part of stored result projection. Malformed/unsafe receipts remain preserved. Historical passed/unexpected results describe completed fixed checks; they are not a complete attempt log, current readiness, loaded state or hardware evidence.
+
+The count-only spoken response excludes model IDs and raw private details. The response clears old memory/task mutator references and recent history; saved diagnostics do not become execution or model-switch targets. Controller/same-origin/local-mode gates apply even if external sharing/public-query flags are supplied. Unsupported modes reject before receipt access. Malformed command continuations produce local help without a runtime request.
+
+Desktop/phone tests exercise missing/corrupt history preservation, projected saved results, zero runtime/provider calls, production receipt reads, direct initial-result reuse, explicit downloads and denied-refresh clearing. Native ASR and actual local-model acceptance remain separate. See [saved diagnostic storage](nexus-local-model-check-history.md).

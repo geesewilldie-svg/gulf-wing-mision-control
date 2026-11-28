@@ -1,4 +1,6 @@
 "use client";
+import LocalModelCheckHistory from "./local-model-check-history";
+import type { LocalModelCheckHistory as ModelHistory } from "@/lib/local-model-check-history";
 import LocalModelDetails from "./local-model-details";
 import type { LocalModelDetails as ModelDetails } from "@/lib/local-model-details";
 import LocalModelCatalog from "./local-model-catalog";
@@ -31,6 +33,7 @@ const AssistantContext = createContext({
 export const useNexusAssistant = () => useContext(AssistantContext);
 type Answer = {
   localModels?: ModelCatalog;
+  localModelHistory?: ModelHistory;
   localModelDetails?: ModelDetails;
   recordSearch?: RecordResults;
   recordInspection?: CurrentRecordInspection;
@@ -434,6 +437,12 @@ export default function NexusAssistant({
               <article className="nexus-answer">
                 <h3>{answer.engine}</h3>
                 <p>{answer.answer}</p>
+                {answer.localModelHistory && (
+                  <LocalModelCheckHistory
+                    key={answer.localModelHistory.readAt}
+                    initialResult={answer.localModelHistory}
+                  />
+                )}
                 {answer.localModelDetails && (
                   <LocalModelDetails
                     key={
