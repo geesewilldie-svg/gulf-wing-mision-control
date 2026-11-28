@@ -561,3 +561,6 @@ Visual-result handoff — November 27, 2026: a displayed single-frame local answ
 
 
 Capability-overview continuity — November 27, 2026: the versioned laptop registry and local deterministic answer now describe current-record retrieval, reviewed model lifecycle, explicit single-frame questions and the fixed REA owned diagnostic. Cards expose effects and evidence limits, while stale REA/Hub connection summaries reflect implemented partial flows without claiming setup/live readiness. No registry read dispatches tools, enables providers or changes grants. See [capability registry](../nexus-laptop-capabilities.md).
+
+
+Conversational installed-model discovery — November 27, 2026: “Show local models” now connects the existing bounded fixed-loopback Ollama metadata service to Auto/Local conversation, with direct structured catalog display and explicit existing detail/diagnostic controls. Count-only speech, history/reference reset and controller/origin/mode gates preserve metadata-only effects. No model is run, downloaded or selected by discovery. See [conversational local models](../nexus-conversation-local-models.md).

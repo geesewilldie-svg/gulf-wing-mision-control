@@ -13,3 +13,6 @@ This supplies discovery for the existing installed local runtime. It is not a Hu
 The same bounded catalog now supports the separate one-answer selector in typed Local Ollama Answer settings. Catalog inspection itself remains read-only; see `nexus-local-model-choice.md` for request-local selection and its generation-time membership recheck.
 
 An explicit [runtime detail inspection](nexus-local-model-details.md) is now available per displayed simple local model/digest. It checks current catalog identity around a bounded metadata request; it does not generate, import or change selection.
+
+
+Conversation now offers the same catalog through **Show local models** in Auto/Local mode, including typed and spoken requests. It reuses returned metadata directly in the assistant with no second automatic read. Detail checks and diagnostics remain separate explicit controls, and listing changes no model or configuration. See [conversational local models](nexus-conversation-local-models.md).

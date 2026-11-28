@@ -1,3 +1,5 @@
+import { localModelIntent } from "@/lib/local-model-intent";
+import { conversationLocalModels } from "@/lib/server/conversation-local-models";
 import {
   currentRecordReference,
   pageConversationRecords,
@@ -203,6 +205,17 @@ export async function POST(request: Request) {
           data.resetHistory === true,
       });
     };
+    const localModelCommand = localModelIntent(body.query);
+    if (localModelCommand) {
+      if (!["auto", "local"].includes(body.mode as string))
+        throw new SyncError(
+          403,
+          "Local model catalog lookup requires Auto or Local mode.",
+        );
+      return reply(
+        await conversationLocalModels(localModelCommand, request.signal),
+      );
+    }
     const recordCommand = currentRecordIntent(body.query);
     if (recordCommand) {
       if (!["auto", "local"].includes(body.mode as string))

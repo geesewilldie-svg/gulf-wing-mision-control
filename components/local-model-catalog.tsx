@@ -2,8 +2,10 @@
 import LocalModelDetails from "./local-model-details";
 import { useEffect, useRef, useState } from "react";
 import type { LocalModelCatalog as Catalog } from "@/lib/local-model-catalog";
-export default function LocalModelCatalog() {
-  const [data, setData] = useState<Catalog | null>(null),
+export default function LocalModelCatalog({
+  initialResult,
+}: { initialResult?: Catalog } = {}) {
+  const [data, setData] = useState<Catalog | null>(initialResult || null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   const request = useRef<AbortController | null>(null);
@@ -34,7 +36,10 @@ export default function LocalModelCatalog() {
     }
   }
   return (
-    <details className="nexus-local-model-catalog">
+    <details
+      className="nexus-local-model-catalog"
+      open={initialResult ? true : undefined}
+    >
       <summary>Installed local models</summary>
       <p>
         Inspect Ollama's local model list. This does not run a model or change

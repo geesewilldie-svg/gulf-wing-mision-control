@@ -1,4 +1,6 @@
 "use client";
+import LocalModelCatalog from "./local-model-catalog";
+import type { LocalModelCatalog as ModelCatalog } from "@/lib/local-model-catalog";
 import { currentRecordIntent } from "@/lib/current-record-intent";
 import type { CurrentRecordInspection } from "@/lib/current-record-search";
 import CurrentRecordSearch from "./current-record-search";
@@ -26,6 +28,7 @@ const AssistantContext = createContext({
 });
 export const useNexusAssistant = () => useContext(AssistantContext);
 type Answer = {
+  localModels?: ModelCatalog;
   recordSearch?: RecordResults;
   recordInspection?: CurrentRecordInspection;
   engine: string;
@@ -428,6 +431,12 @@ export default function NexusAssistant({
               <article className="nexus-answer">
                 <h3>{answer.engine}</h3>
                 <p>{answer.answer}</p>
+                {answer.localModels && (
+                  <LocalModelCatalog
+                    key={answer.localModels.checkedAt}
+                    initialResult={answer.localModels}
+                  />
+                )}
                 {answer.recordSearch && (
                   <CurrentRecordSearch
                     key={answer.recordSearch.stamp + answer.recordSearch.readAt}
