@@ -555,3 +555,6 @@ Numbered current-result inspection — November 27, 2026: a conversational looku
 
 
 Conversational result-page navigation — November 27, 2026: explicit “Next current results” and “Previous current results” now advance the signed current search after renewed corpus/scope/lifetime checks. Destination references preserve the original five-minute expiry; global displayed result numbers select only rows on that signed page. Bounds, changed profiles and unsupported modes reject locally, without provider or mutation effects. See [current-result navigation](../nexus-current-result-inspection.md).
+
+
+Visual-result handoff — November 27, 2026: a displayed single-frame local answer now supports an explicit browser JSON download with question/text, model identity, historical timestamps and unverified provenance. A fixed projection excludes image/runtime context and unknown fields; no new inference, server receipt, memory ingestion or automatic persistence is added. Existing capture/result-clear behavior removes the control while completed downloads remain owner-managed copies. See [visual-answer export](../nexus-visual-answer-export.md).

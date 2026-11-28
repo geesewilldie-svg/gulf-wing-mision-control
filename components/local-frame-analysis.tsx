@@ -1,4 +1,5 @@
 "use client";
+import { localFrameExport } from "@/lib/local-frame-export";
 import VisualQuestionRecorder from "./visual-question-recorder";
 import { useNexusAssistant } from "./nexus-assistant";
 import { useEffect, useRef, useState, type RefObject } from "react";
@@ -38,6 +39,30 @@ export default function LocalFrameAnalysis({
     details.capabilitiesKnown &&
     details.capabilities.includes("vision") &&
     details.capabilities.includes("completion");
+  function downloadAnswer() {
+    if (!result || busy || audioBusy) return;
+    let url: string | undefined;
+    try {
+      url = URL.createObjectURL(
+        new Blob([JSON.stringify(localFrameExport(result), null, 2)], {
+          type: "application/json",
+        }),
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "nexus-local-frame-answer.json";
+      link.click();
+    } catch {
+      setMessage(
+        "The browser could not prepare the answer download. The displayed answer remains available.",
+      );
+    } finally {
+      if (url) {
+        const created = url;
+        setTimeout(() => URL.revokeObjectURL(created), 1000);
+      }
+    }
+  }
   async function request(action: "catalog" | "details" | "analyze") {
     if (busy || audioBusy) return;
     const controller = new AbortController();
@@ -333,6 +358,16 @@ export default function LocalFrameAnalysis({
             {result.elapsedMs} ms
           </p>
           <p>{result.notice}</p>
+          <p>
+            Download includes this private question and answer, model identity
+            and timestamps. No image is included. The downloaded copy remains
+            after capture stops; Nexus does not add it to memory or knowledge.
+          </p>
+          <div className="nexus-actions">
+            <button disabled={busy || audioBusy} onClick={downloadAnswer}>
+              Download visual answer JSON
+            </button>
+          </div>
         </section>
       )}
     </section>

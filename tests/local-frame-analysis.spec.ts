@@ -6,6 +6,7 @@ import {
   analyzeLocalFrame,
   inspectFrameJPEG,
 } from "../lib/server/local-frame-analysis";
+import { localFrameExport } from "../lib/local-frame-export";
 import { DEFAULT_FRAME_QUESTION } from "../lib/local-frame-analysis";
 import { stripFrameMetadata } from "../lib/frame-jpeg";
 import { POST } from "../app/api/sync/vision/route";
@@ -500,6 +501,8 @@ test("desktop/phone image flow sends only an explicitly sampled frame, labels hi
       ? route.fulfill({ status: 403, json: { error: "Controller required" } })
       : route.fulfill({
           json: {
+            jpeg: "PRIVATE_IMAGE_SENTINEL",
+            thinking: "PRIVATE_THINKING_SENTINEL",
             runId: "fixture",
             model,
             digest: mode === "stale" ? "b".repeat(64) : digest,
@@ -529,6 +532,50 @@ test("desktop/phone image flow sends only an explicitly sampled frame, labels hi
       exact: true,
     }),
   ).toBeVisible();
+  const downloadEvent = page.waitForEvent("download");
+  await panel
+    .getByRole("button", { name: "Download visual answer JSON", exact: true })
+    .click();
+  const download = await downloadEvent;
+  expect(download.suggestedFilename()).toBe("nexus-local-frame-answer.json");
+  const exported = JSON.parse(
+    await fs.readFile((await download.path())!, "utf8"),
+  );
+  expect(exported).toMatchObject({
+    version: 1,
+    kind: "nexus-local-frame-answer",
+    provenance: "unverified-model-description",
+    result: {
+      runId: "fixture",
+      model,
+      digest,
+      reportedModel: model,
+      source: "camera",
+      question: DEFAULT_FRAME_QUESTION,
+      text: "A blue rectangle. This describes one captured moment.",
+    },
+  });
+  expect(Number.isFinite(Date.parse(exported.exportedAt))).toBe(true);
+  expect(JSON.stringify(exported)).not.toContain("PRIVATE_IMAGE_SENTINEL");
+  expect(JSON.stringify(exported)).not.toContain("PRIVATE_THINKING_SENTINEL");
+  expect(Object.keys(exported.result).sort()).toEqual(
+    [
+      "runId",
+      "model",
+      "digest",
+      "reportedModel",
+      "source",
+      "capturedAt",
+      "completedAt",
+      "width",
+      "height",
+      "bytes",
+      "elapsedMs",
+      "question",
+      "text",
+      "reportedOutputTokens",
+    ].sort(),
+  );
   expect(frames).toBe(1);
   expect(
     await panel.evaluate((el) => el.scrollWidth <= el.clientWidth + 1),
@@ -536,6 +583,31 @@ test("desktop/phone image flow sends only an explicitly sampled frame, labels hi
   await fs.mkdir("artifacts/local-frame-analysis", { recursive: true });
   await panel.screenshot({
     path: `artifacts/local-frame-analysis/${info.project.name}.png`,
+  });
+  await fs.mkdir("artifacts/visual-answer-export", { recursive: true });
+  const exportedRegion = panel.getByRole("region", {
+    name: "Captured frame description",
+    exact: true,
+  });
+  await exportedRegion.screenshot({
+    path: `artifacts/visual-answer-export/${info.project.name}.png`,
+  });
+  const exportButton = panel.getByRole("button", {
+    name: "Download visual answer JSON",
+    exact: true,
+  });
+  expect((await exportButton.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await exportButton.evaluate((el) => el.scrollIntoView({ block: "center" }));
+  expect(
+    await exportButton.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return el.contains(
+        document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2),
+      );
+    }),
+  ).toBe(true);
+  await page.screenshot({
+    path: `artifacts/visual-answer-export/${info.project.name}-control.png`,
   });
   mode = "stale";
   await panel
@@ -547,6 +619,12 @@ test("desktop/phone image flow sends only an explicitly sampled frame, labels hi
   await expect(
     panel.getByRole("region", {
       name: "Captured frame description",
+      exact: true,
+    }),
+  ).toHaveCount(0);
+  await expect(
+    panel.getByRole("button", {
+      name: "Download visual answer JSON",
       exact: true,
     }),
   ).toHaveCount(0);
@@ -780,4 +858,35 @@ test("typed visual questions require a new explicit frame, clear edited/mismatch
   expect(frames).toBe(2);
   await page.getByRole("button", { name: "Stop capture", exact: true }).click();
   await expect(panel).toHaveCount(0);
+});
+
+test("visual answer export projects only historical answer metadata, without unknown image/runtime fields", () => {
+  const input: any = {
+    runId: "one",
+    model: "local",
+    digest: "d",
+    reportedModel: "local",
+    source: "screen",
+    capturedAt: "capture",
+    completedAt: "completion",
+    width: 20,
+    height: 10,
+    bytes: 80,
+    elapsedMs: 1,
+    text: "Unverified observation",
+    question: "What is visible?",
+    reportedOutputTokens: null,
+    notice: "untrusted notice",
+    jpeg: "secret image",
+    thinking: "secret thoughts",
+    context: [1, 2],
+  };
+  const original = JSON.stringify(input);
+  const output = localFrameExport(input);
+  expect(output.result.text).toBe(input.text);
+  expect(output.notice).toContain("Not a live observation");
+  expect(JSON.stringify(output)).not.toMatch(
+    /secret image|secret thoughts|untrusted notice|context/,
+  );
+  expect(JSON.stringify(input)).toBe(original);
 });
