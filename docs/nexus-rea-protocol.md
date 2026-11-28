@@ -27,3 +27,6 @@ Fixture tests cover exact outbound methods, split UTF-8, catalog/source-version 
 ## Build-time tracing boundary
 
 The private installed tool is read at runtime. Narrow `turbopackIgnore` annotations prevent expansion of the manifest's dynamic file expression into a package-wide build glob; the committed hash/lock JSON imports remain application inputs. These annotations affect build analysis only and do not skip runtime file validation. Reproduction with the full installed tree matched the owner's 14,472-file warning before the fix; the final Turbopack build omitted that warning, and compiled-route success/tampered-source rejection were both rechecked. Normal explicit child-process dependency tracing can still apply when packaging a deployment.
+
+
+The same initialize/catalog-only adapter is now available through the explicit Auto/Local command **Test REA protocol**. The conversation wrapper passes only the request signal, never a target or the optional owned-inspection argument. Returned catalog metadata appears directly in the assistant without a second invocation. See [conversational checks](nexus-conversation-rea-checks.md).

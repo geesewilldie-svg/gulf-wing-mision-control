@@ -1,17 +1,20 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import ReaSelfTestHistory from "./rea-self-test-history";
-import type { ReaReadiness as Status } from "@/lib/rea-readiness";
-export default function ReaReadiness() {
-  const [data, setData] = useState<Status | null>(null),
+import type {
+  ReaReadiness as Status,
+  ReaProtocolObservation,
+} from "@/lib/rea-readiness";
+export default function ReaReadiness({
+  initialResult,
+  initialProtocol,
+}: { initialResult?: Status; initialProtocol?: ReaProtocolObservation } = {}) {
+  const [data, setData] = useState<Status | null>(initialResult || null),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
-  const [protocol, setProtocol] = useState<{
-    serverVersion: string;
-    tools: { name: string; schemaSha256: string }[];
-    checkedAt: string;
-    notice: string;
-  } | null>(null);
+  const [protocol, setProtocol] = useState<ReaProtocolObservation | null>(
+    initialProtocol || null,
+  );
   const [browserTest, setBrowserTest] = useState<{
     runId: string;
     receiptState: string;
@@ -57,7 +60,7 @@ export default function ReaReadiness() {
     }
   }
   return (
-    <details>
+    <details open={initialResult || initialProtocol ? true : undefined}>
       <summary>REA inspection prerequisites</summary>
       <p>
         Inspect Nexus's Node runtime and the fixed isolated tool metadata. This

@@ -13,3 +13,10 @@ export type ReaReadiness = {
   adapterReady: false;
   notice: string;
 };
+
+export type ReaProtocolObservation = {
+  serverVersion: string;
+  tools: { name: string; schemaSha256: string }[];
+  checkedAt: string;
+  notice: string;
+};

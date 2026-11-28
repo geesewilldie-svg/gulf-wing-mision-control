@@ -11,3 +11,6 @@ This is an explicit controller-only same-origin POST accepting only `action: rea
 **Adapter ready remains no in every result.** An isolated installer with package integrity verification, compatible runtime, scoped browser target/permissions, bounded evidence adapter and actual acceptance tests are still required. This preflight does not connect REA or establish general browser/computer control. The existing planned connection inventory remains metadata-only and performs no preflight automatically.
 
 A separate **Test REA protocol without browser** control now starts a checked, short-lived MCP catalog exchange on a compatible server runtime. It is not performed by this metadata preflight and does not enable browser tools. See `nexus-rea-protocol.md` for bounds, source checks, cleanup and execution evidence.
+
+
+**Check REA prerequisites** now exposes this read-only observation through Auto/Local conversation. Metadata discovery still launches no process or installation; the separate **Test REA protocol** command explicitly runs the existing bounded process check. See [conversational checks](nexus-conversation-rea-checks.md).

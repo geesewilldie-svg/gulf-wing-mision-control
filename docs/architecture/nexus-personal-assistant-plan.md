@@ -576,3 +576,6 @@ Conversational REA result continuity — November 28, 2026: “Show saved REA te
 
 
 Explicit conversational local diagnostic — November 28, 2026: an exact “Run local model check” command now resolves fresh catalog identity and invokes the existing bounded fixed inference diagnostic. Controller/origin/local-mode, capability/digest/default fences, shared admission, cancellation uncertainty and separate history-save state remain authoritative. No owner context, arbitrary prompt, provider fallback or model-selection change is introduced. Direct result reuse/export avoids automatic repeat execution. See [conversational model checks](../nexus-conversation-local-models.md).
+
+
+Conversational REA prerequisite/protocol actions — November 28, 2026: explicit “Check REA prerequisites” and “Test REA protocol” now reuse the existing metadata observation and pinned initialize/catalog-only process adapter respectively. No target/options or owned-inspection argument is accepted. Controller/origin/local-mode, runtime/integrity/admission and cleanup gates remain unchanged; returned observations render without automatic repeat invocation. General site inspection remains unconnected. See [REA conversation checks](../nexus-conversation-rea-checks.md).

@@ -1,4 +1,9 @@
 "use client";
+import ReaReadiness from "./rea-readiness";
+import type {
+  ReaReadiness as ReaStatus,
+  ReaProtocolObservation,
+} from "@/lib/rea-readiness";
 import LocalModelCheck from "./local-model-check";
 import type { LocalModelCheck as ModelCheck } from "@/lib/local-model-check";
 import ReaSelfTestHistory from "./rea-self-test-history";
@@ -39,6 +44,8 @@ type Answer = {
   localModels?: ModelCatalog;
   localModelCheck?: ModelCheck;
   reaHistory?: ReaHistory;
+  reaPrerequisites?: ReaStatus;
+  reaProtocol?: ReaProtocolObservation;
   localModelHistory?: ModelHistory;
   localModelDetails?: ModelDetails;
   recordSearch?: RecordResults;
@@ -449,6 +456,16 @@ export default function NexusAssistant({
                     model={answer.localModelCheck.model}
                     digest={answer.localModelCheck.digest}
                     initialResult={answer.localModelCheck}
+                  />
+                )}
+                {(answer.reaPrerequisites || answer.reaProtocol) && (
+                  <ReaReadiness
+                    key={
+                      answer.reaPrerequisites?.checkedAt ||
+                      answer.reaProtocol?.checkedAt
+                    }
+                    initialResult={answer.reaPrerequisites}
+                    initialProtocol={answer.reaProtocol}
                   />
                 )}
                 {answer.reaHistory && (

@@ -1,0 +1,16 @@
+# Conversational REA prerequisite and protocol checks
+
+In Auto/Local mode, Nexus accepts two distinct explicit commands:
+
+- **Check REA prerequisites** reads Nexus's Node runtime and the fixed managed package metadata. It does not execute REA, install anything, attach a browser or inspect a website.
+- **Test REA protocol** explicitly invokes the existing short-lived pinned REA process check for initialize/catalog exchange and clean shutdown. It does not call an inspection tool, attach a browser, contact a model or enable general website inspection.
+
+The commands accept no caller target, URL, process path, CLI flags or appended instructions. Malformed continuations receive local help. Controller/same-origin/local-mode gates apply before either action; external-sharing/public-query flags do not start inference or research. Knowledge-only, Compare and hosted modes reject. No owner memory, file excerpts or conversation history is passed into the protocol process. Neither command changes the saved model, provider grants or execution policy.
+
+Prerequisite results retain the existing runtime-compatible/package-state distinctions and `adapterReady: false`. Finding expected package metadata does not prove integrity, executable readiness or browser support. Signal cancellation is checked before and after the bounded metadata observation; it does not add an OS-level deadline to filesystem reads.
+
+Protocol execution retains the existing pinned package/source integrity, runtime compatibility, single-process admission, fixed isolated environment, bounded stdio exchange, exact permitted tool identities, cancellation/cleanup and clean-shutdown acceptance. The conversation wrapper passes only the request signal and never supplies the optional owned-inspection argument. Missing or incompatible setup fails with no automatic install, retry, browser fallback or success claim. A valid returned catalog remains a dated observation, not general tool/browser permission. This phase adds no durable protocol-test receipt; use the separately recorded owned-browser diagnostic history for its own run outcomes.
+
+The returned prerequisite/protocol observation is displayed directly inside the assistant using the existing controls, without an automatic duplicate request. Buttons for a new protocol check or owned-browser self-test remain separate explicit actions, as does saved history review. Recent history and prior memory/task mutator references are cleared. No protocol result becomes an implicit execution target. Cancelling a started process can leave cleanup finishing or unconfirmed according to the existing adapter contract.
+
+Validation covers exact/help grammar; zero execution for metadata/help; one explicit protocol invocation with only the signal; cancellation before invocation; controller/origin/mode gates; local metadata reads and unsupported-setup refusal through the compiled API; returned-result reuse; and populated desktop/phone layout. The existing protocol suite runs an owned stdio MCP fixture to validate framing, catalog identities, clean shutdown, bounded failure and cancellation. These fixtures do not establish successful current pinned-package execution or native Windows/browser readiness. See [REA prerequisite contract](nexus-rea-preflight.md) and [protocol contract](nexus-rea-protocol.md).

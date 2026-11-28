@@ -1,3 +1,5 @@
+import { reaCheckIntent } from "@/lib/rea-check-intent";
+import { conversationReaCheck } from "@/lib/server/conversation-rea-check";
 import { reaHistoryIntent } from "@/lib/rea-history-intent";
 import { conversationReaHistory } from "@/lib/server/conversation-rea-history";
 import { localModelIntent } from "@/lib/local-model-intent";
@@ -207,6 +209,12 @@ export async function POST(request: Request) {
           data.resetHistory === true,
       });
     };
+    const reaCheckCommand = reaCheckIntent(body.query);
+    if (reaCheckCommand) {
+      if (!["auto", "local"].includes(body.mode as string))
+        throw new SyncError(403, "REA checks require Auto or Local mode.");
+      return reply(await conversationReaCheck(reaCheckCommand, request.signal));
+    }
     const reaHistoryCommand = reaHistoryIntent(body.query);
     if (reaHistoryCommand) {
       if (!["auto", "local"].includes(body.mode as string))
